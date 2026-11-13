@@ -1,0 +1,10 @@
+{
+  "name": "gaiapulse",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "heroku-postbuild": "npm --prefix frontend ci --include=dev && npm --prefix frontend run build && node -e \"require('fs').rmSync('frontend/node_modules', {recursive: true, force: true})\""
+  }
+}

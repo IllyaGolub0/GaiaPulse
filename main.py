@@ -21,12 +21,15 @@ import logging
 import math
 import os
 import re
-from typing import Any, Dict, List, Literal, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, model_validator
 
 from nasa_client import clear_cache, fetch_climate_series, get_cache_stats
@@ -416,9 +419,11 @@ def _serialize_variable_meta(var_meta: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-@app.get("/", tags=["System"])
-async def root() -> Dict[str, Any]:
-    """Root status endpoint."""
+FRONTEND_DIST_DIR = Path(__file__).resolve().parent / "frontend" / "dist"
+FRONTEND_INDEX_FILE = FRONTEND_DIST_DIR / "index.html"
+
+
+def _api_status_payload() -> Dict[str, Any]:
     return {
         "service": "GaiaPulse / NASA Earth System Trend Detective API v2",
         "version": "2.1.0",
@@ -436,6 +441,20 @@ async def root() -> Dict[str, Any]:
         },
         "disclaimer": NASA_OFFICIAL_DISCLAIMER,
     }
+
+
+@app.get("/", tags=["System"], response_model=None)
+async def root() -> Any:
+    """Serve built React frontend when available, otherwise return API status."""
+    if FRONTEND_INDEX_FILE.is_file():
+        return FileResponse(FRONTEND_INDEX_FILE)
+    return _api_status_payload()
+
+
+@app.get("/api/info", tags=["System"])
+async def api_info() -> Dict[str, Any]:
+    """API status and endpoint directory."""
+    return _api_status_payload()
 
 
 @app.get("/api/health", tags=["System"])
@@ -650,6 +669,31 @@ async def analyze_csv_v2(payload: AnalyzeCsvRequestV2) -> Dict[str, Any]:
 async def analyze_trend_legacy(payload: AnalyzeTrendRequestV2) -> Dict[str, Any]:
     """Backwards-compatible alias for POST /api/v2/analyze."""
     return await _run_trend_analysis_pipeline(payload)
+
+
+if (FRONTEND_DIST_DIR / "assets").is_dir():
+    app.mount(
+        "/assets",
+        StaticFiles(directory=FRONTEND_DIST_DIR / "assets"),
+        name="frontend-assets",
+    )
+
+if FRONTEND_INDEX_FILE.is_file():
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str) -> FileResponse:
+        """Serve built frontend assets or SPA index.html for non-API routes."""
+        if full_path == "api" or full_path.startswith("api/") or full_path in (
+            "docs",
+            "redoc",
+            "openapi.json",
+        ):
+            raise HTTPException(status_code=404, detail="Not Found")
+
+        dist_root = FRONTEND_DIST_DIR.resolve()
+        candidate = (FRONTEND_DIST_DIR / full_path).resolve()
+        if candidate.is_file() and candidate.is_relative_to(dist_root):
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_INDEX_FILE)
 
 
 if __name__ == "__main__":
