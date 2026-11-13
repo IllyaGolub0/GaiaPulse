@@ -16,7 +16,8 @@ import {
 } from '../types/climate';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.PROD ? '' : 'http://localhost:8000');
 
 export const NASA_OFFICIAL_DISCLAIMER =
   'Disclaimer: NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites. For non-U.S. Government websites, participants must comply with any data use parameters of that specific website.';
