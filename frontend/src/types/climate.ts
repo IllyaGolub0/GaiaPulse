@@ -8,6 +8,12 @@ export type SeasonMode =
   | 'JJA'
   | 'SON';
 
+export type BiomeType =
+  | 'tidal_estuary'
+  | 'rain_forest'
+  | 'desert'
+  | 'cryosphere';
+
 export type ClimateVariableCode =
   | 'T2M'
   | 'PRECTOTCORR'
@@ -18,7 +24,10 @@ export type ClimateVariableCode =
   | 'EVPTRNS'
   | 'QRUNOFF'
   | 'SNODP'
-  | 'SST';
+  | 'SST'
+  | 'SEAWIFS_CHLA'
+  | 'SWOT_WSE'
+  | 'RCM_SAR_BACKSCATTER';
 
 export interface RegionLocation {
   name: string;
@@ -32,8 +41,11 @@ export interface VariableMetadata {
   name_ua?: string;
   unit: string;
   satellite_badge?: string;
+  source?: string;
   gibs_layer?: string;
   description?: string;
+  student_definition?: string;
+  biomes?: BiomeType[];
 }
 
 export interface TimeSeriesPoint {
@@ -164,12 +176,31 @@ export interface AnalyzeTrendRequest {
   prefer_live_api?: boolean;
 }
 
+export interface CsvImportMetadata {
+  inferred_column?: string;
+  total_observations: number;
+  years_count: number;
+  start_year: number;
+  end_year: number;
+}
+
+export interface AnalyzeCsvRequest {
+  csv_text: string;
+  dataset_name: string;
+  variable_code: string;
+  unit?: string;
+  season_mode?: SeasonMode;
+  lat?: number;
+  lon?: number;
+}
+
 export interface AnalyzeTrendResponse {
   season_mode?: SeasonMode;
   variable_metadata: VariableMetadata;
   region_a_analysis: RegionAnalysis;
   region_b_analysis?: RegionAnalysis | null;
   dipole_comparison?: DipoleComparison | null;
+  csv_import_metadata?: CsvImportMetadata | null;
 }
 
 export interface PhenomenonScenario {
@@ -189,6 +220,8 @@ export interface PhenomenonScenario {
   region_a: RegionLocation;
   region_b?: RegionLocation | null;
   event_date?: string;
+  source_url?: string;
+  source_label?: string;
   scientific_summary: string;
   student_note?: string;
 }
@@ -214,4 +247,22 @@ export interface DetectiveCasePreset {
   expected_finding: string;
   region_a: RegionLocation;
   region_b: RegionLocation;
+}
+
+export type OfficialResourceCategory =
+  | 'nasa_data'
+  | 'partner_methodology'
+  | 'csa_resources';
+
+export interface OfficialResourceItem {
+  id: string;
+  number: number;
+  category: OfficialResourceCategory;
+  category_label: string;
+  title: string;
+  agency_badge: string;
+  is_us_gov: boolean;
+  url: string;
+  role_in_app: string;
+  supported_variables?: string[];
 }

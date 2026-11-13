@@ -1,5 +1,5 @@
 """
-Curated Historical Phenomena (Dr. James Acker's NASA Goddard Challenge Cases)
+Curated Historical Phenomena (Dr. James Acker's NASA Goddard Challenge Cases + CSA SWOT/RADARSAT)
 + Live NASA EONET v3 API Event Fetcher & Scenario Converter.
 """
 
@@ -22,7 +22,7 @@ _EONET_CACHE: Dict[str, Any] = {
     "is_live": False,
 }
 
-# Part A: Curated Historical Phenomena (from Dr. James Acker's video & challenge specification)
+# Part A: Curated Historical Phenomena (from Dr. James Acker's video, NTRS paper & CSA resources)
 CURATED_PHENOMENA: List[Dict[str, Any]] = [
     {
         "id": "wisconsin-wildfire-smoke",
@@ -43,6 +43,8 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "lon": -89.50,
         },
         "region_b": None,
+        "source_url": "https://giovanni.gsfc.nasa.gov/giovanni/",
+        "source_label": "NASA Giovanni — MODIS Aqua Aerosol Optical Depth",
         "scientific_summary": (
             "Перенесення диму масштабних лісових пожеж із центральної Канади у США. "
             "Взимку диму немає (шум), але літній сезонний зріз (JJA — Червень-Серпень) "
@@ -51,6 +53,71 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "student_note": (
             "Порада д-ра Екера: Спробуйте перемкнути сезон із JJA (Літо) на DJF (Зима), "
             "щоб побачити, як сезонна фільтрація відділяє реальний сигнал пожеж від зимового фону!"
+        ),
+    },
+    {
+        "id": "ackers-seawifs-coastal-study",
+        "title": "River-Influenced Coastal Chlorophyll Trend (SeaWiFS / MODIS)",
+        "category": "Coastal & Estuarine Ecology",
+        "source_type": "curated",
+        "tags": ["acker_video", "dipole", "curated", "official_resource"],
+        "satellite_badge": "NASA SeaWiFS / MODIS / Giovanni",
+        "variable": "SEAWIFS_CHLA",
+        "secondary_variable": "QRUNOFF",
+        "mode": "dipole",
+        "start_year": 1998,
+        "end_year": 2026,
+        "season_mode": "JJA",
+        "region_a": {
+            "name": "Mississippi River Plume / Chesapeake Bay",
+            "lat": 29.15,
+            "lon": -89.25,
+        },
+        "region_b": {
+            "name": "Open Gulf of Mexico Shelf",
+            "lat": 26.00,
+            "lon": -90.00,
+        },
+        "source_url": "https://ntrs.nasa.gov/api/citations/20090042747/downloads/20090042747.pdf",
+        "source_label": "NASA NTRS 20090042747 — Dr. James Acker's SeaWiFS Coastal Study",
+        "scientific_summary": (
+            "Кейс за науковою статтею автора челенджу д-ра Джеймса Екера (NASA NTRS 20090042747): "
+            "річковий стік (QRUNOFF із GES DISC Hydrology Time Series) виносить біогенні речовини та добрива "
+            "у гирло Міссісіпі та Чесапікську затоку, викликаючи статистично значуще зростання хлорофілу-а "
+            "(SEAWIFS_CHLA у NASA Giovanni), тоді як відкритий шельф Мексиканської затоки має протилежну динаміку."
+        ),
+        "student_note": (
+            "Натисніть кнопку перемикання змінної (SEAWIFS_CHLA ↔ QRUNOFF), щоб порівняти цвітіння водоростей із річковим стоком!"
+        ),
+    },
+    {
+        "id": "csa-swot-radarsat-water-ice",
+        "title": "Canadian Boreal Lakes & Arctic Sea Ice Shift (CSA SWOT + RCM + Geo.ca)",
+        "category": "CSA Water & Cryosphere",
+        "source_type": "curated",
+        "tags": ["acker_video", "curated", "csa", "official_resource"],
+        "satellite_badge": "CSA SWOT + RADARSAT (RCM)",
+        "variable": "SWOT_WSE",
+        "secondary_variable": "RCM_SAR_BACKSCATTER",
+        "mode": "single",
+        "start_year": 2002,
+        "end_year": 2026,
+        "season_mode": "deseasonalized",
+        "region_a": {
+            "name": "Northern Canada / Hudson Bay",
+            "lat": 58.76,
+            "lon": -94.17,
+        },
+        "region_b": None,
+        "source_url": "https://www.asc-csa.gc.ca/eng/satellites/swot/",
+        "source_label": "CSA SWOT Mission & RADARSAT Constellation Mission (RCM)",
+        "scientific_summary": (
+            "Використання радарних даних Канадського космічного агентства CSA RADARSAT (RCM) та інтерферометричної "
+            "альтиметрії SWOT для виявлення трендів рівня води бореальних озер (SWOT_WSE) та скорочення льодового "
+            "покриву Гудзонової затоки (RCM_SAR_BACKSCATTER) за будь-якої хмарності та полярної ночі."
+        ),
+        "student_note": (
+            "Перемикайтеся між SWOT_WSE (висота водної поверхні в метрах) та RCM_SAR_BACKSCATTER (радарне розсіювання SAR у dB)."
         ),
     },
     {
@@ -72,6 +139,8 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "lon": -175.51,
         },
         "region_b": None,
+        "source_url": "https://giovanni.gsfc.nasa.gov/giovanni/",
+        "source_label": "NASA Giovanni — Aura OMI Sulfur Dioxide (OMSO2m)",
         "scientific_summary": (
             "Потужне виверження вулкана Касаточі на Алеутських островах інжектує діоксид сірки (SO₂) "
             "у стратосферу. Сульфатні аерозолі блокують сонячне випромінювання і запускають регіональну "
@@ -105,6 +174,8 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "lat": -12.40,
             "lon": 130.80,
         },
+        "source_url": "https://climexp.knmi.nl/",
+        "source_label": "KNMI Climate Explorer & NASA GPM IMERG",
         "scientific_summary": (
             "Один глобальний океанічно-атмосферний процес (ENSO) формує два протилежні регіональні тренди: "
             "зростання конвективних опадів уздовж узбережжя Перу/Еквадору та посилення посухи в Індонезії "
@@ -137,6 +208,8 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "lat": 53.00,
             "lon": -35.00,
         },
+        "source_url": "https://appeears.earthdatacloud.nasa.gov/",
+        "source_label": "NASA AppEEARS & MERRA-2 Reanalysis",
         "scientific_summary": (
             "Втрата морського льоду викликає стрімке потепління Арктики (p < 0.001, десезоналізований тренд), "
             "тоді як притік талої води Гренландії уповільнює меридіональну циркуляцію AMOC, створюючи "
@@ -165,6 +238,8 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "lon": 32.60,
         },
         "region_b": None,
+        "source_url": "https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Time%20Series",
+        "source_label": "NASA GES DISC Hydrology Time Series (GLDAS-2.1)",
         "scientific_summary": (
             "Демонстрація тренду на межі статистичної значущості (p ≈ 0.07): літнє висихання кореневого шару "
             "ґрунту на Півдні України вже має помітний спадний нахил, а калькулятор Time-to-Significance "
@@ -304,7 +379,7 @@ def _extract_eonet_lat_lon(geometries: List[Dict[str, Any]]) -> Optional[Tuple[f
 def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Dict[str, Any]:
     """
     Map NASA EONET event category to the appropriate Earth observation variable,
-    satellite/model badge, time range, and seasonal filter as specified in the TZ.
+    satellite/model badge, time range, and seasonal filter.
     """
     cat_lower = f"{category_id} {category_title}".lower()
 
@@ -329,7 +404,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
     if "flood" in cat_lower:
         return {
             "variable": "QRUNOFF",
-            "satellite_badge": "GLDAS",
+            "satellite_badge": "GLDAS / SWOT",
             "season_mode": "deseasonalized",
             "start_year": 2000,
             "end_year": 2026,
@@ -355,10 +430,10 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
         }
     if "ice" in cat_lower or "snow" in cat_lower:
         return {
-            "variable": "SNODP",
-            "satellite_badge": "MODIS / MERRA-2",
+            "variable": "RCM_SAR_BACKSCATTER",
+            "satellite_badge": "CSA RADARSAT / MODIS",
             "season_mode": "DJF",
-            "start_year": 2000,
+            "start_year": 2002,
             "end_year": 2026,
             "category_label": "Sea and Lake Ice",
         }
@@ -415,12 +490,10 @@ async def fetch_live_eonet_scenarios(limit: int = 6) -> Tuple[List[Dict[str, Any
             if loc_info is None:
                 continue
             lat, lon, ev_date = loc_info
-            # Clamp latitude to valid satellite range
             lat = max(-85.0, min(85.0, lat))
             lon = max(-180.0, min(180.0, lon))
 
             mapping = _map_eonet_category_to_variable(cat_title, cat_id)
-            # Adjust JJA -> DJF automatically for Southern Hemisphere wildfires/droughts
             season = mapping["season_mode"]
             if lat < -10.0 and season == "JJA":
                 season = "DJF"
@@ -473,8 +546,8 @@ async def fetch_live_eonet_scenarios(limit: int = 6) -> Tuple[List[Dict[str, Any
 
 async def get_all_phenomena_scenarios() -> Dict[str, Any]:
     """
-    Combine Part A (5 Curated Historical Phenomena) and Part B (Live NASA EONET Events)
-    for `GET /api/v2/fetch-phenomena`.
+    Combine Part A (7 Curated Historical Phenomena including Acker's SeaWiFS & CSA SWOT/RCM)
+    and Part B (Live NASA EONET Events) for `GET /api/v2/fetch-phenomena`.
     """
     eonet_list, eonet_is_live = await fetch_live_eonet_scenarios(limit=6)
     combined = [*CURATED_PHENOMENA, *eonet_list]

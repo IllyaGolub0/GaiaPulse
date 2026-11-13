@@ -187,6 +187,51 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       unit: 'Висота',
     },
   },
+  SEAWIFS_CHLA: {
+    id: 'SEAWIFS_CHLA',
+    label: 'MODIS Aqua / SeaWiFS: Прибережний хлорофіл-а (Ocean Color)',
+    layerName: 'MODIS_Aqua_Chlorophyll_A',
+    matrixSet: 'GoogleMapsCompatible_Level7',
+    format: 'png',
+    colorbar: {
+      gradientCss:
+        'linear-gradient(90deg, #1e3a8a 0%, #74c7ec 35%, #a6e3a1 65%, #f9e2af 85%, #f38ba8 100%)',
+      minLabel: '0.03',
+      midLabel: '1.0',
+      maxLabel: '20+',
+      unit: 'mg/m³',
+    },
+  },
+  SWOT_WSE: {
+    id: 'SWOT_WSE',
+    label: 'SWOT / MODIS Bands 7-2-1: Рівень поверхневих вод та озер (WSE)',
+    layerName: 'MODIS_Terra_CorrectedReflectance_Bands721',
+    matrixSet: 'GoogleMapsCompatible_Level9',
+    format: 'jpg',
+    colorbar: {
+      gradientCss:
+        'linear-gradient(90deg, #1e3a8a 0%, #89b4fa 45%, #94e2d5 75%, #a6e3a1 100%)',
+      minLabel: 'Низький',
+      midLabel: 'Норма',
+      maxLabel: 'Паводок',
+      unit: 'm (WSE)',
+    },
+  },
+  RCM_SAR_BACKSCATTER: {
+    id: 'RCM_SAR_BACKSCATTER',
+    label: 'CSA RADARSAT / MODIS: Морський лід та вологість поверхні (SAR σ°)',
+    layerName: 'MODIS_Terra_NDSI_Snow_Cover',
+    matrixSet: 'GoogleMapsCompatible_Level8',
+    format: 'png',
+    colorbar: {
+      gradientCss:
+        'linear-gradient(90deg, #1e1e2e 0%, #74c7ec 40%, #89b4fa 70%, #cdd6f4 100%)',
+      minLabel: '-22 dB (Вода)',
+      midLabel: '-13 dB',
+      maxLabel: '-5 dB (Лід)',
+      unit: 'dB (σ°)',
+    },
+  },
 };
 
 const VARIABLE_TO_GIBS_KEY: Record<string, string> = {
@@ -200,6 +245,9 @@ const VARIABLE_TO_GIBS_KEY: Record<string, string> = {
   SO2: 'SO2',
   ALLSKY_SFC_SW_DWN: 'ALLSKY_SFC_SW_DWN',
   SNODP: 'SNODP',
+  SEAWIFS_CHLA: 'SEAWIFS_CHLA',
+  SWOT_WSE: 'SWOT_WSE',
+  RCM_SAR_BACKSCATTER: 'RCM_SAR_BACKSCATTER',
 };
 
 const BASEMAP_THEMES: Record<

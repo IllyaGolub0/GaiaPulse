@@ -261,6 +261,91 @@ def _generate_special_phenomenon_series(
                 source="NASA GPM IMERG / MERRA-2 Precipitation",
             )
 
+    # 5. Acker's SeaWiFS Coastal Study (NASA NTRS 20090042747)
+    # Region A: Mississippi River Plume / Chesapeake Estuary (lat 29.15, lon -89.25) -> rising eutrophication
+    # Region B: Open Gulf of Mexico Shelf (lat 26.0, lon -90.0) -> oligotrophic opposite/declining trend
+    if var in ("SEAWIFS_CHLA", "QRUNOFF"):
+        is_plume = abs(lat - 29.15) <= 2.2 and abs(lon - (-89.25)) <= 3.0
+        is_open_shelf = abs(lat - 26.0) <= 2.0 and abs(lon - (-90.0)) <= 3.5
+        if is_plume or is_open_shelf:
+            rng = np.random.default_rng(20090042 + (1 if is_plume else 2))
+            shared_rng = np.random.default_rng(20090042)
+            rows = []
+            for yr in full_years:
+                yr_rel = max(0.0, float(yr - 1998))
+                shared_flood_cycle = 0.55 * math.sin(2.0 * math.pi * yr_rel / 3.8) + float(
+                    shared_rng.normal(0.0, 0.25)
+                )
+                for m in range(1, 13):
+                    is_summer_spring = m in (4, 5, 6, 7, 8)
+                    if var == "SEAWIFS_CHLA":
+                        if is_plume:
+                            seasonal = 1.85 * math.cos(2.0 * math.pi * (m - 6) / 12.0)
+                            trend = (0.145 if is_summer_spring else 0.075) * yr_rel
+                            val = 4.2 + seasonal + trend + 0.95 * shared_flood_cycle + rng.normal(0.0, 0.42)
+                            val = max(0.35, val)
+                        else:
+                            seasonal = 0.08 * math.cos(2.0 * math.pi * (m - 2) / 12.0)
+                            trend = -0.0052 * yr_rel
+                            val = 0.34 + seasonal + trend - 0.06 * shared_flood_cycle + rng.normal(0.0, 0.024)
+                            val = max(0.04, val)
+                    else:  # QRUNOFF
+                        if is_plume:
+                            seasonal = 1.45 * math.cos(2.0 * math.pi * (m - 5) / 12.0)
+                            trend = 0.048 * yr_rel
+                            val = 2.45 + seasonal + trend + 0.65 * shared_flood_cycle + rng.normal(0.0, 0.25)
+                        else:
+                            seasonal = 0.25 * math.cos(2.0 * math.pi * (m - 7) / 12.0)
+                            trend = -0.011 * yr_rel
+                            val = 0.65 + seasonal + trend - 0.15 * shared_flood_cycle + rng.normal(0.0, 0.08)
+                        val = max(0.05, val)
+                    rows.append(
+                        {
+                            "year": int(yr),
+                            "month": int(m),
+                            "timestamp": f"{int(yr):04d}-{int(m):02d}",
+                            "value": round(float(val), 4),
+                        }
+                    )
+            src = (
+                "NASA SeaWiFS / MODIS Aqua Chlorophyll-a (Giovanni NTRS 20090042747)"
+                if var == "SEAWIFS_CHLA"
+                else "NASA GES DISC Hydrology Time Series (GLDAS QRUNOFF)"
+            )
+            return _finalize_bundle(rows, var, lat, lon, start_year, end_year, source=src)
+
+    # 6. CSA SWOT & RADARSAT Canadian Water & Ice Monitor (Northern Canada / Hudson Bay, lat 58.76, lon -94.17)
+    if abs(lat - 58.76) <= 5.0 and abs(lon - (-94.17)) <= 8.0 and var in ("SWOT_WSE", "RCM_SAR_BACKSCATTER"):
+        rng = np.random.default_rng(2026058)
+        rows = []
+        for yr in full_years:
+            yr_rel = max(0.0, float(yr - 2002))
+            for m in range(1, 13):
+                if var == "SWOT_WSE":
+                    # Boreal lake & estuarine Water Surface Elevation (meters above reference ellipsoid)
+                    seasonal = 0.68 * math.cos(2.0 * math.pi * (m - 6) / 12.0)
+                    trend = 0.036 * yr_rel
+                    val = 42.15 + seasonal + trend + rng.normal(0.0, 0.14)
+                else:
+                    # RCM_SAR_BACKSCATTER (C-band sigma0 in dB): declining multi-year ice & earlier melt onset
+                    seasonal = 2.15 * math.cos(2.0 * math.pi * (m - 2) / 12.0)
+                    trend = -0.118 * yr_rel
+                    val = -10.85 + seasonal + trend + rng.normal(0.0, 0.45)
+                rows.append(
+                    {
+                        "year": int(yr),
+                        "month": int(m),
+                        "timestamp": f"{int(yr):04d}-{int(m):02d}",
+                        "value": round(float(val), 4),
+                    }
+                )
+        src = (
+            "NASA / CNES / CSA SWOT KaRIn Water Surface Elevation"
+            if var == "SWOT_WSE"
+            else "CSA RADARSAT Constellation Mission (RCM) C-Band SAR (Geo.ca)"
+        )
+        return _finalize_bundle(rows, var, lat, lon, start_year, end_year, source=src)
+
     return None
 
 
@@ -406,6 +491,27 @@ def generate_scientific_fallback(
         noise_std = 0.14 * base_val + 0.01
         tele_weight = -0.05
         badge_src = "NASA MODIS / MERRA-2 Cryosphere"
+    elif var == "SEAWIFS_CHLA":
+        base_val = max(0.18, 2.2 * math.exp(-(((abs_lat - 32.0) / 28.0) ** 2)) + 0.45 * abs(lon_factor))
+        trend_per_year = 0.042 + 0.018 * lon_factor
+        season_amp = 0.45 * base_val
+        noise_std = 0.18 * base_val
+        tele_weight = 0.14 * lon_factor
+        badge_src = "NASA SeaWiFS / MODIS / Giovanni"
+    elif var == "SWOT_WSE":
+        base_val = 28.0 + 35.0 * (abs_lat / 90.0) + 6.0 * lon_factor
+        trend_per_year = 0.028 * math.cos(math.radians(lat)) + 0.014 * lon_factor
+        season_amp = 0.62
+        noise_std = 0.16
+        tele_weight = 0.12
+        badge_src = "NASA / CNES / CSA SWOT Satellite"
+    elif var == "RCM_SAR_BACKSCATTER":
+        base_val = -12.5 + 3.5 * ((abs_lat / 90.0) ** 1.3) + 1.2 * lon_factor
+        trend_per_year = -0.085 * (abs_lat / 90.0) - 0.025
+        season_amp = 1.85
+        noise_std = 0.42
+        tele_weight = -0.15
+        badge_src = "CSA RADARSAT (RCM) / Geo.ca"
     else:  # ALLSKY_SFC_SW_DWN
         base_val = 245.0 - 135.0 * (abs_lat / 90.0) ** 1.25 - 12.0 * lon_factor
         trend_per_year = 0.18 * lon_factor - 0.12 * (abs_lat / 90.0)
@@ -428,7 +534,7 @@ def generate_scientific_fallback(
             seasonal_component = season_amp * math.cos(angle)
             val = base_val + annual_signal + seasonal_component + rng.normal(0.0, noise_std * 0.85)
 
-            if var in ("PRECTOTCORR", "AOD", "SO2", "QRUNOFF", "EVPTRNS"):
+            if var in ("PRECTOTCORR", "AOD", "SO2", "QRUNOFF", "EVPTRNS", "SEAWIFS_CHLA"):
                 val = max(0.01, val)
             elif var == "SNODP":
                 val = max(0.0, val)

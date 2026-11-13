@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Sparkles,
   Layers,
+  ExternalLink,
 } from 'lucide-react';
 import { PhenomenonScenario, SeasonMode } from '../types/climate';
 
@@ -137,6 +138,20 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
             <GraduationCap className="w-3.5 h-3.5 text-ctp-mauve shrink-0 mt-0.5" />
             <span>{scenario.student_note}</span>
           </div>
+        )}
+
+        {scenario.source_url && (
+          <a
+            href={scenario.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-ctp-sapphire hover:text-ctp-blue underline decoration-ctp-sapphire/50 transition"
+          >
+            <ExternalLink className="w-3 h-3 shrink-0" />
+            <span className="truncate">
+              {scenario.source_label || 'Офіційне першоджерело NASA / CSA'}
+            </span>
+          </a>
         )}
       </div>
 

@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import {
   AnalysisMode,
+  ClimateVariableCode,
   RegionAnalysis,
   SeasonMode,
   VariableMetadata,
 } from '../types/climate';
+import { ContextDeepLinksBar } from './OfficialResourcesHub';
 
 interface TrendChartsProps {
   mode: AnalysisMode;
@@ -19,6 +21,7 @@ interface TrendChartsProps {
   variableMeta: VariableMetadata;
   regionA: RegionAnalysis;
   regionB?: RegionAnalysis | null;
+  onOpenResourcesModal?: () => void;
 }
 
 type ChartTab = 'timeseries' | 'stripes' | 'decomposition';
@@ -40,6 +43,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   variableMeta,
   regionA,
   regionB,
+  onOpenResourcesModal,
 }) => {
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
   const [dipoleView, setDipoleView] = useState<DipoleViewMode>('anomalies');
@@ -702,6 +706,15 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           </div>
         </div>
       )}
+
+      {/* Contextual Deep-Links Bar under Charts ("Verify in NASA Giovanni", "Explore in AppEEARS", "Check in KNMI Climate Explorer") */}
+      <ContextDeepLinksBar
+        variable={variableMeta.code as ClimateVariableCode}
+        regionA={regionA.location}
+        startYear={yearsA[0] || 1985}
+        endYear={yearsA[yearsA.length - 1] || 2026}
+        onOpenResourcesModal={onOpenResourcesModal || (() => {})}
+      />
     </div>
   );
 };

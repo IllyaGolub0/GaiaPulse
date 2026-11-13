@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Satellite,
   Radar,
@@ -22,10 +22,17 @@ import {
   Download,
   FileSpreadsheet,
   Filter,
+  Upload,
+  BookOpen,
+  ExternalLink,
+  GraduationCap,
+  ShieldAlert,
 } from 'lucide-react';
 import {
   AnalysisMode,
+  AnalyzeCsvRequest,
   AnalyzeTrendResponse,
+  BiomeType,
   ClimateVariableCode,
   PhenomenonScenario,
   RegionLocation,
@@ -33,12 +40,15 @@ import {
   VariableMetadata,
 } from './types/climate';
 import {
+  analyzeCsvTimeSeries,
   analyzeTrendV2,
+  BIOME_FILTER_OPTIONS,
   DEFAULT_VARIABLES,
   FALLBACK_PHENOMENA_SCENARIOS,
   fetchPhenomenaV2,
   fetchPresetsFromApi,
   getVariableMetaLocal,
+  NASA_OFFICIAL_DISCLAIMER,
   SEASON_MODE_OPTIONS,
 } from './services/api';
 import { EarthMap } from './components/EarthMap';
@@ -46,8 +56,15 @@ import { VerdictCard, DipoleVerdictBanner } from './components/VerdictCard';
 import { TrendCharts } from './components/TrendCharts';
 import { DetectiveStepper } from './components/DetectiveStepper';
 import { PhenomenaDrawer } from './components/PhenomenaDrawer';
+import {
+  CsvImporterModal,
+  OfficialResourcesHub,
+} from './components/OfficialResourcesHub';
 
 const VARIABLE_ICONS: Record<string, React.ReactNode> = {
+  SEAWIFS_CHLA: <Waves className="w-4 h-4 text-ctp-green" />,
+  SWOT_WSE: <Waves className="w-4 h-4 text-ctp-sapphire" />,
+  RCM_SAR_BACKSCATTER: <Radar className="w-4 h-4 text-ctp-teal" />,
   T2M: <Thermometer className="w-4 h-4 text-ctp-blue" />,
   SST: <Waves className="w-4 h-4 text-ctp-sapphire" />,
   PRECTOTCORR: <CloudRain className="w-4 h-4 text-ctp-sky" />,
@@ -60,12 +77,22 @@ const VARIABLE_ICONS: Record<string, React.ReactNode> = {
   SNODP: <Snowflake className="w-4 h-4 text-ctp-lavender" />,
 };
 
+const BIOME_BADGE_LABELS: Record<BiomeType, string> = {
+  tidal_estuary: 'Tidal Estuary & Coast',
+  cryosphere: 'Cryosphere & Ice',
+  rain_forest: 'Forests & Tropics',
+  desert: 'Arid & Steppe',
+};
+
 export const App: React.FC = () => {
   const [variables, setVariables] =
     useState<VariableMetadata[]>(DEFAULT_VARIABLES);
+  const [selectedBiome, setSelectedBiome] = useState<'all' | BiomeType>('all');
 
-  // Phenomena Drawer & Scenarios State
+  // Phenomena Drawer & Modals State
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [resourcesModalOpen, setResourcesModalOpen] = useState<boolean>(false);
+  const [csvModalOpen, setCsvModalOpen] = useState<boolean>(false);
   const [phenomenaLoading, setPhenomenaLoading] = useState<boolean>(false);
   const [scenarios, setScenarios] = useState<PhenomenonScenario[]>(
     FALLBACK_PHENOMENA_SCENARIOS
@@ -87,13 +114,14 @@ export const App: React.FC = () => {
     lon: -89.5,
   });
   const [regionB, setRegionB] = useState<RegionLocation>({
-    name: 'Indonesia / Northern Australia',
-    lat: -12.4,
-    lon: 130.8,
+    name: 'Open Gulf of Mexico Shelf',
+    lat: 26.0,
+    lon: -90.0,
   });
 
   const [activeTarget, setActiveTarget] = useState<'A' | 'B'>('A');
   const [cameraTrigger, setCameraTrigger] = useState<number>(1);
+  const quickCsvInputRef = useRef<HTMLInputElement | null>(null);
 
   // Analysis Results State
   const [analysisData, setAnalysisData] =
@@ -194,6 +222,55 @@ export const App: React.FC = () => {
       regionA: scenario.region_a,
       regionB: scenario.mode === 'dipole' ? scenario.region_b || regionB : null,
     });
+  };
+
+  // CSV Analysis Handler (from CsvImporterModal or quick sidebar file dropzone)
+  const handleRunCsvAnalysis = async (csvReq: AnalyzeCsvRequest) => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const result = await analyzeCsvTimeSeries(csvReq);
+      setActiveScenario(null);
+      setMode('single');
+      setSeasonMode(
+        (result.season_mode as SeasonMode) || csvReq.season_mode || 'deseasonalized'
+      );
+      if (result.csv_import_metadata) {
+        setStartYear(result.csv_import_metadata.start_year);
+        setEndYear(result.csv_import_metadata.end_year);
+      }
+      setRegionA(result.region_a_analysis.location);
+      setAnalysisData(result);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Помилка аналізу CSV-файлу.';
+      setErrorMsg(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Quick sidebar file upload handler
+  const handleQuickCsvFileSelect = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const text = String(ev.target?.result || '');
+      if (!text.trim()) return;
+      const cleanName = file.name.replace(/\.csv$/i, '').replace(/[_-]+/g, ' ');
+      await handleRunCsvAnalysis({
+        csv_text: text,
+        dataset_name: cleanName || 'Imported NASA/NOAA CSV',
+        variable_code: variable,
+        unit: getVariableMetaLocal(variable).unit,
+        season_mode: seasonMode,
+        lat: regionA.lat,
+        lon: regionA.lon,
+      });
+    };
+    reader.readAsText(file);
   };
 
   // Map Click Handler
@@ -320,6 +397,13 @@ export const App: React.FC = () => {
   const currentVarMeta =
     analysisData?.variable_metadata || getVariableMetaLocal(variable);
 
+  const filteredVariables = useMemo(() => {
+    if (selectedBiome === 'all') return variables;
+    return variables.filter(
+      (v) => !v.biomes || v.biomes.includes(selectedBiome)
+    );
+  }, [variables, selectedBiome]);
+
   const curatedQuickList = scenarios.filter((s) => s.source_type === 'curated');
 
   return (
@@ -338,29 +422,51 @@ export const App: React.FC = () => {
                   EARTH SYSTEM TREND DETECTIVE
                 </h1>
                 <span className="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-widest rounded-md bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/45">
-                  NASA Space Apps 2026 • Goddard
+                  NASA • NOAA • KNMI • CSA
                 </span>
               </div>
               <p className="text-xs text-ctp-subtext0">
-                GaiaPulse v2 — Статистична верифікація трендів, сезонна декомпозиція та живі події NASA EONET
+                GaiaPulse v2.1 — SeaWiFS, SWOT, CSA RADARSAT (RCM), імпорт CSV (Giovanni / AppEEARS / CDO) та живі події EONET
               </p>
             </div>
           </div>
 
-          {/* Right Header Controls: Prominent Fetch Phenomena CTA + Quick Cases + Export */}
+          {/* Right Header Controls: Fetch Phenomena + Import CSV + Official Resources Hub + Export */}
           <div className="flex flex-wrap items-center gap-2">
             {/* PRIMARY FEATURE BUTTON: Fetch Scenarios & NASA Phenomena */}
             <button
               type="button"
               onClick={handleFetchPhenomenaClick}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-ctp-mauve via-ctp-blue to-ctp-sapphire hover:brightness-110 text-ctp-crust font-extrabold text-xs sm:text-sm tracking-tight transition-all flex items-center gap-2 shadow-[0_0_25px_rgba(203,166,247,0.35)]"
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-ctp-mauve via-ctp-blue to-ctp-sapphire hover:brightness-110 text-ctp-crust font-extrabold text-xs sm:text-sm tracking-tight transition-all flex items-center gap-2 shadow-[0_0_25px_rgba(203,166,247,0.35)]"
             >
               {phenomenaLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Radar className="w-4 h-4" />
               )}
-              <span>Fetch Scenarios &amp; NASA Phenomena</span>
+              <span>Fetch Scenarios &amp; Phenomena</span>
+            </button>
+
+            {/* FEATURE BUTTON: Import NASA/NOAA CSV */}
+            <button
+              type="button"
+              onClick={() => setCsvModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-ctp-green/15 hover:bg-ctp-green/25 text-ctp-green border border-ctp-green/45 text-xs font-mono font-bold transition flex items-center gap-1.5"
+              title="Імпортувати CSV часовий ряд із NASA Giovanni, AppEEARS, GES DISC або NOAA CDO"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Import NASA/NOAA CSV</span>
+            </button>
+
+            {/* FEATURE BUTTON: Official Resources & External Tools Hub */}
+            <button
+              type="button"
+              onClick={() => setResourcesModalOpen(true)}
+              className="px-3 py-2 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-lavender border border-ctp-mauve/40 text-xs font-mono font-bold transition flex items-center gap-1.5"
+              title="Відкрити хаб із 13 офіційних ресурсів NASA, NOAA, KNMI та CSA"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-ctp-mauve" />
+              <span>Official Resources (13)</span>
             </button>
 
             {/* Quick Curated Case Pills */}
@@ -379,7 +485,7 @@ export const App: React.FC = () => {
                     }`}
                   >
                     <Sparkles className="w-3 h-3 text-ctp-mauve" />
-                    <span className="truncate max-w-[155px]">
+                    <span className="truncate max-w-[140px]">
                       {sc.title.split('(')[0].trim()}
                     </span>
                   </button>
@@ -426,6 +532,37 @@ export const App: React.FC = () => {
         onSelectScenario={handleLoadPhenomenonScenario}
       />
 
+      {/* CSV Importer Modal (Giovanni / AppEEARS / NOAA CDO) */}
+      <CsvImporterModal
+        isOpen={csvModalOpen}
+        loading={loading}
+        defaultSeasonMode={seasonMode}
+        onClose={() => setCsvModalOpen(false)}
+        onRunCsvAnalysis={handleRunCsvAnalysis}
+      />
+
+      {/* Official NASA & Space Agency Resources Hub Modal */}
+      {resourcesModalOpen && (
+        <OfficialResourcesHub
+          isModal={true}
+          activeVariable={variable}
+          onCloseModal={() => setResourcesModalOpen(false)}
+          onSelectVariable={(newVar) => {
+            setVariable(newVar);
+            setResourcesModalOpen(false);
+            executeAnalysis({
+              mode,
+              variable: newVar,
+              seasonMode,
+              startYear,
+              endYear,
+              regionA,
+              regionB: mode === 'dipole' ? regionB : null,
+            });
+          }}
+        />
+      )}
+
       {/* Main Catppuccin Mocha Workspace */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 lg:px-8 py-5 space-y-5">
         {/* 5-Step NASA Detective Status Bar */}
@@ -444,13 +581,26 @@ export const App: React.FC = () => {
         {/* Active Phenomenon Scientific Context Banner */}
         {activeScenario && (
           <div className="rounded-2xl bg-ctp-mantle border border-ctp-mauve/40 p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-md">
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold text-ctp-mauve">
                 <Info className="w-4 h-4 shrink-0" />
                 <span>ACTIVE SCENARIO: {activeScenario.title}</span>
                 <span className="px-2 py-0.5 rounded bg-ctp-blue/15 text-ctp-blue border border-ctp-blue/35">
                   {activeScenario.satellite_badge}
                 </span>
+                {activeScenario.source_url && (
+                  <a
+                    href={activeScenario.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-ctp-sapphire/15 text-ctp-sapphire border border-ctp-sapphire/40 hover:bg-ctp-sapphire/25 transition"
+                  >
+                    <span>
+                      {activeScenario.source_label || 'Official Source'}
+                    </span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
               <p className="text-xs sm:text-sm text-ctp-subtext1 leading-relaxed">
                 {activeScenario.scientific_summary}
@@ -499,7 +649,7 @@ export const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left Mission Control Sidebar */}
           <aside className="lg:col-span-4 rounded-2xl bg-ctp-mantle border border-ctp-surface0 p-5 flex flex-col justify-between space-y-4 shadow-xl">
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {/* 1. Mode Switcher */}
               <div>
                 <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0 mb-1.5">
@@ -556,13 +706,30 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* 2. NASA Satellite Variable Selector (Scrollable Compact Catalog of 10 Variables) */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0 mb-1.5">
-                  2. Супутникова змінна NASA (MODIS / OMI / MERRA-2 / GLDAS)
-                </label>
-                <div className="max-h-[215px] overflow-y-auto pr-1 space-y-1.5">
-                  {variables.map((v) => {
+              {/* 2. NASA & CSA Satellite Variable Catalog + Biome Questionnaire Filter */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0">
+                    2. Каталог змінних NASA &amp; CSA (13 місій)
+                  </label>
+                  <select
+                    value={selectedBiome}
+                    onChange={(e) =>
+                      setSelectedBiome(e.target.value as 'all' | BiomeType)
+                    }
+                    className="bg-ctp-crust text-ctp-blue border border-ctp-surface0 rounded-lg px-2 py-0.5 text-[10px] font-mono focus:outline-none focus:border-ctp-blue"
+                    title="Фільтр за біомом опитувальника челенджу"
+                  >
+                    {BIOME_FILTER_OPTIONS.map((b) => (
+                      <option key={b.value} value={b.value}>
+                        {b.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="max-h-[195px] overflow-y-auto pr-1 space-y-1.5">
+                  {filteredVariables.map((v) => {
                     const selected = variable === v.code;
                     return (
                       <button
@@ -595,19 +762,50 @@ export const App: React.FC = () => {
                             <div className="text-xs font-semibold truncate">
                               {v.name_ua || v.name}
                             </div>
-                            <div className="text-[10px] font-mono text-ctp-subtext0">
+                            <div className="text-[10px] font-mono text-ctp-subtext0 truncate">
                               {v.code}
                               {v.satellite_badge ? ` • ${v.satellite_badge}` : ''}
                             </div>
                           </div>
                         </div>
-                        <span className="ml-2 px-2 py-0.5 rounded bg-ctp-surface0 text-[10px] font-mono text-ctp-blue shrink-0">
+                        <span className="ml-2 px-2 py-0.5 rounded bg-ctp-surface0 text-[10px] font-mono text-ctp-blue shrink-0 max-w-[110px] truncate">
                           {v.unit}
                         </span>
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Student Definition & Biome Tags for Selected Variable */}
+                {currentVarMeta.student_definition && (
+                  <div className="p-2.5 rounded-xl bg-ctp-crust/90 border border-ctp-surface0 space-y-1.5">
+                    <div className="flex items-start gap-1.5 text-[11px] text-ctp-subtext1 leading-relaxed">
+                      <GraduationCap className="w-3.5 h-3.5 text-ctp-mauve shrink-0 mt-0.5" />
+                      <span>
+                        <strong className="text-ctp-lavender">
+                          Пояснення для студентів:{' '}
+                        </strong>
+                        {currentVarMeta.student_definition}
+                      </span>
+                    </div>
+                    {currentVarMeta.biomes &&
+                      currentVarMeta.biomes.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                          <span className="text-[10px] font-mono text-ctp-subtext0">
+                            Біоми:
+                          </span>
+                          {currentVarMeta.biomes.map((bKey) => (
+                            <span
+                              key={bKey}
+                              className="px-1.5 py-0.5 rounded bg-ctp-surface0 text-[10px] font-mono text-ctp-teal"
+                            >
+                              {BIOME_BADGE_LABELS[bKey] || bKey}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
 
               {/* 3. Seasonal & Deseasonalized Filter (`season_mode`) */}
@@ -660,7 +858,7 @@ export const App: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-ctp-blue" />
-                    <span>Часове вікно</span>
+                    <span>4. Часове вікно</span>
                   </span>
                   <span className="text-xs font-mono font-bold text-ctp-blue">
                     {startYear} — {endYear} ({endYear - startYear + 1} р.)
@@ -697,7 +895,56 @@ export const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* 5. Selected Regions Telemetry Summary */}
+              {/* 5. Compact CSV Dropzone (Giovanni / AppEEARS / NOAA CDO) */}
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleQuickCsvFileSelect(file);
+                }}
+                className="p-2.5 rounded-xl bg-ctp-crust border border-dashed border-ctp-green/45 hover:border-ctp-green flex items-center justify-between gap-2 transition"
+              >
+                <input
+                  ref={quickCsvInputRef}
+                  type="file"
+                  accept=".csv,.txt,.tsv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleQuickCsvFileSelect(file);
+                  }}
+                />
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileSpreadsheet className="w-4 h-4 text-ctp-green shrink-0" />
+                  <div className="truncate">
+                    <div className="text-xs font-bold text-ctp-green truncate">
+                      Import NASA / NOAA CSV
+                    </div>
+                    <div className="text-[10px] font-mono text-ctp-subtext0 truncate">
+                      Giovanni • AppEEARS • GES DISC • CDO
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => quickCsvInputRef.current?.click()}
+                    className="px-2 py-1 rounded-lg bg-ctp-green/15 hover:bg-ctp-green/25 text-ctp-green border border-ctp-green/40 text-[10px] font-mono font-bold transition"
+                  >
+                    Файл
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCsvModalOpen(true)}
+                    className="px-2 py-1 rounded-lg bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text text-[10px] font-mono font-semibold transition"
+                  >
+                    Шаблони
+                  </button>
+                </div>
+              </div>
+
+              {/* 6. Selected Regions Telemetry Summary */}
               <div className="space-y-1.5">
                 <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-blue/35 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2 min-w-0">
@@ -816,7 +1063,7 @@ export const App: React.FC = () => {
           </section>
         )}
 
-        {/* Scientific Plotly Charts Section */}
+        {/* Scientific Plotly Charts Section + Context Deep-Links */}
         {analysisData && (
           <section>
             <TrendCharts
@@ -827,10 +1074,45 @@ export const App: React.FC = () => {
               regionB={
                 mode === 'dipole' ? analysisData.region_b_analysis : null
               }
+              onOpenResourcesModal={() => setResourcesModalOpen(true)}
             />
           </section>
         )}
+
+        {/* Interactive Official NASA, NOAA, KNMI & CSA Space Agency Resources Hub */}
+        <section id="official-resources-hub">
+          <OfficialResourcesHub
+            activeVariable={variable}
+            onSelectVariable={(newVar) => {
+              setVariable(newVar);
+              executeAnalysis({
+                mode,
+                variable: newVar,
+                seasonMode,
+                startYear,
+                endYear,
+                regionA,
+                regionB: mode === 'dipole' ? regionB : null,
+              });
+            }}
+          />
+        </section>
       </main>
+
+      {/* Application Footer with Mandatory Official NASA Disclaimer */}
+      <footer className="mt-8 bg-ctp-mantle border-t border-ctp-surface0 px-4 lg:px-8 py-5">
+        <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-start gap-2.5 max-w-4xl">
+            <ShieldAlert className="w-4 h-4 text-ctp-yellow shrink-0 mt-0.5" />
+            <p className="text-xs font-mono text-ctp-subtext0 leading-relaxed">
+              {NASA_OFFICIAL_DISCLAIMER}
+            </p>
+          </div>
+          <div className="text-xs font-mono text-ctp-subtext0 shrink-0">
+            GaiaPulse v2.1 • NASA Space Apps Challenge 2026 • Earth System Trend Detective
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
