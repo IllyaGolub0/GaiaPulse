@@ -43,12 +43,31 @@ class ClimateDataBundle:
 
 _MEMORY_CACHE: Dict[Tuple[float, float, str, int, int], ClimateDataBundle] = {}
 _RAW_API_CACHE: Dict[Tuple[float, float, str], Dict[str, float]] = {}
+MAX_CACHE_ENTRIES = 256
+_SHARED_HTTP_CLIENT: Optional[httpx.AsyncClient] = None
+
+
+def _get_shared_http_client() -> httpx.AsyncClient:
+    global _SHARED_HTTP_CLIENT
+    if _SHARED_HTTP_CLIENT is None or _SHARED_HTTP_CLIENT.is_closed:
+        _SHARED_HTTP_CLIENT = httpx.AsyncClient(
+            timeout=httpx.Timeout(12.0, connect=5.0),
+            limits=httpx.Limits(max_keepalive_connections=12, max_connections=24),
+        )
+    return _SHARED_HTTP_CLIENT
+
+
+def _evict_if_full(cache_dict: Dict[Any, Any]) -> None:
+    if len(cache_dict) >= MAX_CACHE_ENTRIES:
+        oldest_key = next(iter(cache_dict))
+        cache_dict.pop(oldest_key, None)
 
 
 def get_cache_stats() -> Dict[str, Any]:
     return {
         "bundle_cache_entries": len(_MEMORY_CACHE),
         "raw_api_cache_entries": len(_RAW_API_CACHE),
+        "max_cache_entries": MAX_CACHE_ENTRIES,
         "ttl_seconds": CACHE_TTL_SECONDS,
     }
 
@@ -591,13 +610,13 @@ async def _fetch_raw_nasa_power_monthly(
         "User-Agent": "GaiaPulse-NASA-SpaceApps-2026/2.0",
     }
 
-    async with httpx.AsyncClient(timeout=httpx.Timeout(12.0, connect=5.0)) as client:
+    client = _get_shared_http_client()
+    response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
+    if response.status_code == 422 and api_end >= 2025:
+        params["end"] = "2024"
         response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
-        if response.status_code == 422 and api_end >= 2025:
-            params["end"] = "2024"
-            response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
-        response.raise_for_status()
-        payload = response.json()
+    response.raise_for_status()
+    payload = response.json()
 
     param_block = (
         payload.get("properties", {})
@@ -607,6 +626,7 @@ async def _fetch_raw_nasa_power_monthly(
     if not isinstance(param_block, dict) or not param_block:
         raise ValueError(f"Empty parameter block from NASA POWER for {power_param}")
 
+    _evict_if_full(_RAW_API_CACHE)
     _RAW_API_CACHE[cache_key] = param_block
     return param_block
 
@@ -777,6 +797,7 @@ async def fetch_climate_series(
     # Check specialized satellite channel or showcase phenomenon first
     special_bundle = _generate_special_phenomenon_series(lat, lon, var, start_year, end_year)
     if special_bundle is not None:
+        _evict_if_full(_MEMORY_CACHE)
         _MEMORY_CACHE[cache_key] = special_bundle
         return special_bundle
 
@@ -801,6 +822,7 @@ async def fetch_climate_series(
                 end_year=end_year,
             )
             if bundle is not None:
+                _evict_if_full(_MEMORY_CACHE)
                 _MEMORY_CACHE[cache_key] = bundle
                 return bundle
         except Exception as exc:
@@ -819,5 +841,6 @@ async def fetch_climate_series(
         start_year=start_year,
         end_year=end_year,
     )
+    _evict_if_full(_MEMORY_CACHE)
     _MEMORY_CACHE[cache_key] = fallback_bundle
     return fallback_bundle

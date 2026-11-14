@@ -1235,10 +1235,28 @@ function buildOfflineRegionAnalysis(
   };
 }
 
+const _CLIENT_ANALYSIS_CACHE = new Map<string, AnalyzeTrendResponse>();
+const MAX_CLIENT_CACHE_SIZE = 80;
+
+function makeAnalysisCacheKey(payload: AnalyzeTrendRequest, seasonMode: SeasonMode): string {
+  const rA = `${payload.region_a.lat.toFixed(3)},${payload.region_a.lon.toFixed(3)},${payload.region_a.name}`;
+  const rB = payload.region_b
+    ? `${payload.region_b.lat.toFixed(3)},${payload.region_b.lon.toFixed(3)},${payload.region_b.name}`
+    : 'none';
+  return `${payload.variable}|${seasonMode}|${payload.start_year}|${payload.end_year}|${rA}|${rB}`;
+}
+
 export async function analyzeTrendV2(
-  payload: AnalyzeTrendRequest
+  payload: AnalyzeTrendRequest,
+  options?: { signal?: AbortSignal; forceRefresh?: boolean }
 ): Promise<AnalyzeTrendResponse> {
   const seasonMode: SeasonMode = payload.season_mode || 'raw';
+  const cacheKey = makeAnalysisCacheKey(payload, seasonMode);
+
+  if (!options?.forceRefresh && _CLIENT_ANALYSIS_CACHE.has(cacheKey)) {
+    return _CLIENT_ANALYSIS_CACHE.get(cacheKey)!;
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/v2/analyze`, {
       method: 'POST',
@@ -1249,6 +1267,7 @@ export async function analyzeTrendV2(
         ...payload,
         season_mode: seasonMode,
       }),
+      signal: options?.signal,
     });
 
     if (!response.ok) {
@@ -1256,8 +1275,17 @@ export async function analyzeTrendV2(
       throw new Error(`API Error (${response.status}): ${errText}`);
     }
 
-    return (await response.json()) as AnalyzeTrendResponse;
-  } catch {
+    const data = (await response.json()) as AnalyzeTrendResponse;
+    if (_CLIENT_ANALYSIS_CACHE.size >= MAX_CLIENT_CACHE_SIZE) {
+      const oldestKey = _CLIENT_ANALYSIS_CACHE.keys().next().value;
+      if (oldestKey) _CLIENT_ANALYSIS_CACHE.delete(oldestKey);
+    }
+    _CLIENT_ANALYSIS_CACHE.set(cacheKey, data);
+    return data;
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw err;
+    }
     const varMeta = getVariableMetaLocal(payload.variable);
     const regionA = buildOfflineRegionAnalysis(
       payload.region_a,
@@ -1278,7 +1306,7 @@ export async function analyzeTrendV2(
         )
       : null;
 
-    return {
+    const fallbackData: AnalyzeTrendResponse = {
       season_mode: seasonMode,
       variable_metadata: varMeta,
       region_a_analysis: regionA,
@@ -1296,6 +1324,8 @@ export async function analyzeTrendV2(
           }
         : null,
     };
+    _CLIENT_ANALYSIS_CACHE.set(cacheKey, fallbackData);
+    return fallbackData;
   }
 }
 

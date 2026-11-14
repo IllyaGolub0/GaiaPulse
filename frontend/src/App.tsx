@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   Satellite,
   Download,
@@ -23,6 +23,10 @@ import {
   Maximize2,
   EyeOff,
   Eye,
+  Search,
+  Link2,
+  Check,
+  X,
 } from 'lucide-react';
 import {
   AnalysisMode,
@@ -150,6 +154,9 @@ export const App: React.FC = () => {
   const [controlsExpanded, setControlsExpanded] = useState<boolean>(true);
   const [coordEditorOpen, setCoordEditorOpen] = useState<boolean>(false);
   const [cameraTrigger, setCameraTrigger] = useState<number>(1);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState<boolean>(false);
+  const [commandQuery, setCommandQuery] = useState<string>('');
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
   // Catalog & Phenomenon Scenarios State
   const [variables, setVariables] =
@@ -164,29 +171,53 @@ export const App: React.FC = () => {
   const [phenomenaLoading, setPhenomenaLoading] = useState<boolean>(false);
   const [csvLoading, setCsvLoading] = useState<boolean>(false);
 
+  // Hydrate initial state from URL query parameters if present
+  const initialUrlParams = useMemo(
+    () =>
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams(),
+    []
+  );
+
   // Active Query State
   const [activeScenarioId, setActiveScenarioId] = useState<string>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].id
+    initialUrlParams.get('scenario') || FALLBACK_PHENOMENA_SCENARIOS[0].id
   );
   const [mode, setMode] = useState<AnalysisMode>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].mode
+    (initialUrlParams.get('mode') as AnalysisMode) ||
+      FALLBACK_PHENOMENA_SCENARIOS[0].mode
   );
   const [selectedBiome, setSelectedBiome] = useState<BiomeType | 'all'>('all');
   const [variable, setVariable] = useState<ClimateVariableCode>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].variable
+    (initialUrlParams.get('var') as ClimateVariableCode) ||
+      FALLBACK_PHENOMENA_SCENARIOS[0].variable
   );
   const [seasonMode, setSeasonMode] = useState<SeasonMode>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].season_mode
+    (initialUrlParams.get('season') as SeasonMode) ||
+      FALLBACK_PHENOMENA_SCENARIOS[0].season_mode
   );
-  const [startYear, setStartYear] = useState<number>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].start_year
-  );
-  const [endYear, setEndYear] = useState<number>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].end_year
-  );
-  const [regionA, setRegionA] = useState<RegionLocation>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].region_a
-  );
+  const [startYear, setStartYear] = useState<number>(() => {
+    const p = Number(initialUrlParams.get('start'));
+    return p >= 1981 && p <= 2025 ? p : FALLBACK_PHENOMENA_SCENARIOS[0].start_year;
+  });
+  const [endYear, setEndYear] = useState<number>(() => {
+    const p = Number(initialUrlParams.get('end'));
+    return p >= 1982 && p <= 2026 ? p : FALLBACK_PHENOMENA_SCENARIOS[0].end_year;
+  });
+  const [regionA, setRegionA] = useState<RegionLocation>(() => {
+    const lat = parseFloat(initialUrlParams.get('lat') || '');
+    const lon = parseFloat(initialUrlParams.get('lon') || '');
+    const name = initialUrlParams.get('name');
+    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+      return {
+        name: name || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
+        lat,
+        lon,
+      };
+    }
+    return FALLBACK_PHENOMENA_SCENARIOS[0].region_a;
+  });
   const [regionB, setRegionB] = useState<RegionLocation>(
     FALLBACK_PHENOMENA_SCENARIOS[0].region_b || {
       name: 'Northern Ontario Forest, Canada',
@@ -201,6 +232,33 @@ export const App: React.FC = () => {
     useState<AnalyzeTrendResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Sync active investigation state to URL query parameters (shareable reproducible links)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    params.set('var', variable);
+    params.set('season', seasonMode);
+    params.set('start', String(startYear));
+    params.set('end', String(endYear));
+    params.set('mode', mode);
+    params.set('lat', regionA.lat.toFixed(2));
+    params.set('lon', regionA.lon.toFixed(2));
+    params.set('name', regionA.name);
+    if (activeScenarioId && activeScenarioId !== 'custom') {
+      params.set('scenario', activeScenarioId);
+    }
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+  }, [variable, seasonMode, startYear, endYear, mode, regionA, activeScenarioId]);
+
+  const handleCopyShareLink = () => {
+    if (typeof window === 'undefined') return;
+    navigator.clipboard?.writeText(window.location.href);
+    setCopiedLink(true);
+    window.setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   // Trigger resize event when splitLayout or sidebarCollapsed changes
   useEffect(() => {
@@ -233,9 +291,18 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Keyboard shortcuts for Workbench views (1-6 and '[' to toggle sidebar)
+  // Keyboard shortcuts for Workbench views (1-6, '[' to toggle sidebar, Ctrl+K / Cmd+K for Command Palette)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+      if (e.key === 'Escape' && commandPaletteOpen) {
+        setCommandPaletteOpen(false);
+        return;
+      }
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -250,7 +317,7 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [commandPaletteOpen]);
 
   const handleOpenPhenomenaDrawer = async () => {
     setPhenomenaDrawerOpen(true);
@@ -264,31 +331,55 @@ export const App: React.FC = () => {
     }
   };
 
-  const runAnalysis = useCallback(async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const response = await analyzeTrendApi({
-        variable,
-        start_year: startYear,
-        end_year: endYear,
-        season_mode: seasonMode,
-        region_a: regionA,
-        region_b: mode === 'dipole' ? regionB : null,
-        prefer_live_api: true,
-      });
-      setAnalysisResult(response);
-    } catch (err: any) {
-      setErrorMsg(
-        err?.message || 'Помилка з’єднання з NASA / статистичним сервером.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [variable, startYear, endYear, seasonMode, regionA, regionB, mode]);
+  const runAnalysis = useCallback(
+    async (opts?: { forceRefresh?: boolean }) => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
+      setLoading(true);
+      setErrorMsg(null);
+      try {
+        const response = await analyzeTrendApi(
+          {
+            variable,
+            start_year: startYear,
+            end_year: endYear,
+            season_mode: seasonMode,
+            region_a: regionA,
+            region_b: mode === 'dipole' ? regionB : null,
+            prefer_live_api: true,
+          },
+          {
+            signal: controller.signal,
+            forceRefresh: opts?.forceRefresh,
+          }
+        );
+        if (!controller.signal.aborted) {
+          setAnalysisResult(response);
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return;
+        setErrorMsg(
+          err?.message || 'Помилка з’єднання з NASA / статистичним сервером.'
+        );
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [variable, startYear, endYear, seasonMode, regionA, regionB, mode]
+  );
+
+  // Debounce automatic slider/coordinate updates by 140ms to prevent request storms
   useEffect(() => {
-    runAnalysis();
+    const timer = window.setTimeout(() => {
+      runAnalysis();
+    }, 140);
+    return () => window.clearTimeout(timer);
   }, [runAnalysis]);
 
   const handleRunCsvAnalysis = async (payload: AnalyzeCsvRequest) => {
@@ -558,7 +649,7 @@ export const App: React.FC = () => {
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            onClick={runAnalysis}
+            onClick={() => runAnalysis({ forceRefresh: true })}
             disabled={loading}
             className="px-2.5 py-1 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-200 font-mono text-[11px] transition flex items-center gap-1.5 border border-[#24242b]"
           >
@@ -1209,6 +1300,53 @@ export const App: React.FC = () => {
 
           {/* Right: Language Switcher (UA / EN) + Clean Monochrome Actions */}
           <div className="flex items-center gap-1.5">
+            {/* Command Palette Trigger (Ctrl+K) */}
+            <button
+              type="button"
+              onClick={() => {
+                setCommandQuery('');
+                setCommandPaletteOpen(true);
+              }}
+              className="hidden md:flex items-center gap-2 px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition border border-[#1f1f24]"
+              title={
+                lang === 'en'
+                  ? 'Quick Command Palette (Ctrl+K)'
+                  : 'Швидкий пошук та команди (Ctrl+K)'
+              }
+            >
+              <Search className="w-3 h-3 text-zinc-500" />
+              <span>{lang === 'en' ? 'Search' : 'Пошук'}</span>
+              <span className="px-1 py-0.2 rounded bg-[#09090b] border border-[#24242b] text-[9px] text-zinc-500">
+                Ctrl K
+              </span>
+            </button>
+
+            {/* Share Reproducible Investigation Link */}
+            <button
+              type="button"
+              onClick={handleCopyShareLink}
+              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition border border-[#1f1f24]"
+              title={
+                lang === 'en'
+                  ? 'Copy shareable URL with current coordinates & parameters'
+                  : 'Скопіювати посилання на поточне дослідження (URL)'
+              }
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-400">
+                    {lang === 'en' ? 'Copied' : 'Скопійовано'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3 h-3 text-zinc-500" />
+                  <span>{lang === 'en' ? 'Share' : 'Лінк'}</span>
+                </>
+              )}
+            </button>
+
             {/* UA / EN Switcher */}
             <div
               className="inline-flex items-center rounded bg-[#121216] p-0.5 border border-[#1f1f24]"
@@ -2052,6 +2190,164 @@ export const App: React.FC = () => {
         onClose={() => setCsvModalOpen(false)}
         onRunCsvAnalysis={handleRunCsvAnalysis}
       />
+
+      {/* Minimalist Command Palette (Ctrl+K / Cmd+K) */}
+      {commandPaletteOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4"
+          onClick={() => setCommandPaletteOpen(false)}
+        >
+          <div
+            className="w-full max-w-xl rounded-md bg-[#0c0c0f] border border-[#24242b] shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Search Input Header */}
+            <div className="px-3.5 py-2.5 border-b border-[#1f1f24] flex items-center gap-2.5 bg-[#09090b]">
+              <Search className="w-4 h-4 text-zinc-500 shrink-0" />
+              <input
+                type="text"
+                autoFocus
+                value={commandQuery}
+                onChange={(e) => setCommandQuery(e.target.value)}
+                placeholder={
+                  lang === 'en'
+                    ? 'Jump to variable (AOD, SWOT_WSE...), phenomenon, season, or view...'
+                    : 'Швидкий перехід: змінна (AOD, SWOT_WSE...), феномен, сезон або вкладка...'
+                }
+                className="flex-1 bg-transparent text-xs text-zinc-100 placeholder-zinc-500 font-mono focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setCommandPaletteOpen(false)}
+                className="px-1.5 py-0.5 rounded bg-[#141419] border border-[#24242b] text-[10px] font-mono text-zinc-400 hover:text-zinc-200"
+              >
+                ESC
+              </button>
+            </div>
+
+            {/* Filtered Results */}
+            <div className="max-h-[380px] overflow-y-auto p-2 space-y-3 text-xs">
+              {/* 1. Variables */}
+              <div>
+                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                  {lang === 'en'
+                    ? 'Satellite & Reanalysis Variables (13)'
+                    : 'Супутникові змінні NASA та CSA (13)'}
+                </div>
+                <div className="space-y-0.5">
+                  {variables
+                    .filter((v) => {
+                      const q = commandQuery.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        v.code.toLowerCase().includes(q) ||
+                        v.name.toLowerCase().includes(q) ||
+                        (v.name_ua || '').toLowerCase().includes(q) ||
+                        (v.satellite_badge || '').toLowerCase().includes(q)
+                      );
+                    })
+                    .slice(0, 6)
+                    .map((v) => (
+                      <button
+                        key={v.code}
+                        type="button"
+                        onClick={() => {
+                          setVariable(v.code as ClimateVariableCode);
+                          setActiveScenarioId('custom');
+                          setCommandPaletteOpen(false);
+                        }}
+                        className={`w-full px-2.5 py-1.5 rounded flex items-center justify-between gap-2 text-left transition ${
+                          variable === v.code
+                            ? 'bg-zinc-800 text-zinc-100'
+                            : 'hover:bg-[#141419] text-zinc-300'
+                        }`}
+                      >
+                        <div className="min-w-0 truncate">
+                          <span className="font-mono font-medium text-sky-400 mr-2">
+                            {v.code}
+                          </span>
+                          <span>
+                            {lang === 'en' ? v.name : v.name_ua || v.name}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                          {v.unit}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* 2. Curated & Live EONET Scenarios */}
+              <div>
+                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                  {lang === 'en'
+                    ? 'Curated Phenomena & Live EONET Cases'
+                    : 'Наукові сценарії та події NASA EONET'}
+                </div>
+                <div className="space-y-0.5">
+                  {scenarios
+                    .filter((s) => {
+                      const q = commandQuery.trim().toLowerCase();
+                      if (!q) return true;
+                      return (
+                        s.title.toLowerCase().includes(q) ||
+                        s.variable.toLowerCase().includes(q) ||
+                        s.region_a.name.toLowerCase().includes(q)
+                      );
+                    })
+                    .slice(0, 6)
+                    .map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          applyScenario(s);
+                          setCommandPaletteOpen(false);
+                        }}
+                        className={`w-full px-2.5 py-1.5 rounded flex items-center justify-between gap-2 text-left transition ${
+                          activeScenarioId === s.id
+                            ? 'bg-zinc-800 text-zinc-100'
+                            : 'hover:bg-[#141419] text-zinc-300'
+                        }`}
+                      >
+                        <span className="truncate">{s.title}</span>
+                        <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                          {s.variable} · {s.season_mode}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              </div>
+
+              {/* 3. Workspace Views */}
+              <div>
+                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                  {lang === 'en' ? 'Workbench Views' : 'Робочі простори (1–6)'}
+                </div>
+                <div className="grid grid-cols-2 gap-1">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveView(item.id);
+                        setCommandPaletteOpen(false);
+                      }}
+                      className="px-2.5 py-1.5 rounded hover:bg-[#141419] text-zinc-300 flex items-center justify-between text-left"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        [{item.shortcut}]
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
