@@ -2194,7 +2194,7 @@ export const App: React.FC = () => {
       {/* Minimalist Command Palette (Ctrl+K / Cmd+K) */}
       {commandPaletteOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4"
+          className="fixed inset-0 z-[3000] bg-black/75 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4"
           onClick={() => setCommandPaletteOpen(false)}
         >
           <div

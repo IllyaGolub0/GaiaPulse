@@ -677,7 +677,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
       </div>
 
       {/* Center Canvas: 2D Map or 3D WebGL Globe */}
-      <div className="relative flex-1 w-full min-h-[460px] bg-ctp-crust overflow-hidden">
+      <div className="relative isolate z-0 flex-1 w-full min-h-[460px] bg-[#070709] overflow-hidden">
         {gibsEnabled && gibsConfig.colorbar && (
           <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
             <div className="flex items-center justify-between text-[10px] font-mono text-ctp-text mb-1">
