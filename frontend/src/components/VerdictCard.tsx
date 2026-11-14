@@ -3,14 +3,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  ShieldCheck,
-  AlertTriangle,
-  Activity,
-  Sparkles,
   GitCompareArrows,
-  Gauge,
-  Hourglass,
-  CheckCircle2,
 } from 'lucide-react';
 import {
   DipoleComparison,
@@ -33,14 +26,6 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
   const { t, lang } = useLanguage();
   const { location, statistics, human_summary, data_source } = analysis;
   const isRegionA = regionKey === 'A';
-
-  const accentBorder = isRegionA
-    ? 'border-ctp-blue/45 hover:border-ctp-blue/80'
-    : 'border-ctp-peach/45 hover:border-ctp-peach/80';
-
-  const accentBadge = isRegionA
-    ? 'bg-ctp-blue/15 text-ctp-blue border-ctp-blue/45'
-    : 'bg-ctp-peach/15 text-ctp-peach border-ctp-peach/45';
 
   const slopeDecade = statistics.change_per_decade;
   const slopeYear = statistics.sens_slope_per_year;
@@ -66,228 +51,207 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
   const tts = statistics.time_to_significance;
 
   return (
-    <div
-      className={`rounded-2xl bg-ctp-mantle border ${accentBorder} p-5 shadow-xl transition-all duration-300 flex flex-col justify-between gap-4`}
-    >
-      <div>
-        {/* Top Header: Region Tag + Statistical Significance Verdict Badge */}
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2.5">
+    <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden flex flex-col justify-between">
+      {/* Top Header Strip */}
+      <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#1f1f24]">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium border ${
+              isRegionA
+                ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+            }`}
+          >
             <span
-              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${accentBadge}`}
-            >
-              {t.verdictRegionLabel} {regionKey}
-            </span>
-            <div>
-              <h3 className="text-base font-bold text-ctp-text leading-tight">
-                {location.name}
-              </h3>
-              <p className="text-[11px] font-mono text-ctp-subtext0">
-                {location.lat.toFixed(2)}° N, {location.lon.toFixed(2)}° E
-                {statistics.season_mode
-                  ? ` • ${t.verdictSeasonLabel}: ${statistics.season_mode}`
-                  : ''}
-                {data_source ? ` • ${data_source}` : ''}
-              </p>
-            </div>
+              className={`w-1.5 h-1.5 rounded-full ${
+                isRegionA ? 'bg-sky-400' : 'bg-orange-400'
+              }`}
+            />
+            {t.verdictRegionLabel} {regionKey}
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-zinc-100 truncate">
+              {location.name}
+            </h3>
+            <p className="text-[11px] font-mono text-zinc-500 truncate">
+              {location.lat.toFixed(2)}°N, {location.lon.toFixed(2)}°E
+              {statistics.season_mode ? ` · ${statistics.season_mode}` : ''}
+              {data_source ? ` · ${data_source}` : ''}
+            </p>
           </div>
-
-          {/* Statistical Significance Badge */}
-          {statistics.is_significant ? (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 border border-ctp-green/55 text-ctp-green text-xs font-mono font-bold shadow-[0_0_15px_rgba(166,227,161,0.18)]">
-              <ShieldCheck className="w-4 h-4 text-ctp-green shrink-0" />
-              <span>
-                {t.verdictSignificant}: p = {formattedPValue} ({statistics.confidence_level})
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-yellow/15 border border-ctp-yellow/50 text-ctp-yellow text-xs font-mono font-bold">
-              <AlertTriangle className="w-4 h-4 text-ctp-yellow shrink-0" />
-              <span>p = {formattedPValue} ≥ 0.05 ({t.verdictNotYetSig})</span>
-            </div>
-          )}
         </div>
 
-        {/* Hero Metric: Rate of Change (per Decade & per Year) + 95% CI */}
-        <div className="p-4 rounded-xl bg-ctp-crust border border-ctp-surface0 mb-4 flex items-center justify-between gap-4">
+        {/* Minimalist Status Indicator */}
+        <div
+          className={`inline-flex items-center gap-2 px-2.5 py-1 rounded text-[11px] font-mono border ${
+            statistics.is_significant
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+              : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              statistics.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
+            }`}
+          />
+          <span className="font-medium">
+            {statistics.is_significant
+              ? `${t.verdictSignificant} · p = ${formattedPValue}`
+              : `${t.verdictNotYetSig} · p = ${formattedPValue}`}
+          </span>
+        </div>
+      </div>
+
+      {/* Swiss 5-Column Telemetry Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-[#1f1f24] bg-[#09090b] border-b border-[#1f1f24]">
+        {/* Col 1: Sen's Slope (Hero Metric) */}
+        <div className="col-span-2 sm:col-span-2 p-3.5 flex items-center justify-between gap-2">
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-ctp-subtext0 font-semibold mb-1">
-              {t.verdictRateTitle}
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              Sen&apos;s Slope / {t.verdictPerDecade}
             </div>
-            <div className="flex flex-wrap items-baseline gap-2">
+            <div className="flex items-baseline gap-1.5 mt-1">
               <span
-                className={`text-2xl sm:text-3xl font-mono font-extrabold tracking-tight ${
+                className={`text-xl font-mono font-semibold tracking-tight ${
                   slopeDecade > 0
                     ? isRegionA
-                      ? 'text-ctp-blue'
-                      : 'text-ctp-peach'
+                      ? 'text-sky-400'
+                      : 'text-orange-400'
                     : slopeDecade < 0
-                    ? 'text-ctp-red'
-                    : 'text-ctp-text'
+                    ? 'text-rose-400'
+                    : 'text-zinc-100'
                 }`}
               >
                 {slopeSign}
                 {slopeDecade.toFixed(3)}
               </span>
-              <span className="text-xs font-mono text-ctp-subtext0">
-                {variableMeta.unit} / {t.verdictPerDecade} ({yearSign}
-                {slopeYear.toFixed(4)} / {t.verdictPerYear})
+              <span className="text-[11px] font-mono text-zinc-500">
+                {variableMeta.unit} ({yearSign}
+                {slopeYear.toFixed(4)}/{t.verdictPerYear})
               </span>
             </div>
             {statistics.slope_ci_lower_decade !== undefined &&
               statistics.slope_ci_upper_decade !== undefined && (
-                <div className="text-[11px] text-ctp-subtext0 mt-1 font-mono">
-                  {t.verdictSlopeCi}: [
-                  {statistics.slope_ci_lower_decade > 0 ? '+' : ''}
-                  {statistics.slope_ci_lower_decade.toFixed(3)},{' '}
-                  {statistics.slope_ci_upper_decade > 0 ? '+' : ''}
-                  {statistics.slope_ci_upper_decade.toFixed(3)}]{' '}
-                  {variableMeta.unit}{t.perDecadeShort}
+                <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+                  95% CI: [{statistics.slope_ci_lower_decade.toFixed(3)},{' '}
+                  {statistics.slope_ci_upper_decade.toFixed(3)}]
                 </div>
               )}
           </div>
 
-          <div
-            className={`w-12 h-12 rounded-xl flex items-center justify-center border shrink-0 ${
-              statistics.mk_trend === 'increasing'
-                ? 'bg-ctp-blue/15 border-ctp-blue/45 text-ctp-blue'
-                : statistics.mk_trend === 'decreasing'
-                ? 'bg-ctp-peach/15 border-ctp-peach/45 text-ctp-peach'
-                : 'bg-ctp-surface0 border-ctp-surface1 text-ctp-subtext0'
-            }`}
-          >
+          <div className="text-zinc-500 pr-1">
             {statistics.mk_trend === 'increasing' && (
-              <TrendingUp className="w-6 h-6" />
+              <TrendingUp className="w-4 h-4 text-sky-400" />
             )}
             {statistics.mk_trend === 'decreasing' && (
-              <TrendingDown className="w-6 h-6" />
+              <TrendingDown className="w-4 h-4 text-orange-400" />
             )}
             {statistics.mk_trend !== 'increasing' &&
               statistics.mk_trend !== 'decreasing' && (
-                <Minus className="w-6 h-6" />
+                <Minus className="w-4 h-4 text-zinc-600" />
               )}
           </div>
         </div>
 
-        {/* 4-Column Telemetry Metric Grid: Mann-Kendall, Student's t-test, SNR, Total Delta */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-          <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Mann-Kendall Z
-            </div>
-            <div className="text-sm font-mono font-bold text-ctp-text mt-0.5">
-              {statistics.z_score > 0
-                ? `+${statistics.z_score.toFixed(2)}`
-                : statistics.z_score.toFixed(2)}{' '}
-              σ
-            </div>
-            <div className="text-[10px] font-mono text-ctp-subtext0">
-              p = {formattedPValue}
-            </div>
+        {/* Col 2: Mann-Kendall Z & Student t */}
+        <div className="p-3.5">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            MK Z / t-stat
           </div>
-
-          <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Student&apos;s t-test
-            </div>
-            <div className="text-sm font-mono font-bold text-ctp-lavender mt-0.5">
-              t = {tStat > 0 ? `+${tStat.toFixed(2)}` : tStat.toFixed(2)}
-            </div>
-            <div className="text-[10px] font-mono text-ctp-subtext0">
-              p = {formattedTPValue}
-            </div>
+          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
+            {statistics.z_score > 0
+              ? `+${statistics.z_score.toFixed(2)}`
+              : statistics.z_score.toFixed(2)}
+            σ · t={tStat > 0 ? `+${tStat.toFixed(2)}` : tStat.toFixed(2)}
           </div>
-
-          <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              {t.verdictSnrLabel}
-            </div>
-            <div className="text-sm font-mono font-bold text-ctp-text mt-0.5 flex items-center gap-1.5">
-              <span>{statistics.signal_to_noise_ratio.toFixed(2)}</span>
-              <Gauge className="w-3.5 h-3.5 text-ctp-teal" />
-            </div>
-            <div className="w-full h-1.5 bg-ctp-surface0 rounded-full overflow-hidden mt-1">
-              <div
-                className={`h-full rounded-full ${
-                  statistics.signal_to_noise_ratio >= 1.5
-                    ? 'bg-ctp-green'
-                    : statistics.signal_to_noise_ratio >= 0.8
-                    ? 'bg-ctp-blue'
-                    : 'bg-ctp-yellow'
-                }`}
-                style={{ width: `${snrPercent}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              {t.verdictTotalDelta}
-            </div>
-            <div className="text-sm font-mono font-bold text-ctp-text mt-0.5">
-              {absDeltaSign}
-              {statistics.total_change_abs.toFixed(2)} {variableMeta.unit}
-            </div>
-            <div className="text-[10px] font-mono text-ctp-subtext0">
-              R² ={' '}
-              {statistics.ols_r_squared !== undefined
-                ? statistics.ols_r_squared.toFixed(2)
-                : '—'}
-            </div>
+          <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+            p = {formattedTPValue}
           </div>
         </div>
 
-        {/* Time-to-Significance Calculator Box */}
-        {tts && (
-          <div
-            className={`p-3 rounded-xl border mb-3 flex items-start gap-2.5 ${
-              tts.is_already_significant
-                ? 'bg-ctp-green/10 border-ctp-green/40 text-ctp-green'
-                : 'bg-ctp-yellow/10 border-ctp-yellow/45 text-ctp-yellow'
-            }`}
-          >
-            {tts.is_already_significant ? (
-              <CheckCircle2 className="w-4 h-4 text-ctp-green shrink-0 mt-0.5" />
-            ) : (
-              <Hourglass className="w-4 h-4 text-ctp-yellow shrink-0 mt-0.5 animate-pulse" />
-            )}
-            <div className="text-xs leading-relaxed">
-              <div className="font-mono font-bold uppercase tracking-wider text-[10px] mb-0.5">
-                {t.verdictTtsTitle}
-              </div>
-              <p className="text-ctp-text text-xs">
-                {lang === 'en'
-                  ? tts.is_already_significant
-                    ? `Statistical significance threshold (p < 0.05) reached within the observed ${tts.current_years}-year record.`
-                    : `Requires approximately +${tts.additional_years_needed} additional years of satellite observations (until ~${tts.projected_significance_year}) to cross the p < 0.05 threshold.`
-                  : tts.message}
-              </p>
-            </div>
+        {/* Col 3: Signal to Noise */}
+        <div className="p-3.5">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            SNR
           </div>
-        )}
+          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
+            {statistics.signal_to_noise_ratio.toFixed(2)}
+          </div>
+          <div className="w-full h-1 bg-zinc-800 rounded-none overflow-hidden mt-2">
+            <div
+              className={`h-full ${
+                statistics.signal_to_noise_ratio >= 1.5
+                  ? 'bg-emerald-400'
+                  : statistics.signal_to_noise_ratio >= 0.8
+                  ? 'bg-sky-400'
+                  : 'bg-amber-400'
+              }`}
+              style={{ width: `${snrPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Col 4: Total Shift */}
+        <div className="p-3.5">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            {t.verdictTotalDelta}
+          </div>
+          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
+            {absDeltaSign}
+            {statistics.total_change_abs.toFixed(2)} {variableMeta.unit}
+          </div>
+          <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+            R² ={' '}
+            {statistics.ols_r_squared !== undefined
+              ? statistics.ols_r_squared.toFixed(2)
+              : '—'}
+          </div>
+        </div>
       </div>
 
-      {/* Detective Human-Readable Scientific Summary */}
-      <div className="p-3.5 rounded-xl bg-ctp-surface0/45 border border-ctp-surface1">
-        <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ctp-mauve mb-1">
-          <Sparkles className="w-3.5 h-3.5 text-ctp-mauve" />
-          <span>{t.verdictSummaryTitle}</span>
+      {/* Bottom Editorial Summary & Time-to-Significance */}
+      <div className="p-4 space-y-2.5 text-xs">
+        {tts && (
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded bg-[#121216] border border-[#1f1f24] font-mono text-[11px]">
+            <span className="text-zinc-400 uppercase tracking-wider text-[10px]">
+              Time-to-Significance (p &lt; 0.05)
+            </span>
+            <span
+              className={
+                tts.is_already_significant
+                  ? 'text-emerald-400 font-medium'
+                  : 'text-amber-400 font-medium'
+              }
+            >
+              {lang === 'en'
+                ? tts.is_already_significant
+                  ? `Reached (${tts.current_years} yrs)`
+                  : `+${tts.additional_years_needed} yrs (~${tts.projected_significance_year})`
+                : tts.message}
+            </span>
+          </div>
+        )}
+
+        <div className="border-l-2 border-zinc-700 pl-3 py-0.5">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-0.5">
+            {t.verdictSummaryTitle}
+          </div>
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            {lang === 'en'
+              ? `[${statistics.season_mode || 'Annual'}] In ${location.name}, ${
+                  variableMeta.name
+                } exhibits ${
+                  statistics.is_significant
+                    ? `a statistically significant ${statistics.mk_trend} trend`
+                    : `an emerging ${statistics.mk_trend} signal not yet crossing p < 0.05`
+                } (${slopeSign}${slopeDecade.toFixed(3)} ${
+                  variableMeta.unit
+                }/decade, Mann-Kendall p = ${formattedPValue}, Student's t = ${tStat.toFixed(
+                  2
+                )}, SNR = ${statistics.signal_to_noise_ratio.toFixed(2)}).`
+              : human_summary}
+          </p>
         </div>
-        <p className="text-xs sm:text-sm text-ctp-text leading-relaxed">
-          {lang === 'en'
-            ? `[${statistics.season_mode || 'Annual'}] In ${location.name}, ${
-                variableMeta.name
-              } exhibits ${
-                statistics.is_significant
-                  ? `a statistically significant ${statistics.mk_trend} trend`
-                  : `an emerging ${statistics.mk_trend} signal not yet crossing p < 0.05`
-              } (${slopeSign}${slopeDecade.toFixed(3)} ${
-                variableMeta.unit
-              }/decade, Mann-Kendall p = ${formattedPValue}, Student's t = ${tStat.toFixed(
-                2
-              )}, SNR = ${statistics.signal_to_noise_ratio.toFixed(2)}).`
-            : human_summary}
-        </p>
       </div>
     </div>
   );
@@ -305,79 +269,57 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
   regionBName,
 }) => {
   const { t } = useLanguage();
-  const isStrongDipole = dipole.is_opposite_trend || dipole.pearson_r < -0.4;
 
   return (
-    <div
-      className={`rounded-2xl p-4 sm:p-5 border transition-all ${
-        isStrongDipole
-          ? 'bg-gradient-to-r from-ctp-blue/15 via-ctp-mantle to-ctp-peach/15 border-ctp-mauve/60 shadow-[0_0_30px_rgba(203,166,247,0.12)]'
-          : 'bg-ctp-mantle border-ctp-surface0'
-      }`}
-    >
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-ctp-mauve/20 text-ctp-mauve border border-ctp-mauve/50">
-              <GitCompareArrows className="w-3.5 h-3.5" />
-              {dipole.badge ||
-                (dipole.is_opposite_trend
-                  ? t.dipoleDetectedBadge
-                  : t.crossRegionBadge)}
-            </span>
-            <span className="text-xs text-ctp-subtext0 font-mono">
-              {regionAName} ↔ {regionBName}
-            </span>
+    <div className="rounded-md p-4 bg-[#0c0c0f] border border-[#1f1f24] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-800 text-zinc-200 border border-zinc-700">
+            <GitCompareArrows className="w-3.5 h-3.5 text-zinc-400" />
+            {dipole.badge ||
+              (dipole.is_opposite_trend
+                ? t.dipoleDetectedBadge
+                : t.crossRegionBadge)}
+          </span>
+          <span className="text-xs text-zinc-500 font-mono">
+            {regionAName} ↔ {regionBName}
+          </span>
+        </div>
+        <p className="text-xs text-zinc-300 leading-relaxed">
+          {dipole.verdict}
+        </p>
+      </div>
+
+      <div className="flex items-center divide-x divide-[#1f1f24] border border-[#1f1f24] rounded bg-[#09090b] shrink-0 font-mono">
+        <div className="px-3.5 py-2 text-center">
+          <div className="text-[10px] uppercase text-zinc-500">
+            {t.pearsonLabel}
           </div>
-          <p className="text-xs sm:text-sm text-ctp-text leading-relaxed">
-            {dipole.verdict}
-          </p>
+          <div className="text-sm font-semibold text-zinc-100 mt-0.5">
+            {dipole.pearson_r > 0
+              ? `+${dipole.pearson_r.toFixed(2)}`
+              : dipole.pearson_r.toFixed(2)}
+          </div>
+          <div className="text-[10px] text-zinc-500">
+            p ={' '}
+            {dipole.correlation_p_value < 0.0001
+              ? '< 0.0001'
+              : dipole.correlation_p_value.toFixed(4)}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="px-3.5 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0 text-center min-w-[115px]">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              {t.pearsonLabel}
-            </div>
-            <div
-              className={`text-lg font-mono font-extrabold ${
-                dipole.pearson_r < -0.45
-                  ? 'text-ctp-mauve'
-                  : dipole.pearson_r > 0.45
-                  ? 'text-ctp-peach'
-                  : 'text-ctp-text'
-              }`}
-            >
-              {dipole.pearson_r > 0
-                ? `+${dipole.pearson_r.toFixed(2)}`
-                : dipole.pearson_r.toFixed(2)}
-            </div>
-            <div className="text-[10px] font-mono text-ctp-subtext0">
-              p ={' '}
-              {dipole.correlation_p_value < 0.0001
-                ? '< 0.0001'
-                : dipole.correlation_p_value.toFixed(4)}
-            </div>
+        <div className="px-3.5 py-2 text-center">
+          <div className="text-[10px] uppercase text-zinc-500">
+            {t.trendContrastLabel}
           </div>
-
-          <div className="px-3.5 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0 text-center min-w-[115px]">
-            <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              {t.trendContrastLabel}
-            </div>
-            <div className="text-sm font-mono font-bold text-ctp-text mt-1 flex items-center justify-center gap-1">
-              <Activity className="w-4 h-4 text-ctp-green" />
-              <span>
-                {dipole.is_opposite_trend
-                  ? t.contrastOpposite
-                  : t.contrastSync}
-              </span>
-            </div>
-            <div className="text-[10px] font-mono text-ctp-subtext0 mt-0.5">
-              Spearman ρ ={' '}
-              {dipole.spearman_r !== undefined
-                ? dipole.spearman_r.toFixed(2)
-                : dipole.pearson_r.toFixed(2)}
-            </div>
+          <div className="text-xs font-semibold text-zinc-200 mt-1">
+            {dipole.is_opposite_trend ? t.contrastOpposite : t.contrastSync}
+          </div>
+          <div className="text-[10px] text-zinc-500 mt-0.5">
+            ρ ={' '}
+            {dipole.spearman_r !== undefined
+              ? dipole.spearman_r.toFixed(2)
+              : dipole.pearson_r.toFixed(2)}
           </div>
         </div>
       </div>

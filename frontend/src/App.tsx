@@ -4,13 +4,8 @@ import {
   Download,
   RefreshCw,
   GitCompareArrows,
-  Sliders,
   Compass,
-  Info,
-  HelpCircle,
-  BookOpen,
   MapPin,
-  Sparkles,
   FileSpreadsheet,
   Columns,
   Globe2,
@@ -21,17 +16,13 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
-  Clock,
-  Activity,
   Table2,
   Crosshair,
   ArrowUpRight,
   ArrowDownRight,
   Maximize2,
-  Minimize2,
   EyeOff,
   Eye,
-  Languages,
 } from 'lucide-react';
 import {
   AnalysisMode,
@@ -89,25 +80,24 @@ const QUICK_YEAR_PRESETS: Array<{
   label: string;
   start: number;
   end: number;
-  tag: string;
 }> = [
-  { label: 'Full Record (1985–2026)', start: 1985, end: 2026, tag: '42 yrs' },
-  { label: 'MODIS Era (2002–2026)', start: 2002, end: 2026, tag: '25 yrs' },
-  { label: 'Recent 20 Yrs (2006–2026)', start: 2006, end: 2026, tag: '21 yrs' },
-  { label: 'Recent Decade (2015–2026)', start: 2015, end: 2026, tag: '12 yrs' },
+  { label: '1985–2026', start: 1985, end: 2026 },
+  { label: '2002–2026', start: 2002, end: 2026 },
+  { label: '2006–2026', start: 2006, end: 2026 },
+  { label: '2015–2026', start: 2015, end: 2026 },
 ];
 
 /**
- * Compact SVG Sparkline for floating map HUD and sidebar telemetry card
+ * Minimalist Monochrome SVG Sparkline
  */
 const MiniSparkline: React.FC<{
   values: number[];
   trendValues?: number[];
   color?: string;
-}> = ({ values, trendValues, color = '#89b4fa' }) => {
+}> = ({ values, trendValues, color = '#d4d4d8' }) => {
   if (!values || values.length < 2) return null;
-  const width = 150;
-  const height = 38;
+  const width = 148;
+  const height = 32;
   const minVal = Math.min(...values, ...(trendValues || []));
   const maxVal = Math.max(...values, ...(trendValues || []));
   const span = maxVal - minVal || 1;
@@ -115,8 +105,8 @@ const MiniSparkline: React.FC<{
   const toCoords = (arr: number[]) =>
     arr
       .map((v, i) => {
-        const x = (i / (arr.length - 1)) * (width - 6) + 3;
-        const y = height - 4 - ((v - minVal) / span) * (height - 8);
+        const x = (i / (arr.length - 1)) * (width - 4) + 2;
+        const y = height - 3 - ((v - minVal) / span) * (height - 6);
         return `${x.toFixed(1)},${y.toFixed(1)}`;
       })
       .join(' ');
@@ -131,7 +121,7 @@ const MiniSparkline: React.FC<{
       <polyline
         fill="none"
         stroke={color}
-        strokeWidth="1.75"
+        strokeWidth="1.25"
         strokeLinecap="round"
         strokeLinejoin="round"
         points={toCoords(values)}
@@ -139,9 +129,9 @@ const MiniSparkline: React.FC<{
       {trendValues && trendValues.length === values.length && (
         <polyline
           fill="none"
-          stroke="#a6e3a1"
-          strokeWidth="1.5"
-          strokeDasharray="3 2"
+          stroke="#38bdf8"
+          strokeWidth="1.25"
+          strokeDasharray="2 2"
           points={toCoords(trendValues)}
         />
       )}
@@ -174,7 +164,7 @@ export const App: React.FC = () => {
   const [phenomenaLoading, setPhenomenaLoading] = useState<boolean>(false);
   const [csvLoading, setCsvLoading] = useState<boolean>(false);
 
-  // Active Query State (Defaults to Case 1: Wisconsin Wildfire Smoke in JJA)
+  // Active Query State
   const [activeScenarioId, setActiveScenarioId] = useState<string>(
     FALLBACK_PHENOMENA_SCENARIOS[0].id
   );
@@ -212,7 +202,7 @@ export const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Trigger resize event when splitLayout or sidebarCollapsed changes so Leaflet, 3D Globe, and Plotly resize smoothly
+  // Trigger resize event when splitLayout or sidebarCollapsed changes
   useEffect(() => {
     const t1 = window.setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
@@ -325,7 +315,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Apply a Phenomenon Scenario (1-Click Auto-Configuration)
   const applyScenario = (scenario: PhenomenonScenario) => {
     setActiveScenarioId(scenario.id);
     setMode(scenario.mode);
@@ -433,110 +422,97 @@ export const App: React.FC = () => {
     label: string;
     subtitle: string;
     icon: React.ReactNode;
-    badge?: string;
-    accent?: string;
   }> = [
     {
       id: 'split',
       shortcut: '1',
       label: t.navSplitLabel,
       subtitle: t.navSplitSub,
-      icon: <Columns className="w-4 h-4" />,
-      badge: 'STUDIO',
-      accent: 'text-ctp-mauve',
+      icon: <Columns className="w-3.5 h-3.5" />,
     },
     {
       id: 'map',
       shortcut: '2',
       label: t.navMapLabel,
       subtitle: t.navMapSub,
-      icon: <Globe2 className="w-4 h-4" />,
-      accent: 'text-ctp-blue',
+      icon: <Globe2 className="w-3.5 h-3.5" />,
     },
     {
       id: 'analytics',
       shortcut: '3',
       label: t.navAnalyticsLabel,
       subtitle: t.navAnalyticsSub,
-      icon: <BarChart3 className="w-4 h-4" />,
-      badge: statsA ? (statsA.is_significant ? 'SIG' : 'NOISE') : undefined,
-      accent: 'text-ctp-green',
+      icon: <BarChart3 className="w-3.5 h-3.5" />,
     },
     {
       id: 'phenomena',
       shortcut: '4',
       label: t.navPhenomenaLabel,
       subtitle: t.navPhenomenaSub,
-      icon: <Satellite className="w-4 h-4" />,
-      badge: `${scenarios.length}`,
-      accent: 'text-ctp-sapphire',
+      icon: <Satellite className="w-3.5 h-3.5" />,
     },
     {
       id: 'csv',
       shortcut: '5',
       label: t.navCsvLabel,
       subtitle: t.navCsvSub,
-      icon: <FileSpreadsheet className="w-4 h-4" />,
-      accent: 'text-ctp-teal',
+      icon: <FileSpreadsheet className="w-3.5 h-3.5" />,
     },
     {
       id: 'resources',
       shortcut: '6',
       label: t.navResourcesLabel,
       subtitle: t.navResourcesSub,
-      icon: <Library className="w-4 h-4" />,
-      badge: '13',
-      accent: 'text-ctp-peach',
+      icon: <Library className="w-3.5 h-3.5" />,
     },
   ];
 
-  // Shared Mission Parameters Control Panel (used in Split, Map, and Analytics views)
+  // Minimalist Swiss-Grid Instrument Panel
   const renderMissionControlPanel = () => (
-    <div className="rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-lg overflow-hidden">
-      {/* Compact Header Bar of Mission Control */}
-      <div className="px-4 py-2.5 bg-ctp-crust/80 border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-ctp-mauve font-bold">
-            <Sliders className="w-3.5 h-3.5" />
-            <span>{t.missionParamsTitle}</span>
+    <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden">
+      {/* Slim Header Bar */}
+      <div className="px-3.5 py-2 bg-[#09090b] border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-medium">
+            {t.missionParamsTitle}
           </span>
 
-          {/* Single vs Dipole Mode Toggle */}
-          <div className="inline-flex rounded-lg bg-ctp-mantle p-0.5 border border-ctp-surface0">
+          <span className="text-zinc-700">|</span>
+
+          {/* Single vs Dipole Segmented Switch */}
+          <div className="inline-flex rounded bg-[#121216] p-0.5 border border-[#1f1f24]">
             <button
               type="button"
               onClick={() => setMode('single')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                 mode === 'single'
-                  ? 'bg-ctp-blue text-ctp-crust font-bold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-100 text-zinc-950'
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <MapPin className="w-3 h-3" />
-              <span>{t.singleRegionBtn}</span>
+              {t.singleRegionBtn}
             </button>
             <button
               type="button"
               onClick={() => setMode('dipole')}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition flex items-center gap-1 ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
                 mode === 'dipole'
-                  ? 'bg-ctp-mauve text-ctp-crust font-bold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-100 text-zinc-950'
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              <GitCompareArrows className="w-3 h-3" />
-              <span>{t.dipoleModeBtn}</span>
+              {t.dipoleModeBtn}
             </button>
           </div>
 
-          {/* Manual Coordinate Editor Toggle */}
+          {/* Coordinate Editor Trigger */}
           <button
             type="button"
             onClick={() => setCoordEditorOpen((prev) => !prev)}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold border transition flex items-center gap-1 ${
+            className={`px-2 py-0.5 rounded text-[11px] font-mono border transition flex items-center gap-1 ${
               coordEditorOpen
-                ? 'bg-ctp-sapphire/20 text-ctp-sapphire border-ctp-sapphire/50'
-                : 'bg-ctp-surface0/50 text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                : 'bg-[#121216] text-zinc-400 border-[#1f1f24] hover:text-zinc-200'
             }`}
             title={t.manualCoordsTitle}
           >
@@ -545,181 +521,9 @@ export const App: React.FC = () => {
               {regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}°
             </span>
           </button>
-        </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={runAnalysis}
-            disabled={loading}
-            className="px-2.5 py-1 rounded-lg bg-ctp-blue hover:bg-ctp-sapphire text-ctp-crust font-bold text-[11px] transition flex items-center gap-1"
-          >
-            <RefreshCw
-              className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`}
-            />
-            <span>{t.reAnalyzeBtn}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setControlsExpanded((prev) => !prev)}
-            className="px-2 py-1 rounded-lg bg-ctp-surface0/60 hover:bg-ctp-surface0 text-ctp-subtext1 text-[11px] font-mono flex items-center gap-1 border border-ctp-surface0"
-          >
-            {controlsExpanded ? (
-              <>
-                <ChevronUp className="w-3.5 h-3.5" />
-                <span>{t.collapseBtn}</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3.5 h-3.5" />
-                <span>{t.expandParamsBtn}</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Optional Manual Coordinate Editor Drawer */}
-      {coordEditorOpen && (
-        <div className="px-4 py-3 bg-ctp-crust/95 border-b border-ctp-surface0 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="p-2.5 rounded-xl bg-ctp-mantle border border-ctp-blue/30 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-bold text-ctp-blue">
-                {t.regionACoordsTitle}
-              </span>
-              <span className="text-[10px] font-mono text-ctp-subtext0">
-                {t.regionACoordsHint}
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                type="text"
-                value={regionA.name}
-                onChange={(e) =>
-                  setRegionA({ ...regionA, name: e.target.value })
-                }
-                placeholder={t.regionANamePlaceholder}
-                className="col-span-3 sm:col-span-1 px-2 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-ctp-text font-mono text-[11px]"
-              />
-              <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
-                <span className="text-[10px] font-mono text-ctp-subtext0">
-                  Lat:
-                </span>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-90"
-                  max="90"
-                  value={regionA.lat}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!Number.isNaN(val) && val >= -90 && val <= 90) {
-                      setRegionA({ ...regionA, lat: val });
-                      setCameraTrigger((c) => c + 1);
-                    }
-                  }}
-                  className="w-full bg-transparent text-ctp-text font-mono text-[11px] focus:outline-none"
-                />
-              </label>
-              <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
-                <span className="text-[10px] font-mono text-ctp-subtext0">
-                  Lon:
-                </span>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="-180"
-                  max="180"
-                  value={regionA.lon}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (!Number.isNaN(val) && val >= -180 && val <= 180) {
-                      setRegionA({ ...regionA, lon: val });
-                      setCameraTrigger((c) => c + 1);
-                    }
-                  }}
-                  className="w-full bg-transparent text-ctp-text font-mono text-[11px] focus:outline-none"
-                />
-              </label>
-            </div>
-          </div>
-
-          {mode === 'dipole' && (
-            <div className="p-2.5 rounded-xl bg-ctp-mantle border border-ctp-peach/30 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-ctp-peach">
-                  {t.regionBCoordsTitle}
-                </span>
-                <span className="text-[10px] font-mono text-ctp-subtext0">
-                  {t.regionBCoordsHint}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  value={regionB.name}
-                  onChange={(e) =>
-                    setRegionB({ ...regionB, name: e.target.value })
-                  }
-                  placeholder={t.regionBNamePlaceholder}
-                  className="col-span-3 sm:col-span-1 px-2 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-ctp-text font-mono text-[11px]"
-                />
-                <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
-                  <span className="text-[10px] font-mono text-ctp-subtext0">
-                    Lat:
-                  </span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="-90"
-                    max="90"
-                    value={regionB.lat}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!Number.isNaN(val) && val >= -90 && val <= 90) {
-                        setRegionB({ ...regionB, lat: val });
-                        setCameraTrigger((c) => c + 1);
-                      }
-                    }}
-                    className="w-full bg-transparent text-ctp-text font-mono text-[11px] focus:outline-none"
-                  />
-                </label>
-                <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
-                  <span className="text-[10px] font-mono text-ctp-subtext0">
-                    Lon:
-                  </span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="-180"
-                    max="180"
-                    value={regionB.lon}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value);
-                      if (!Number.isNaN(val) && val >= -180 && val <= 180) {
-                        setRegionB({ ...regionB, lon: val });
-                        setCameraTrigger((c) => c + 1);
-                      }
-                    }}
-                    className="w-full bg-transparent text-ctp-text font-mono text-[11px] focus:outline-none"
-                  />
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Expandable Controls Grid */}
-      {controlsExpanded && (
-        <div className="p-3.5 space-y-3">
           {/* Biome Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0 flex items-center gap-1 mr-1">
-              <HelpCircle className="w-3 h-3 text-ctp-yellow" />
-              <span>{t.biomeLabel}</span>
-            </span>
+          <div className="hidden 2xl:flex items-center gap-1 pl-1 border-l border-[#1f1f24]">
             {biomeOptionsList.map((biome) => {
               const isSelected = selectedBiome === biome.id;
               return (
@@ -738,10 +542,10 @@ export const App: React.FC = () => {
                     }
                   }}
                   title={biome.subtitle}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition border ${
+                  className={`px-2 py-0.5 rounded text-[11px] transition ${
                     isSelected
-                      ? 'bg-ctp-yellow/15 border-ctp-yellow text-ctp-yellow'
-                      : 'bg-ctp-crust/70 border-ctp-surface0 text-ctp-subtext0 hover:text-ctp-text hover:border-ctp-surface1'
+                      ? 'bg-zinc-800 text-zinc-100 font-medium'
+                      : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
                   {biome.title}
@@ -749,131 +553,295 @@ export const App: React.FC = () => {
               );
             })}
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-start">
-            {/* Variable Selector + Student Note (5 cols) */}
-            <div className="xl:col-span-5 space-y-1.5">
-              <label className="block text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                {t.satelliteVarLabel} ({filteredVariables.length} {t.of13Label})
-              </label>
-              <select
-                value={variable}
-                onChange={(e) => {
-                  setVariable(e.target.value as ClimateVariableCode);
-                  setActiveScenarioId('custom');
-                }}
-                className="w-full rounded-xl bg-ctp-crust border border-ctp-surface1 px-3 py-2 text-xs text-ctp-text font-semibold focus:outline-none focus:border-ctp-blue"
-              >
-                {filteredVariables.map((v) => (
-                  <option key={v.code} value={v.code}>
-                    {v.code} —{' '}
-                    {lang === 'ua' ? v.name_ua || v.name : v.name} ({v.unit})
-                  </option>
-                ))}
-              </select>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={runAnalysis}
+            disabled={loading}
+            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-200 font-mono text-[11px] transition flex items-center gap-1.5 border border-[#24242b]"
+          >
+            <RefreshCw
+              className={`w-3 h-3 text-zinc-400 ${
+                loading ? 'animate-spin' : ''
+              }`}
+            />
+            <span>{t.reAnalyzeBtn}</span>
+          </button>
 
-              {currentVarMeta?.student_definition && (
-                <div className="rounded-xl bg-ctp-crust/80 border border-ctp-surface0 px-2.5 py-1.5 flex items-start gap-2">
-                  <BookOpen className="w-3.5 h-3.5 text-ctp-sapphire shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-ctp-subtext0 leading-relaxed">
-                    <span className="font-bold text-ctp-sapphire">
-                      {currentVarMeta.satellite_badge || currentVarMeta.source}:{' '}
-                    </span>
-                    {lang === 'en'
-                      ? currentVarMeta.description ||
-                        currentVarMeta.student_definition
-                      : currentVarMeta.student_definition}
-                  </p>
-                </div>
-              )}
+          <button
+            type="button"
+            onClick={() => setControlsExpanded((prev) => !prev)}
+            className="px-2 py-1 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono flex items-center gap-1 border border-[#24242b]"
+          >
+            {controlsExpanded ? (
+              <>
+                <ChevronUp className="w-3 h-3" />
+                <span>{t.collapseBtn}</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3 h-3" />
+                <span>{t.expandParamsBtn}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Optional Manual Coordinate Editor Drawer */}
+      {coordEditorOpen && (
+        <div className="px-3.5 py-2.5 bg-[#09090b] border-b border-[#1f1f24] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="p-2.5 rounded bg-[#0c0c0f] border border-[#1f1f24] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-mono font-medium text-sky-400 text-[11px]">
+                {t.regionACoordsTitle}
+              </span>
+              <span className="text-[10px] font-mono text-zinc-500">
+                {t.regionACoordsHint}
+              </span>
             </div>
-
-            {/* Seasonal Filter Buttons (4 cols) */}
-            <div className="xl:col-span-4 space-y-1.5">
-              <label className="block text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                {t.seasonalFilterLabel}
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={regionA.name}
+                onChange={(e) =>
+                  setRegionA({ ...regionA, name: e.target.value })
+                }
+                placeholder={t.regionANamePlaceholder}
+                className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[11px]"
+              />
+              <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
+                <span className="text-[10px] font-mono text-zinc-500">
+                  Lat:
+                </span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="-90"
+                  max="90"
+                  value={regionA.lat}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!Number.isNaN(val) && val >= -90 && val <= 90) {
+                      setRegionA({ ...regionA, lat: val });
+                      setCameraTrigger((c) => c + 1);
+                    }
+                  }}
+                  className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                />
               </label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {seasonModesList.map((sm) => {
-                  const selected = seasonMode === sm.id;
-                  return (
-                    <button
-                      key={sm.id}
-                      type="button"
-                      onClick={() => setSeasonMode(sm.id)}
-                      title={sm.hint}
-                      className={`px-2 py-1.5 rounded-lg text-[11px] font-mono transition border text-center truncate ${
-                        selected
-                          ? 'bg-ctp-yellow/20 text-ctp-yellow border-ctp-yellow font-bold shadow-[0_0_10px_rgba(249,226,175,0.18)]'
-                          : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                      }`}
-                    >
-                      {sm.shortLabel}
-                    </button>
-                  );
-                })}
-              </div>
+              <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
+                <span className="text-[10px] font-mono text-zinc-500">
+                  Lon:
+                </span>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="-180"
+                  max="180"
+                  value={regionA.lon}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!Number.isNaN(val) && val >= -180 && val <= 180) {
+                      setRegionA({ ...regionA, lon: val });
+                      setCameraTrigger((c) => c + 1);
+                    }
+                  }}
+                  className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                />
+              </label>
             </div>
+          </div>
 
-            {/* Time Window Presets + Sliders (3 cols) */}
-            <div className="xl:col-span-3 space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono text-ctp-subtext0">
-                <span className="uppercase">{t.periodLabel}</span>
-                <span className="text-ctp-blue font-bold">
-                  {startYear}–{endYear} ({endYear - startYear + 1}{' '}
-                  {t.yearsShort})
+          {mode === 'dipole' && (
+            <div className="p-2.5 rounded bg-[#0c0c0f] border border-[#1f1f24] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-medium text-orange-400 text-[11px]">
+                  {t.regionBCoordsTitle}
+                </span>
+                <span className="text-[10px] font-mono text-zinc-500">
+                  {t.regionBCoordsHint}
                 </span>
               </div>
-
-              <div className="flex flex-wrap gap-1">
-                {QUICK_YEAR_PRESETS.map((preset) => {
-                  const isCurrent =
-                    startYear === preset.start && endYear === preset.end;
-                  return (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => {
-                        setStartYear(preset.start);
-                        setEndYear(preset.end);
-                      }}
-                      title={preset.label}
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono border transition ${
-                        isCurrent
-                          ? 'bg-ctp-blue/20 text-ctp-blue border-ctp-blue/50 font-bold'
-                          : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                      }`}
-                    >
-                      {preset.start}–{String(preset.end).slice(2)}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="space-y-1 pt-0.5">
+              <div className="grid grid-cols-3 gap-2">
                 <input
-                  type="range"
-                  min={1985}
-                  max={2021}
-                  value={startYear}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setStartYear(Math.min(val, endYear - 5));
-                  }}
-                  className="w-full accent-ctp-blue cursor-pointer h-1.5"
+                  type="text"
+                  value={regionB.name}
+                  onChange={(e) =>
+                    setRegionB({ ...regionB, name: e.target.value })
+                  }
+                  placeholder={t.regionBNamePlaceholder}
+                  className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[11px]"
                 />
-                <input
-                  type="range"
-                  min={1990}
-                  max={2026}
-                  value={endYear}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setEndYear(Math.max(val, startYear + 5));
-                  }}
-                  className="w-full accent-ctp-mauve cursor-pointer h-1.5"
-                />
+                <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    Lat:
+                  </span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="-90"
+                    max="90"
+                    value={regionB.lat}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!Number.isNaN(val) && val >= -90 && val <= 90) {
+                        setRegionB({ ...regionB, lat: val });
+                        setCameraTrigger((c) => c + 1);
+                      }
+                    }}
+                    className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                  />
+                </label>
+                <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    Lon:
+                  </span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="-180"
+                    max="180"
+                    value={regionB.lon}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!Number.isNaN(val) && val >= -180 && val <= 180) {
+                        setRegionB({ ...regionB, lon: val });
+                        setCameraTrigger((c) => c + 1);
+                      }
+                    }}
+                    className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                  />
+                </label>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Flush 3-Column Swiss Instrument Grid */}
+      {controlsExpanded && (
+        <div className="grid grid-cols-1 xl:grid-cols-12 divide-y xl:divide-y-0 xl:divide-x divide-[#1f1f24]">
+          {/* Col 1: Variable Selector + Compact Definition (5 cols) */}
+          <div className="xl:col-span-5 p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              <span>
+                {t.satelliteVarLabel} ({filteredVariables.length} {t.of13Label})
+              </span>
+              <span className="text-zinc-400">
+                {currentVarMeta.satellite_badge || currentVarMeta.source}
+              </span>
+            </div>
+            <select
+              value={variable}
+              onChange={(e) => {
+                setVariable(e.target.value as ClimateVariableCode);
+                setActiveScenarioId('custom');
+              }}
+              className="w-full rounded bg-[#09090b] border border-[#24242b] px-2.5 py-1.5 text-xs text-zinc-100 font-medium focus:outline-none focus:border-zinc-500"
+            >
+              {filteredVariables.map((v) => (
+                <option key={v.code} value={v.code}>
+                  {v.code} — {lang === 'ua' ? v.name_ua || v.name : v.name} (
+                  {v.unit})
+                </option>
+              ))}
+            </select>
+            {currentVarMeta?.student_definition && (
+              <p className="text-[11px] text-zinc-500 leading-snug line-clamp-2">
+                {lang === 'en'
+                  ? currentVarMeta.description ||
+                    currentVarMeta.student_definition
+                  : currentVarMeta.student_definition}
+              </p>
+            )}
+          </div>
+
+          {/* Col 2: Seasonal Filter Segmented Grid (4 cols) */}
+          <div className="xl:col-span-4 p-3 space-y-1.5">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              {t.seasonalFilterLabel}
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {seasonModesList.map((sm) => {
+                const selected = seasonMode === sm.id;
+                return (
+                  <button
+                    key={sm.id}
+                    type="button"
+                    onClick={() => setSeasonMode(sm.id)}
+                    title={sm.hint}
+                    className={`px-2 py-1.5 rounded text-[11px] font-mono transition border text-center truncate ${
+                      selected
+                        ? 'bg-zinc-100 text-zinc-950 border-zinc-100 font-semibold'
+                        : 'bg-[#09090b] text-zinc-400 border-[#1f1f24] hover:text-zinc-200 hover:border-zinc-700'
+                    }`}
+                  >
+                    {sm.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Col 3: Time Window Presets + Sliders (3 cols) */}
+          <div className="xl:col-span-3 p-3 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+              <span className="uppercase">{t.periodLabel}</span>
+              <span className="text-zinc-200 font-medium">
+                {startYear}–{endYear} ({endYear - startYear + 1} {t.yearsShort})
+              </span>
+            </div>
+
+            <div className="grid grid-cols-4 gap-1">
+              {QUICK_YEAR_PRESETS.map((preset) => {
+                const isCurrent =
+                  startYear === preset.start && endYear === preset.end;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setStartYear(preset.start);
+                      setEndYear(preset.end);
+                    }}
+                    className={`py-0.5 rounded text-[10px] font-mono border transition text-center ${
+                      isCurrent
+                        ? 'bg-zinc-800 text-zinc-100 border-zinc-600 font-medium'
+                        : 'bg-[#09090b] text-zinc-500 border-[#1f1f24] hover:text-zinc-300'
+                    }`}
+                  >
+                    {preset.start}–{String(preset.end).slice(2)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-1 pt-0.5">
+              <input
+                type="range"
+                min={1985}
+                max={2021}
+                value={startYear}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setStartYear(Math.min(val, endYear - 5));
+                }}
+                className="w-full accent-zinc-200 cursor-pointer h-1"
+              />
+              <input
+                type="range"
+                min={1990}
+                max={2026}
+                value={endYear}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setEndYear(Math.max(val, startYear + 5));
+                }}
+                className="w-full accent-zinc-400 cursor-pointer h-1"
+              />
             </div>
           </div>
         </div>
@@ -890,26 +858,28 @@ export const App: React.FC = () => {
     const minPoint = sortedByVal[sortedByVal.length - 1];
 
     return (
-      <div className="rounded-2xl bg-ctp-mantle/90 border border-ctp-surface0 overflow-hidden shadow-xl">
-        <div className="px-5 py-3.5 bg-ctp-crust/80 border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden">
+        <div className="px-4 py-2.5 bg-[#09090b] border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Table2 className="w-4 h-4 text-ctp-sapphire" />
-            <h3 className="text-sm font-bold text-ctp-text">
+            <Table2 className="w-3.5 h-3.5 text-zinc-400" />
+            <h3 className="text-xs font-mono uppercase tracking-wider font-medium text-zinc-300">
               {t.annualTableTitle} ({seriesA.length} {t.yearsCountLabel})
             </h3>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
             {maxPoint && (
-              <span className="px-2.5 py-1 rounded-lg bg-ctp-red/15 text-ctp-red border border-ctp-red/30">
-                {t.peakLabel}: {maxPoint.year} ({maxPoint.value.toFixed(3)}{' '}
-                {currentVarMeta.unit})
+              <span className="px-2 py-0.5 rounded bg-[#141419] text-zinc-300 border border-[#24242b]">
+                {t.peakLabel}:{' '}
+                <strong className="text-rose-400">{maxPoint.year}</strong> (
+                {maxPoint.value.toFixed(3)} {currentVarMeta.unit})
               </span>
             )}
             {minPoint && (
-              <span className="px-2.5 py-1 rounded-lg bg-ctp-blue/15 text-ctp-blue border border-ctp-blue/30">
-                {t.minLabel}: {minPoint.year} ({minPoint.value.toFixed(3)}{' '}
-                {currentVarMeta.unit})
+              <span className="px-2 py-0.5 rounded bg-[#141419] text-zinc-300 border border-[#24242b]">
+                {t.minLabel}:{' '}
+                <strong className="text-sky-400">{minPoint.year}</strong> (
+                {minPoint.value.toFixed(3)} {currentVarMeta.unit})
               </span>
             )}
           </div>
@@ -917,53 +887,53 @@ export const App: React.FC = () => {
 
         <div className="max-h-72 overflow-y-auto">
           <table className="w-full text-left border-collapse text-xs font-mono">
-            <thead className="sticky top-0 bg-ctp-crust text-ctp-subtext0 border-b border-ctp-surface0">
+            <thead className="sticky top-0 bg-[#09090b] text-zinc-500 border-b border-[#1f1f24] text-[11px]">
               <tr>
-                <th className="py-2.5 px-4">{t.colYear}</th>
-                <th className="py-2.5 px-4">
+                <th className="py-2 px-4 font-medium">{t.colYear}</th>
+                <th className="py-2 px-4 font-medium">
                   {t.colRegionA} ({currentVarMeta.unit})
                 </th>
-                <th className="py-2.5 px-4">{t.colAnomalyA}</th>
-                <th className="py-2.5 px-4">{t.colSensTrendA}</th>
-                <th className="py-2.5 px-4">{t.colCiBand}</th>
+                <th className="py-2 px-4 font-medium">{t.colAnomalyA}</th>
+                <th className="py-2 px-4 font-medium">{t.colSensTrendA}</th>
+                <th className="py-2 px-4 font-medium">{t.colCiBand}</th>
                 {mode === 'dipole' && seriesB.length > 0 && (
                   <>
-                    <th className="py-2.5 px-4 text-ctp-peach">
+                    <th className="py-2 px-4 font-medium text-orange-400">
                       {t.colRegionB} ({currentVarMeta.unit})
                     </th>
-                    <th className="py-2.5 px-4 text-ctp-peach">
+                    <th className="py-2 px-4 font-medium text-orange-400">
                       {t.colAnomalyB}
                     </th>
                   </>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-ctp-surface0/50">
+            <tbody className="divide-y divide-[#18181c]">
               {[...seriesA].reverse().map((row) => {
                 const rb = seriesB.find((b) => b.year === row.year);
                 return (
                   <tr
                     key={row.year}
-                    className="hover:bg-ctp-surface0/30 transition"
+                    className="hover:bg-[#121216] transition"
                   >
-                    <td className="py-2 px-4 font-bold text-ctp-text">
+                    <td className="py-1.5 px-4 font-medium text-zinc-200">
                       {row.year}
                     </td>
-                    <td className="py-2 px-4 text-ctp-blue font-semibold">
+                    <td className="py-1.5 px-4 text-sky-400">
                       {row.value.toFixed(3)}
                     </td>
                     <td
-                      className={`py-2 px-4 font-semibold ${
-                        row.anomaly >= 0 ? 'text-ctp-red' : 'text-ctp-sapphire'
+                      className={`py-1.5 px-4 ${
+                        row.anomaly >= 0 ? 'text-rose-400' : 'text-sky-400'
                       }`}
                     >
                       {row.anomaly >= 0 ? '+' : ''}
                       {row.anomaly.toFixed(3)}
                     </td>
-                    <td className="py-2 px-4 text-ctp-green">
+                    <td className="py-1.5 px-4 text-zinc-300">
                       {row.trend_line.toFixed(3)}
                     </td>
-                    <td className="py-2 px-4 text-ctp-subtext0">
+                    <td className="py-1.5 px-4 text-zinc-500">
                       {row.ci_lower !== undefined && row.ci_upper !== undefined
                         ? `[${row.ci_lower.toFixed(2)}, ${row.ci_upper.toFixed(
                             2
@@ -972,10 +942,10 @@ export const App: React.FC = () => {
                     </td>
                     {mode === 'dipole' && seriesB.length > 0 && (
                       <>
-                        <td className="py-2 px-4 text-ctp-peach font-semibold">
+                        <td className="py-1.5 px-4 text-orange-400">
                           {rb ? rb.value.toFixed(3) : '—'}
                         </td>
-                        <td className="py-2 px-4 text-ctp-subtext1">
+                        <td className="py-1.5 px-4 text-zinc-400">
                           {rb
                             ? `${rb.anomaly >= 0 ? '+' : ''}${rb.anomaly.toFixed(
                                 3
@@ -994,7 +964,7 @@ export const App: React.FC = () => {
     );
   };
 
-  // Compute grid column spans for Split Studio based on splitLayout
+  // Compute grid column spans for Split Studio
   const globeColSpanClass =
     splitLayout === 'only-globe'
       ? 'lg:col-span-12'
@@ -1014,35 +984,30 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="min-h-screen bg-ctp-base text-ctp-text flex selection:bg-ctp-mauve selection:text-ctp-crust">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex selection:bg-zinc-200 selection:text-zinc-950">
       {/* =====================================================================
-          LEFT PERSISTENT WORKBENCH SIDEBAR (NO MORE VERTICAL SCROLLING)
+          MINIMALIST LEFT NAVIGATION RAIL (LINEAR / VERCEL GEIST STYLE)
          ===================================================================== */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        } shrink-0 bg-ctp-crust border-r border-ctp-surface0 flex flex-col justify-between sticky top-0 h-screen z-40 transition-all duration-200 select-none`}
+          sidebarCollapsed ? 'w-13' : 'w-56'
+        } shrink-0 bg-[#070709] border-r border-[#1f1f24] flex flex-col justify-between sticky top-0 h-screen z-40 transition-all duration-150 select-none`}
       >
-        {/* Top Brand + Collapse Button */}
         <div>
-          <div className="p-3.5 border-b border-ctp-surface0 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-ctp-mauve/30 via-ctp-blue/25 to-ctp-sapphire/25 border border-ctp-mauve/50 flex items-center justify-center text-ctp-mauve shrink-0 shadow-[0_0_15px_rgba(203,166,247,0.2)]">
-                <Satellite className="w-5 h-5" />
+          {/* Top Brand Header (h-11 to align with top command bar) */}
+          <div className="h-11 px-3 border-b border-[#1f1f24] flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-6 h-6 rounded bg-zinc-100 text-zinc-950 flex items-center justify-center font-mono font-bold text-[11px] shrink-0">
+                GP
               </div>
               {!sidebarCollapsed && (
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-extrabold tracking-tight text-ctp-text truncate">
-                      {t.appTitle}
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-ctp-mauve/20 text-ctp-mauve border border-ctp-mauve/40">
-                      STUDIO
-                    </span>
-                  </div>
-                  <p className="text-[10px] font-mono text-ctp-subtext0 truncate">
-                    {t.appSubtitle}
-                  </p>
+                <div className="flex items-baseline gap-1.5 min-w-0">
+                  <span className="text-xs font-semibold tracking-tight text-zinc-100 truncate">
+                    GaiaPulse
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    NASA
+                  </span>
                 </div>
               )}
             </div>
@@ -1050,23 +1015,23 @@ export const App: React.FC = () => {
             <button
               type="button"
               onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="p-1.5 rounded-lg bg-ctp-mantle hover:bg-ctp-surface0 text-ctp-subtext0 hover:text-ctp-text border border-ctp-surface0 transition shrink-0"
+              className="p-1 rounded hover:bg-[#16161b] text-zinc-500 hover:text-zinc-200 transition shrink-0"
               title={t.toggleSidebarTitle}
             >
               {sidebarCollapsed ? (
-                <PanelLeftOpen className="w-4 h-4" />
+                <PanelLeftOpen className="w-3.5 h-3.5" />
               ) : (
-                <PanelLeftClose className="w-4 h-4" />
+                <PanelLeftClose className="w-3.5 h-3.5" />
               )}
             </button>
           </div>
 
-          {/* Primary Workspace Views Navigation */}
-          <div className="p-2.5 space-y-1">
+          {/* Primary Workspace Views */}
+          <div className="p-2 space-y-0.5">
             {!sidebarCollapsed && (
-              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
+              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
                 <span>{t.workspacesHeader}</span>
-                <span>{t.keysHint}</span>
+                <span>1–6</span>
               </div>
             )}
 
@@ -1078,49 +1043,29 @@ export const App: React.FC = () => {
                   type="button"
                   onClick={() => setActiveView(item.id)}
                   title={`${item.label} — ${item.subtitle} (${item.shortcut})`}
-                  className={`w-full rounded-xl px-2.5 py-2 transition flex items-center justify-between gap-2 border ${
+                  className={`w-full rounded px-2.5 py-1.5 transition flex items-center justify-between gap-2 text-xs ${
                     isSelected
-                      ? 'bg-ctp-surface0/90 text-ctp-text border-ctp-mauve/60 shadow-[0_0_16px_rgba(203,166,247,0.16)]'
-                      : 'bg-transparent text-ctp-subtext0 border-transparent hover:bg-ctp-mantle hover:text-ctp-text hover:border-ctp-surface0'
+                      ? 'bg-[#16161b] text-zinc-100 font-medium border-l-2 border-zinc-100'
+                      : 'text-zinc-400 hover:bg-[#111115] hover:text-zinc-200'
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={`shrink-0 ${
-                        isSelected ? 'text-ctp-mauve' : item.accent
+                        isSelected ? 'text-zinc-100' : 'text-zinc-500'
                       }`}
                     >
                       {item.icon}
                     </span>
                     {!sidebarCollapsed && (
-                      <div className="text-left min-w-0">
-                        <div className="text-xs font-bold leading-tight truncate">
-                          {item.label}
-                        </div>
-                        <div className="text-[10px] text-ctp-subtext0 truncate">
-                          {item.subtitle}
-                        </div>
-                      </div>
+                      <span className="truncate">{item.label}</span>
                     )}
                   </div>
 
                   {!sidebarCollapsed && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      {item.badge && (
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
-                            isSelected
-                              ? 'bg-ctp-mauve/25 text-ctp-mauve'
-                              : 'bg-ctp-mantle text-ctp-subtext0 border border-ctp-surface0'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                      <span className="text-[9px] font-mono text-ctp-overlay0 px-1">
-                        {item.shortcut}
-                      </span>
-                    </div>
+                    <span className="text-[10px] font-mono text-zinc-600">
+                      {item.shortcut}
+                    </span>
                   )}
                 </button>
               );
@@ -1129,14 +1074,11 @@ export const App: React.FC = () => {
 
           {/* Quick 1-Click Curated Scenarios in Sidebar */}
           {!sidebarCollapsed && (
-            <div className="px-2.5 pt-2 border-t border-ctp-surface0/70">
-              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
+            <div className="px-2 pt-2 mt-1 border-t border-[#1f1f24]">
+              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
                 <span>{t.quickCasesHeader}</span>
-                <span className="text-ctp-mauve font-bold">
-                  {t.oneClickBadge}
-                </span>
               </div>
-              <div className="space-y-1 max-h-56 overflow-y-auto pr-0.5">
+              <div className="space-y-0.5 max-h-60 overflow-y-auto pr-0.5">
                 {scenarios.slice(0, 7).map((sc) => {
                   const isCurrent = activeScenarioId === sc.id;
                   return (
@@ -1144,14 +1086,14 @@ export const App: React.FC = () => {
                       key={sc.id}
                       type="button"
                       onClick={() => applyScenario(sc)}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition flex items-center justify-between gap-1.5 border ${
+                      className={`w-full text-left px-2 py-1.5 rounded text-[11px] transition flex items-center justify-between gap-1.5 ${
                         isCurrent
-                          ? 'bg-ctp-blue/15 text-ctp-blue border-ctp-blue/50 font-bold'
-                          : 'bg-ctp-mantle/60 text-ctp-subtext0 border-ctp-surface0/60 hover:text-ctp-text hover:border-ctp-surface1'
+                          ? 'bg-[#16161b] text-zinc-100 font-medium'
+                          : 'text-zinc-500 hover:bg-[#111115] hover:text-zinc-300'
                       }`}
                     >
                       <span className="truncate">{sc.title}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-ctp-crust text-ctp-lavender shrink-0">
+                      <span className="text-[9px] font-mono text-zinc-500 shrink-0">
                         {sc.variable}
                       </span>
                     </button>
@@ -1162,42 +1104,28 @@ export const App: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Live Telemetry Mini Card in Sidebar */}
-        <div className="p-2.5 border-t border-ctp-surface0 bg-ctp-mantle/60">
+        {/* Bottom Telemetry Sparkline */}
+        <div className="p-2.5 border-t border-[#1f1f24] bg-[#09090b]">
           {!sidebarCollapsed ? (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="text-ctp-subtext0 flex items-center gap-1">
-                  <Activity className="w-3 h-3 text-ctp-green" />
-                  <span>{t.liveTelemetry}</span>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
+                    }`}
+                  />
+                  <span>{eonetIsLive ? t.eonetLive : t.eonetCache}</span>
                 </span>
-                <span
-                  className={`px-1.5 py-0.2 rounded font-bold ${
-                    eonetIsLive
-                      ? 'bg-ctp-green/15 text-ctp-green'
-                      : 'bg-ctp-yellow/15 text-ctp-yellow'
-                  }`}
-                >
-                  {eonetIsLive ? t.eonetLive : t.eonetCache}
-                </span>
+                {statsA && (
+                  <span className="text-zinc-300">
+                    p={statsA.p_value.toFixed(4)}
+                  </span>
+                )}
               </div>
 
               {statsA && (
-                <div className="rounded-xl bg-ctp-crust p-2 border border-ctp-surface0 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-mono">
-                    <span className="text-ctp-subtext0 truncate">
-                      {regionA.name}
-                    </span>
-                    <span
-                      className={`font-bold ${
-                        statsA.is_significant
-                          ? 'text-ctp-green'
-                          : 'text-ctp-yellow'
-                      }`}
-                    >
-                      p={statsA.p_value.toFixed(4)}
-                    </span>
-                  </div>
+                <div className="pt-0.5">
                   <MiniSparkline
                     values={seriesA.map((d) => d.value)}
                     trendValues={seriesA.map((d) => d.trend_line)}
@@ -1206,171 +1134,155 @@ export const App: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2">
-              <button
-                type="button"
-                onClick={handleOpenPhenomenaDrawer}
-                title={t.openPhenomenaTitle}
-                className="p-2 rounded-xl bg-ctp-mauve/20 text-ctp-mauve hover:bg-ctp-mauve/30 transition"
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
+            <div className="flex flex-col items-center">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
+                }`}
+              />
             </div>
           )}
         </div>
       </aside>
 
       {/* =====================================================================
-          MAIN WORKBENCH STAGE (TOP TELEMETRY HEADER + ACTIVE VIEWPORT)
+          MAIN WORKBENCH STAGE
          ===================================================================== */}
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        {/* TOP LIVE TELEMETRY HUD HEADER */}
-        <header className="sticky top-0 z-30 border-b border-ctp-surface0 bg-ctp-mantle/90 backdrop-blur-md px-4 py-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Left: Active Case / Coordinates & Live Statistical Verdict Pill */}
-            <div className="flex flex-wrap items-center gap-2 min-w-0">
-              <span className="px-2.5 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-xs font-mono font-bold text-ctp-blue flex items-center gap-1.5 truncate max-w-xs">
-                <MapPin className="w-3.5 h-3.5 text-ctp-blue shrink-0" />
-                <span className="truncate">{regionA.name}</span>
-              </span>
+        {/* SLIM 44px TOP COMMAND BAR */}
+        <header className="sticky top-0 z-30 h-11 border-b border-[#1f1f24] bg-[#09090b]/90 backdrop-blur-md px-4 flex items-center justify-between gap-3">
+          {/* Left: Breadcrumb Telemetry Readout */}
+          <div className="flex items-center gap-2 min-w-0 text-xs font-mono">
+            <span className="text-zinc-200 font-medium truncate max-w-[200px]">
+              {regionA.name}
+            </span>
 
-              {mode === 'dipole' && (
-                <span className="px-2.5 py-1 rounded-lg bg-ctp-crust border border-ctp-peach/40 text-xs font-mono font-bold text-ctp-peach flex items-center gap-1.5 truncate max-w-xs">
-                  <GitCompareArrows className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{regionB.name}</span>
+            {mode === 'dipole' && (
+              <>
+                <span className="text-zinc-600">↔</span>
+                <span className="text-orange-400 font-medium truncate max-w-[180px]">
+                  {regionB.name}
                 </span>
-              )}
+              </>
+            )}
 
-              <span className="px-2 py-1 rounded-lg bg-ctp-surface0/70 text-[11px] font-mono text-ctp-lavender font-semibold">
-                {variable} • {seasonMode} • {startYear}–{endYear}
-              </span>
+            <span className="text-zinc-700">/</span>
 
-              {/* Instant Verdict Badge in Header */}
-              {statsA && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeView === 'split') setInspectorTab('verdict');
-                    else setActiveView('analytics');
-                  }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold border transition flex items-center gap-1.5 ${
-                    statsA.is_significant
-                      ? 'bg-ctp-green/15 text-ctp-green border-ctp-green/50 hover:bg-ctp-green/25'
-                      : 'bg-ctp-yellow/15 text-ctp-yellow border-ctp-yellow/50 hover:bg-ctp-yellow/25'
+            <span className="text-zinc-400 hidden md:inline">
+              {variable} · {seasonMode} · {startYear}–{endYear}
+            </span>
+
+            {/* Minimalist Statistical Verdict Indicator */}
+            {statsA && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeView === 'split') setInspectorTab('verdict');
+                  else setActiveView('analytics');
+                }}
+                className="ml-1 px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-[11px] font-mono transition flex items-center gap-1.5"
+                title={t.verdictTooltip}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    statsA.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
                   }`}
-                  title={t.verdictTooltip}
+                />
+                <span className="text-zinc-200">
+                  p = {statsA.p_value.toFixed(4)}
+                </span>
+                <span className="text-zinc-600">·</span>
+                <span
+                  className={
+                    statsA.change_per_decade >= 0
+                      ? 'text-sky-400'
+                      : 'text-orange-400'
+                  }
                 >
-                  {statsA.is_significant ? (
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  ) : (
-                    <Clock className="w-3.5 h-3.5" />
-                  )}
-                  <span>
-                    {statsA.is_significant
-                      ? `${t.significantBadge} (p = ${statsA.p_value.toFixed(
-                          4
-                        )})`
-                      : `${t.emergingBadge} (p = ${statsA.p_value.toFixed(3)}${
-                          statsA.time_to_significance?.additional_years_needed
-                            ? ` • +${statsA.time_to_significance.additional_years_needed} ${t.yrsNeeded}`
-                            : ''
-                        })`}
-                  </span>
-                  {statsA.change_per_decade >= 0 ? (
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  ) : (
-                    <ArrowDownRight className="w-3.5 h-3.5" />
-                  )}
-                  <span>
-                    {statsA.change_per_decade >= 0 ? '+' : ''}
-                    {statsA.change_per_decade.toFixed(3)}
-                    {t.perDecadeShort}
-                  </span>
-                </button>
-              )}
+                  {statsA.change_per_decade >= 0 ? '+' : ''}
+                  {statsA.change_per_decade.toFixed(3)}
+                  {t.perDecadeShort}
+                </span>
+              </button>
+            )}
+          </div>
+
+          {/* Right: Language Switcher (UA / EN) + Clean Monochrome Actions */}
+          <div className="flex items-center gap-1.5">
+            {/* UA / EN Switcher */}
+            <div
+              className="inline-flex items-center rounded bg-[#121216] p-0.5 border border-[#1f1f24]"
+              title={t.languageToggleTitle}
+            >
+              <button
+                type="button"
+                onClick={() => setLang('ua')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
+                  lang === 'ua'
+                    ? 'bg-zinc-100 text-zinc-950'
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                UA
+              </button>
+              <button
+                type="button"
+                onClick={() => setLang('en')}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
+                  lang === 'en'
+                    ? 'bg-zinc-100 text-zinc-950'
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                EN
+              </button>
             </div>
 
-            {/* Right: Language Switcher (UA / EN) + Quick Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* UA | EN Language Switcher Pill */}
-              <div
-                className="inline-flex items-center rounded-xl bg-ctp-crust p-0.5 border border-ctp-surface1"
-                title={t.languageToggleTitle}
-              >
-                <span className="pl-2 pr-1 text-ctp-mauve flex items-center">
-                  <Languages className="w-3.5 h-3.5" />
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setLang('ua')}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition ${
-                    lang === 'ua'
-                      ? 'bg-ctp-mauve text-ctp-crust shadow-sm'
-                      : 'text-ctp-subtext0 hover:text-ctp-text'
-                  }`}
-                >
-                  UA
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang('en')}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition ${
-                    lang === 'en'
-                      ? 'bg-ctp-blue text-ctp-crust shadow-sm'
-                      : 'text-ctp-subtext0 hover:text-ctp-text'
-                  }`}
-                >
-                  EN
-                </button>
-              </div>
+            <button
+              type="button"
+              onClick={handleOpenPhenomenaDrawer}
+              className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs transition flex items-center gap-1.5"
+            >
+              <span>{t.fetchScenariosBtn}</span>
+              <span className="px-1 py-0.2 rounded bg-zinc-950/15 text-zinc-950 font-mono text-[10px]">
+                {scenarios.length}
+              </span>
+            </button>
 
+            <button
+              type="button"
+              onClick={() => setCsvModalOpen(true)}
+              className="px-2.5 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-200 font-mono text-xs transition flex items-center gap-1.5 border border-[#24242b]"
+            >
+              <FileSpreadsheet className="w-3 h-3 text-zinc-400" />
+              <span>{t.importCsvBtn}</span>
+            </button>
+
+            <div className="hidden sm:flex items-center gap-1">
               <button
                 type="button"
-                onClick={handleOpenPhenomenaDrawer}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-ctp-mauve via-ctp-blue to-ctp-sapphire hover:brightness-110 text-ctp-crust font-extrabold text-xs transition flex items-center gap-1.5 shadow-[0_0_18px_rgba(203,166,247,0.3)]"
+                onClick={() => exportData('csv')}
+                disabled={!analysisResult}
+                className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 border border-[#1f1f24]"
               >
-                <Sparkles className="w-3.5 h-3.5 fill-current" />
-                <span>{t.fetchScenariosBtn}</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-ctp-crust/25 text-ctp-crust font-mono text-[10px]">
-                  {scenarios.length}
-                </span>
+                <Download className="w-3 h-3" />
+                <span>CSV</span>
               </button>
-
               <button
                 type="button"
-                onClick={() => setCsvModalOpen(true)}
-                className="px-2.5 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-sapphire font-mono font-bold text-xs transition flex items-center gap-1.5 border border-ctp-sapphire/40"
+                onClick={() => exportData('json')}
+                disabled={!analysisResult}
+                className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 border border-[#1f1f24]"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>{t.importCsvBtn}</span>
+                <Download className="w-3 h-3" />
+                <span>JSON</span>
               </button>
-
-              <div className="hidden sm:flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => exportData('csv')}
-                  disabled={!analysisResult}
-                  className="px-2.5 py-1.5 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 text-[11px] font-mono transition flex items-center gap-1 border border-ctp-surface0"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>CSV</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => exportData('json')}
-                  disabled={!analysisResult}
-                  className="px-2.5 py-1.5 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 text-[11px] font-mono transition flex items-center gap-1 border border-ctp-surface0"
-                >
-                  <Download className="w-3 h-3" />
-                  <span>JSON</span>
-                </button>
-              </div>
             </div>
           </div>
         </header>
 
-        {/* Contextual Deep Links Bar (Giovanni, AppEEARS, KNMI, GES DISC, NOAA CDO, CSA) */}
-        <div className="px-4">
+        {/* Slim Contextual Reference Bar */}
+        <div className="px-4 bg-[#09090b]">
           <ContextDeepLinksBar
             variable={variable}
             regionA={regionA}
@@ -1382,7 +1294,7 @@ export const App: React.FC = () => {
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="mx-4 mt-3 rounded-xl bg-ctp-red/15 border border-ctp-red p-3 text-xs text-ctp-red">
+          <div className="mx-4 mt-3 rounded bg-rose-500/10 border border-rose-500/30 p-2.5 text-xs text-rose-400 font-mono">
             {errorMsg}
           </div>
         )}
@@ -1390,78 +1302,78 @@ export const App: React.FC = () => {
         {/* =================================================================
             ACTIVE WORKSPACE VIEWPORT
            ================================================================= */}
-        <main className="flex-1 p-4 space-y-4">
+        <main className="flex-1 p-4 space-y-3">
           {/* ---------------------------------------------------------------
-              VIEW 1: SPLIT STUDIO (WITH COLLAPSIBLE GLOBE & CHART ZONES)
+              VIEW 1: SPLIT STUDIO
              --------------------------------------------------------------- */}
           {activeView === 'split' && (
             <div className="space-y-3">
               {renderMissionControlPanel()}
 
-              {/* Quick Split Proportion & Zone Collapse Toolbar */}
-              <div className="rounded-xl bg-ctp-mantle/90 border border-ctp-surface0 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0 font-bold flex items-center gap-1.5 mr-1">
-                    <Columns className="w-3.5 h-3.5 text-ctp-mauve" />
-                    <span>{t.layoutToolbarLabel}</span>
+              {/* Minimalist Split Proportion & Zone Collapse Strip */}
+              <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3 py-1.5 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mr-1.5">
+                    {t.layoutToolbarLabel}
                   </span>
 
-                  <button
-                    type="button"
-                    onClick={() => setSplitLayout('balanced')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
-                      splitLayout === 'balanced'
-                        ? 'bg-ctp-mauve/20 text-ctp-mauve border-ctp-mauve/60'
-                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                    }`}
-                  >
-                    {t.layoutBalanced}
-                  </button>
+                  <div className="inline-flex rounded bg-[#09090b] p-0.5 border border-[#1f1f24]">
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('balanced')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+                        splitLayout === 'balanced'
+                          ? 'bg-zinc-100 text-zinc-950 font-medium'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {t.layoutBalanced}
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSplitLayout('wide-globe')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
-                      splitLayout === 'wide-globe'
-                        ? 'bg-ctp-blue/20 text-ctp-blue border-ctp-blue/60'
-                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                    }`}
-                  >
-                    {t.layoutWideGlobe}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('wide-globe')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+                        splitLayout === 'wide-globe'
+                          ? 'bg-zinc-100 text-zinc-950 font-medium'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {t.layoutWideGlobe}
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSplitLayout('wide-chart')}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
-                      splitLayout === 'wide-chart'
-                        ? 'bg-ctp-green/20 text-ctp-green border-ctp-green/60'
-                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                    }`}
-                  >
-                    {t.layoutWideChart}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('wide-chart')}
+                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+                        splitLayout === 'wide-chart'
+                          ? 'bg-zinc-100 text-zinc-950 font-medium'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {t.layoutWideChart}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Direct 1-Click Collapse/Expand Buttons for Globe and Chart */}
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {splitLayout === 'only-chart' ? (
                     <button
                       type="button"
                       onClick={() => setSplitLayout('balanced')}
-                      className="px-3 py-1 rounded-lg bg-ctp-blue/20 hover:bg-ctp-blue/30 text-ctp-blue border border-ctp-blue/50 text-xs font-mono font-bold transition flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 text-[11px] font-mono font-medium transition flex items-center gap-1.5"
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-3 h-3" />
                       <span>{t.expandGlobeBtn}</span>
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setSplitLayout('only-chart')}
-                      className="px-3 py-1 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 hover:text-ctp-text border border-ctp-surface0 text-xs font-mono font-semibold transition flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded bg-[#09090b] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-[#1f1f24] text-[11px] font-mono transition flex items-center gap-1.5"
                       title={t.maximizeChartTitle}
                     >
-                      <EyeOff className="w-3.5 h-3.5 text-ctp-blue" />
+                      <EyeOff className="w-3 h-3" />
                       <span>{t.collapseGlobeBtn}</span>
                     </button>
                   )}
@@ -1470,114 +1382,102 @@ export const App: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSplitLayout('balanced')}
-                      className="px-3 py-1 rounded-lg bg-ctp-green/20 hover:bg-ctp-green/30 text-ctp-green border border-ctp-green/50 text-xs font-mono font-bold transition flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 text-[11px] font-mono font-medium transition flex items-center gap-1.5"
                     >
-                      <Eye className="w-3.5 h-3.5" />
+                      <Eye className="w-3 h-3" />
                       <span>{t.expandChartBtn}</span>
                     </button>
                   ) : (
                     <button
                       type="button"
                       onClick={() => setSplitLayout('only-globe')}
-                      className="px-3 py-1 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 hover:text-ctp-text border border-ctp-surface0 text-xs font-mono font-semibold transition flex items-center gap-1.5"
+                      className="px-2.5 py-1 rounded bg-[#09090b] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-[#1f1f24] text-[11px] font-mono transition flex items-center gap-1.5"
                       title={t.maximizeGlobeTitle}
                     >
-                      <EyeOff className="w-3.5 h-3.5 text-ctp-green" />
+                      <EyeOff className="w-3 h-3" />
                       <span>{t.collapseChartBtn}</span>
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Collapsed Globe Restore Banner (shown when Globe is collapsed so Chart is full-width) */}
+              {/* Collapsed Globe Restore Strip */}
               {splitLayout === 'only-chart' && (
-                <div className="rounded-xl bg-ctp-crust/90 border border-ctp-blue/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext1">
-                    <Globe2 className="w-4 h-4 text-ctp-blue shrink-0" />
+                <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <Globe2 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     <span>{t.globeCollapsedBanner}</span>
-                    <span className="text-ctp-blue font-bold">
-                      ({regionA.name}: {regionA.lat.toFixed(2)}°,{' '}
-                      {regionA.lon.toFixed(2)}°)
+                    <span className="text-zinc-200">
+                      [{regionA.name}: {regionA.lat.toFixed(2)}°,{' '}
+                      {regionA.lon.toFixed(2)}°]
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setSplitLayout('balanced')}
-                    className="px-3 py-1 rounded-lg bg-ctp-blue text-ctp-crust font-mono font-bold text-xs transition flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 font-mono font-medium text-[11px] transition flex items-center gap-1"
                   >
-                    <Maximize2 className="w-3.5 h-3.5" />
+                    <Maximize2 className="w-3 h-3" />
                     <span>{t.expandGlobeBtn}</span>
                   </button>
                 </div>
               )}
 
-              {/* Collapsed Chart Restore Banner (shown when Chart is collapsed so Globe is full-width) */}
+              {/* Collapsed Chart Restore Strip */}
               {splitLayout === 'only-globe' && (
-                <div className="rounded-xl bg-ctp-crust/90 border border-ctp-green/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext1">
-                    <BarChart3 className="w-4 h-4 text-ctp-green shrink-0" />
+                <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <div className="flex items-center gap-2 text-zinc-400">
+                    <BarChart3 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                     <span>{t.chartCollapsedBanner}</span>
                     {statsA && (
-                      <span className="text-ctp-green font-bold">
-                        (p = {statsA.p_value.toFixed(4)} •{' '}
+                      <span className="text-zinc-200">
+                        [p = {statsA.p_value.toFixed(4)} ·{' '}
                         {statsA.change_per_decade >= 0 ? '+' : ''}
                         {statsA.change_per_decade.toFixed(3)}{' '}
                         {currentVarMeta.unit}
-                        {t.perDecadeShort})
+                        {t.perDecadeShort}]
                       </span>
                     )}
                   </div>
                   <button
                     type="button"
                     onClick={() => setSplitLayout('balanced')}
-                    className="px-3 py-1 rounded-lg bg-ctp-green text-ctp-crust font-mono font-bold text-xs transition flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 font-mono font-medium text-[11px] transition flex items-center gap-1"
                   >
-                    <Maximize2 className="w-3.5 h-3.5" />
+                    <Maximize2 className="w-3 h-3" />
                     <span>{t.expandChartBtn}</span>
                   </button>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                {/* LEFT ZONE: Interactive 2D/3D Map + Active Scenario Banner */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+                {/* LEFT ZONE: Interactive 2D/3D Map + Active Scenario Note */}
                 {splitLayout !== 'only-chart' && (
                   <div className={`${globeColSpanClass} space-y-3`}>
-                    <div className="rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl overflow-hidden">
-                      {/* Globe / Map Zone Header */}
-                      <div className="px-3.5 py-2.5 bg-ctp-crust border-b border-ctp-surface0 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-ctp-text">
-                          <Globe2 className="w-4 h-4 text-ctp-blue" />
-                          <span>{t.globeZoneTitle}</span>
-                        </div>
-                      </div>
+                    <EarthMap
+                      mode={mode}
+                      variable={variable}
+                      regionA={regionA}
+                      regionB={regionB}
+                      activeTarget={activeTarget}
+                      cameraTrigger={cameraTrigger}
+                      onMapClickRegion={handleMapClickRegion}
+                      onToggleActiveTarget={setActiveTarget}
+                    />
 
-                      <div className="p-2">
-                        <EarthMap
-                          mode={mode}
-                          variable={variable}
-                          regionA={regionA}
-                          regionB={regionB}
-                          activeTarget={activeTarget}
-                          cameraTrigger={cameraTrigger}
-                          onMapClickRegion={handleMapClickRegion}
-                          onToggleActiveTarget={setActiveTarget}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Compact Scenario Context Strip under Map */}
+                    {/* Minimalist Active Case Footnote under Map */}
                     {activeScenario && (
-                      <div className="rounded-2xl bg-ctp-mantle/90 border border-ctp-mauve/40 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-bold">
+                            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#16161b] text-zinc-300 border border-[#24242b]">
                               {t.activeCaseBadge}
                             </span>
-                            <span className="text-xs font-bold text-ctp-text">
+                            <span className="text-xs font-semibold text-zinc-100">
                               {activeScenario.title}
                             </span>
                           </div>
-                          <p className="text-xs text-ctp-subtext0 leading-relaxed">
+                          <p className="text-xs text-zinc-400 leading-relaxed">
                             {activeScenario.scientific_summary}
                           </p>
                         </div>
@@ -1589,7 +1489,7 @@ export const App: React.FC = () => {
                               onClick={() =>
                                 setSeasonMode(activeScenario.season_mode)
                               }
-                              className="px-3 py-1.5 rounded-xl bg-ctp-yellow/20 hover:bg-ctp-yellow/30 text-ctp-yellow border border-ctp-yellow/50 text-xs font-mono font-bold shrink-0 transition"
+                              className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-medium shrink-0 transition"
                             >
                               {t.switchToSeasonBtn} {activeScenario.season_mode}
                             </button>
@@ -1599,21 +1499,21 @@ export const App: React.FC = () => {
                   </div>
                 )}
 
-                {/* RIGHT ZONE: Live Detective Inspector Dock (Charts, Verdict, Guide) */}
+                {/* RIGHT ZONE: Live Detective Inspector Dock */}
                 {splitLayout !== 'only-globe' && (
                   <div
-                    className={`${chartColSpanClass} rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl flex flex-col overflow-hidden`}
+                    className={`${chartColSpanClass} rounded-md bg-[#0c0c0f] border border-[#1f1f24] flex flex-col overflow-hidden`}
                   >
-                    {/* Inspector Dock Tab Header */}
-                    <div className="px-3.5 py-2 bg-ctp-crust border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-1">
+                    {/* Minimalist Segmented Inspector Header */}
+                    <div className="px-3.5 py-2 bg-[#09090b] border-b border-[#1f1f24] flex items-center justify-between gap-2">
+                      <div className="inline-flex items-center p-0.5 rounded bg-[#121216] border border-[#1f1f24]">
                         <button
                           type="button"
                           onClick={() => setInspectorTab('charts')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
                             inspectorTab === 'charts'
-                              ? 'bg-ctp-blue text-ctp-crust shadow-sm'
-                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                              ? 'bg-zinc-100 text-zinc-950'
+                              : 'text-zinc-400 hover:text-zinc-200'
                           }`}
                         >
                           <BarChart3 className="w-3.5 h-3.5" />
@@ -1623,10 +1523,10 @@ export const App: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setInspectorTab('verdict')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
                             inspectorTab === 'verdict'
-                              ? 'bg-ctp-mauve text-ctp-crust shadow-sm'
-                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                              ? 'bg-zinc-100 text-zinc-950'
+                              : 'text-zinc-400 hover:text-zinc-200'
                           }`}
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1636,16 +1536,25 @@ export const App: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setInspectorTab('guide')}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
                             inspectorTab === 'guide'
-                              ? 'bg-ctp-sapphire text-ctp-crust shadow-sm'
-                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                              ? 'bg-zinc-100 text-zinc-950'
+                              : 'text-zinc-400 hover:text-zinc-200'
                           }`}
                         >
                           <Compass className="w-3.5 h-3.5" />
                           <span>{t.tabGuide}</span>
                         </button>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setActiveView('analytics')}
+                        className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 border border-[#1f1f24] text-[10px] font-mono text-zinc-400 hover:text-zinc-200 transition"
+                        title={t.fullLabTitle}
+                      >
+                        {t.fullLabBtn} ↗
+                      </button>
                     </div>
 
                     {/* Inspector Body */}
@@ -1657,8 +1566,8 @@ export const App: React.FC = () => {
                       } space-y-3`}
                     >
                       {!analysisResult ? (
-                        <div className="py-16 flex flex-col items-center justify-center gap-2 text-ctp-subtext0">
-                          <RefreshCw className="w-6 h-6 animate-spin text-ctp-blue" />
+                        <div className="py-16 flex flex-col items-center justify-center gap-2 text-zinc-500">
+                          <RefreshCw className="w-5 h-5 animate-spin text-zinc-400" />
                           <span className="text-xs font-mono">
                             {t.calculatingMsg}
                           </span>
@@ -1668,49 +1577,49 @@ export const App: React.FC = () => {
                           {/* TAB 1: CHARTS & TREND */}
                           {inspectorTab === 'charts' && (
                             <div className="space-y-3">
-                              {/* Compact Quick Metrics Strip */}
+                              {/* Swiss 3-Cell Telemetry Strip */}
                               {statsA && (
-                                <div className="grid grid-cols-3 gap-2">
-                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                <div className="grid grid-cols-3 divide-x divide-[#1f1f24] rounded bg-[#09090b] border border-[#1f1f24]">
+                                  <div className="p-2.5">
+                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
                                       p-value (MK)
                                     </div>
                                     <div
-                                      className={`text-sm font-mono font-extrabold ${
+                                      className={`text-sm font-mono font-semibold mt-0.5 ${
                                         statsA.is_significant
-                                          ? 'text-ctp-green'
-                                          : 'text-ctp-yellow'
+                                          ? 'text-emerald-400'
+                                          : 'text-amber-400'
                                       }`}
                                     >
                                       {statsA.p_value < 0.0001
                                         ? '< 0.0001'
                                         : statsA.p_value.toFixed(4)}
                                     </div>
-                                    <div className="text-[10px] text-ctp-subtext0">
+                                    <div className="text-[10px] text-zinc-500">
                                       {statsA.is_significant
                                         ? t.provenTrend
                                         : t.noiseVariability}
                                     </div>
                                   </div>
 
-                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                  <div className="p-2.5">
+                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
                                       Sen&apos;s Slope / Dec
                                     </div>
-                                    <div className="text-sm font-mono font-extrabold text-ctp-blue">
+                                    <div className="text-sm font-mono font-semibold text-zinc-100 mt-0.5">
                                       {statsA.change_per_decade >= 0 ? '+' : ''}
                                       {statsA.change_per_decade.toFixed(3)}
                                     </div>
-                                    <div className="text-[10px] text-ctp-subtext0 truncate">
+                                    <div className="text-[10px] text-zinc-500 truncate">
                                       {currentVarMeta.unit} ({t.per10Yrs})
                                     </div>
                                   </div>
 
-                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                  <div className="p-2.5">
+                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
                                       {t.timeToSigLabel}
                                     </div>
-                                    <div className="text-sm font-mono font-extrabold text-ctp-mauve">
+                                    <div className="text-sm font-mono font-semibold text-zinc-200 mt-0.5">
                                       {statsA.is_significant
                                         ? t.alreadyReached
                                         : `+${
@@ -1718,14 +1627,13 @@ export const App: React.FC = () => {
                                               ?.additional_years_needed ?? '—'
                                           } ${t.yrsNeeded}`}
                                     </div>
-                                    <div className="text-[10px] text-ctp-subtext0">
+                                    <div className="text-[10px] text-zinc-500">
                                       SNR: {statsA.signal_to_noise_ratio}
                                     </div>
                                   </div>
                                 </div>
                               )}
 
-                              {/* Interactive Plotly Chart */}
                               <TrendCharts
                                 mode={mode}
                                 seasonMode={seasonMode}
@@ -1744,23 +1652,23 @@ export const App: React.FC = () => {
                             <div className="space-y-3">
                               {mode === 'dipole' &&
                                 analysisResult.dipole_comparison && (
-                                  <div className="rounded-xl bg-ctp-crust border border-ctp-mauve/50 p-3 space-y-1">
+                                  <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-1">
                                     <div className="flex items-center justify-between text-xs font-mono">
-                                      <span className="text-ctp-mauve font-bold">
+                                      <span className="text-zinc-200 font-medium">
                                         Dipole Correlation (r ={' '}
                                         {analysisResult.dipole_comparison.pearson_r.toFixed(
                                           3
                                         )}
                                         )
                                       </span>
-                                      <span className="text-ctp-subtext0">
+                                      <span className="text-zinc-500">
                                         p ={' '}
                                         {analysisResult.dipole_comparison.correlation_p_value.toFixed(
                                           4
                                         )}
                                       </span>
                                     </div>
-                                    <p className="text-xs text-ctp-subtext1">
+                                    <p className="text-xs text-zinc-400">
                                       {analysisResult.dipole_comparison.verdict}
                                     </p>
                                   </div>
@@ -1789,24 +1697,24 @@ export const App: React.FC = () => {
                           {inspectorTab === 'guide' && (
                             <div className="space-y-3">
                               {activeScenario ? (
-                                <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2.5">
-                                  <div className="flex items-center justify-between">
-                                    <span className="px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-mono text-[10px] font-bold">
+                                <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 space-y-2.5">
+                                  <div className="flex items-center justify-between text-[11px] font-mono">
+                                    <span className="text-zinc-300">
                                       {activeScenario.satellite_badge}
                                     </span>
-                                    <span className="text-[11px] font-mono text-ctp-yellow">
-                                      Recommended: {activeScenario.season_mode}
+                                    <span className="text-amber-400">
+                                      Season: {activeScenario.season_mode}
                                     </span>
                                   </div>
-                                  <h3 className="text-sm font-bold text-ctp-text">
+                                  <h3 className="text-sm font-semibold text-zinc-100">
                                     {activeScenario.title}
                                   </h3>
-                                  <p className="text-xs text-ctp-subtext1 leading-relaxed">
+                                  <p className="text-xs text-zinc-400 leading-relaxed">
                                     {activeScenario.scientific_summary}
                                   </p>
                                   {activeScenario.student_note && (
-                                    <div className="rounded-lg bg-ctp-mantle p-2.5 border border-ctp-surface0 text-xs text-ctp-subtext0">
-                                      <span className="font-bold text-ctp-mauve">
+                                    <div className="border-l-2 border-zinc-700 pl-3 py-0.5 text-xs text-zinc-400">
+                                      <span className="font-medium text-zinc-200">
                                         {t.studentTipLabel}
                                       </span>
                                       {activeScenario.student_note}
@@ -1814,15 +1722,14 @@ export const App: React.FC = () => {
                                   )}
                                 </div>
                               ) : (
-                                <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 text-xs text-ctp-subtext0">
+                                <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 text-xs text-zinc-400">
                                   {t.customPointHint}
                                 </div>
                               )}
 
-                              <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2 text-xs text-ctp-subtext0">
-                                <div className="font-bold text-ctp-text flex items-center gap-1.5">
-                                  <Info className="w-4 h-4 text-ctp-blue" />
-                                  <span>{t.howToUseTitle}</span>
+                              <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 space-y-2 text-xs text-zinc-400">
+                                <div className="font-medium text-zinc-200">
+                                  {t.howToUseTitle}
                                 </div>
                                 <ul className="space-y-1.5 list-disc list-inside">
                                   <li>{t.howToUseTip1}</li>
@@ -1860,42 +1767,49 @@ export const App: React.FC = () => {
                   onToggleActiveTarget={setActiveTarget}
                 />
 
-                {/* Floating Glassmorphic Telemetry HUD on the Map */}
+                {/* Minimalist Floating Telemetry HUD on the Map */}
                 {statsA && (
-                  <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-5 lg:right-5 z-[500] lg:w-80 rounded-2xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 p-3.5 shadow-2xl space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-ctp-mauve font-bold">
+                  <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-4 lg:right-4 z-[500] lg:w-72 rounded-md bg-[#09090b]/92 backdrop-blur-md border border-[#24242b] p-3 shadow-2xl space-y-2">
+                    <div className="flex items-center justify-between gap-2 text-[10px] font-mono">
+                      <span className="uppercase tracking-wider text-zinc-500">
                         {t.liveMapHudTitle}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        className={`inline-flex items-center gap-1 ${
                           statsA.is_significant
-                            ? 'bg-ctp-green/20 text-ctp-green'
-                            : 'bg-ctp-yellow/20 text-ctp-yellow'
+                            ? 'text-emerald-400'
+                            : 'text-amber-400'
                         }`}
                       >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            statsA.is_significant
+                              ? 'bg-emerald-400'
+                              : 'bg-amber-400'
+                          }`}
+                        />
                         {statsA.is_significant ? 'p < 0.05 SIG' : 'NOISE'}
                       </span>
                     </div>
 
-                    <div className="text-xs font-bold text-ctp-text truncate">
+                    <div className="text-xs font-medium text-zinc-100 truncate">
                       {regionA.name}
                     </div>
 
                     <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-mono space-y-0.5">
-                        <div className="text-ctp-subtext0">
+                      <div className="text-[11px] font-mono space-y-0.5 text-zinc-400">
+                        <div>
                           Slope:{' '}
-                          <span className="text-ctp-blue font-bold">
+                          <span className="text-zinc-100 font-medium">
                             {statsA.change_per_decade >= 0 ? '+' : ''}
                             {statsA.change_per_decade.toFixed(3)}{' '}
                             {currentVarMeta.unit}
                             {t.perDecadeShort}
                           </span>
                         </div>
-                        <div className="text-ctp-subtext0">
+                        <div>
                           p-value:{' '}
-                          <span className="text-ctp-text font-bold">
+                          <span className="text-zinc-100 font-medium">
                             {statsA.p_value.toFixed(4)}
                           </span>
                         </div>
@@ -1906,18 +1820,18 @@ export const App: React.FC = () => {
                       />
                     </div>
 
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-1.5 pt-1">
                       <button
                         type="button"
                         onClick={() => setActiveView('split')}
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-ctp-blue text-ctp-crust font-bold text-[11px] transition text-center"
+                        className="flex-1 py-1 px-2 rounded bg-zinc-100 text-zinc-950 font-medium text-[11px] transition text-center"
                       >
                         {t.splitViewBtn}
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveView('analytics')}
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text font-semibold text-[11px] transition text-center"
+                        className="flex-1 py-1 px-2 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-200 border border-[#24242b] text-[11px] transition text-center"
                       >
                         {t.fullChartsBtn}
                       </button>
@@ -1932,51 +1846,45 @@ export const App: React.FC = () => {
               VIEW 3: STATISTICAL LAB (FULL CHARTS + VERDICTS + DATA TABLE)
              --------------------------------------------------------------- */}
           {activeView === 'analytics' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {renderMissionControlPanel()}
 
               {analysisResult && (
                 <>
                   {/* Dipole Correlation Banner */}
                   {mode === 'dipole' && analysisResult.dipole_comparison && (
-                    <div
-                      className={`rounded-2xl p-4 border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                        analysisResult.dipole_comparison.is_opposite_trend
-                          ? 'bg-ctp-mauve/10 border-ctp-mauve'
-                          : 'bg-ctp-surface0/40 border-ctp-surface1'
-                      }`}
-                    >
+                    <div className="rounded-md p-3.5 bg-[#0c0c0f] border border-[#1f1f24] flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <GitCompareArrows className="w-5 h-5 text-ctp-mauve" />
-                          <span className="text-xs font-mono uppercase tracking-wider text-ctp-mauve font-bold">
+                          <GitCompareArrows className="w-4 h-4 text-zinc-400" />
+                          <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-medium">
                             Dipole Teleconnection Verdict
                           </span>
                           {analysisResult.dipole_comparison.badge && (
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-ctp-mauve/20 text-ctp-mauve border border-ctp-mauve/40">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#141419] text-zinc-300 border border-[#24242b]">
                               {analysisResult.dipole_comparison.badge}
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-ctp-text font-medium">
+                        <p className="text-xs text-zinc-300">
                           {analysisResult.dipole_comparison.verdict}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0 font-mono text-xs">
-                        <div className="px-3 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0">
-                          <span className="text-ctp-subtext0 block text-[10px]">
+                      <div className="flex items-center divide-x divide-[#1f1f24] rounded bg-[#09090b] border border-[#1f1f24] shrink-0 font-mono text-xs">
+                        <div className="px-3 py-1.5">
+                          <span className="text-zinc-500 block text-[10px]">
                             Pearson r
                           </span>
-                          <span className="text-sm font-bold text-ctp-text">
+                          <span className="text-sm font-semibold text-zinc-100">
                             {analysisResult.dipole_comparison.pearson_r}
                           </span>
                         </div>
-                        <div className="px-3 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0">
-                          <span className="text-ctp-subtext0 block text-[10px]">
+                        <div className="px-3 py-1.5">
+                          <span className="text-zinc-500 block text-[10px]">
                             Corr p-value
                           </span>
-                          <span className="text-sm font-bold text-ctp-text">
+                          <span className="text-sm font-semibold text-zinc-100">
                             {
                               analysisResult.dipole_comparison
                                 .correlation_p_value
@@ -1993,7 +1901,7 @@ export const App: React.FC = () => {
                       mode === 'dipole' && analysisResult.region_b_analysis
                         ? 'lg:grid-cols-2'
                         : 'lg:grid-cols-1'
-                    } gap-4`}
+                    } gap-3`}
                   >
                     <VerdictCard
                       regionKey="A"
@@ -2027,7 +1935,7 @@ export const App: React.FC = () => {
           )}
 
           {/* ---------------------------------------------------------------
-              VIEW 4: PHENOMENA & LIVE NASA EONET ARCHIVE (EMBEDDED VIEW)
+              VIEW 4: PHENOMENA & LIVE NASA EONET ARCHIVE
              --------------------------------------------------------------- */}
           {activeView === 'phenomena' && (
             <PhenomenaDrawer
@@ -2053,10 +1961,10 @@ export const App: React.FC = () => {
           )}
 
           {/* ---------------------------------------------------------------
-              VIEW 5: CSV TIME-SERIES LAB (GIOVANNI / APPEEARS / NOAA CDO)
+              VIEW 5: CSV TIME-SERIES LAB
              --------------------------------------------------------------- */}
           {activeView === 'csv' && (
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 items-start">
               <div className="xl:col-span-6">
                 <CsvImporterModal
                   isOpen={true}
@@ -2068,7 +1976,7 @@ export const App: React.FC = () => {
                 />
               </div>
 
-              <div className="xl:col-span-6 space-y-4">
+              <div className="xl:col-span-6 space-y-3">
                 {analysisResult && (
                   <>
                     <VerdictCard
@@ -2090,7 +1998,7 @@ export const App: React.FC = () => {
           )}
 
           {/* ---------------------------------------------------------------
-              VIEW 6: 13 OFFICIAL RESOURCES HUB (NASA / CSA / KNMI / NOAA)
+              VIEW 6: 13 OFFICIAL RESOURCES HUB
              --------------------------------------------------------------- */}
           {activeView === 'resources' && (
             <OfficialResourcesHub
@@ -2104,26 +2012,26 @@ export const App: React.FC = () => {
           )}
         </main>
 
-        {/* Compact Footer with Official NASA Disclaimer */}
-        <footer className="mt-auto border-t border-ctp-surface0 bg-ctp-crust/90 px-4 py-3 text-[11px] text-ctp-subtext0">
+        {/* Minimalist Footer */}
+        <footer className="mt-auto border-t border-[#1f1f24] bg-[#070709] px-4 py-2.5 text-[11px] text-zinc-500">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2 font-mono">
-              <span className="text-ctp-mauve font-bold">
-                Earth System Trend Detective (Workbench UI)
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
+              <span className="text-zinc-300 font-medium">
+                GaiaPulse // Earth System Trend Detective
               </span>
-              <span>•</span>
+              <span>·</span>
               <span>
-                Mann-Kendall • Sen&apos;s Slope • Student&apos;s t-test • STL
+                Mann-Kendall · Sen&apos;s Slope · Student&apos;s t-test · STL
               </span>
             </div>
-            <p className="text-[10px] text-ctp-subtext0 max-w-2xl leading-relaxed">
+            <p className="text-[10px] text-zinc-600 max-w-2xl leading-relaxed">
               {NASA_OFFICIAL_DISCLAIMER}
             </p>
           </div>
         </footer>
       </div>
 
-      {/* Modal Overlays (accessible from any view via Header buttons) */}
+      {/* Modal Overlays */}
       <PhenomenaDrawer
         isOpen={phenomenaDrawerOpen}
         isModal={true}

@@ -8,12 +8,10 @@ import {
 } from 'lucide-react';
 import {
   AnalysisMode,
-  ClimateVariableCode,
   RegionAnalysis,
   SeasonMode,
   VariableMetadata,
 } from '../types/climate';
-import { ContextDeepLinksBar } from './OfficialResourcesHub';
 import { useLanguage } from '../i18n/translations';
 
 interface TrendChartsProps {
@@ -29,13 +27,13 @@ type ChartTab = 'timeseries' | 'stripes' | 'decomposition';
 type DipoleViewMode = 'anomalies' | 'absolute';
 
 const CLIMATE_STRIPES_COLORSCALE: Array<[number, string]> = [
-  [0.0, '#1e3a8a'],
-  [0.2, '#3b82f6'],
-  [0.38, '#89b4fa'],
-  [0.5, '#313244'],
-  [0.65, '#f9e2af'],
-  [0.82, '#fab387'],
-  [1.0, '#f38ba8'],
+  [0.0, '#0c4a6e'],
+  [0.25, '#0284c7'],
+  [0.42, '#38bdf8'],
+  [0.5, '#18181b'],
+  [0.65, '#f59e0b'],
+  [0.82, '#f97316'],
+  [1.0, '#ef4444'],
 ];
 
 export const TrendCharts: React.FC<TrendChartsProps> = ({
@@ -44,7 +42,6 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   variableMeta,
   regionA,
   regionB,
-  onOpenResourcesModal,
 }) => {
   const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
@@ -96,64 +93,64 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   const targetDecompAnalysis =
     hasRegionB && decompRegion === 'B' && regionB ? regionB : regionA;
   const targetDecompColor =
-    hasRegionB && decompRegion === 'B' ? '#fab387' : '#89b4fa';
+    hasRegionB && decompRegion === 'B' ? '#f97316' : '#38bdf8';
 
   return (
-    <div className="rounded-2xl bg-ctp-mantle border border-ctp-surface0 p-5 shadow-xl">
-      {/* Top Bar: Chart Tabs & Contextual Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-ctp-surface0">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden">
+      {/* Top Bar: Minimalist Segmented Chart Tabs */}
+      <div className="px-4 py-2.5 bg-[#09090b] border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex items-center p-0.5 rounded bg-[#121216] border border-[#1f1f24]">
           <button
             type="button"
             onClick={() => setActiveTab('timeseries')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
               activeTab === 'timeseries'
-                ? 'bg-ctp-blue/20 text-ctp-blue border-ctp-blue/55 shadow-[0_0_15px_rgba(137,180,250,0.16)]'
-                : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                ? 'bg-zinc-100 text-zinc-950'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <LineChart className="w-4 h-4" />
+            <LineChart className="w-3.5 h-3.5" />
             <span>{t.chartTabTimeSeries}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('stripes')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
               activeTab === 'stripes'
-                ? 'bg-ctp-mauve/20 text-ctp-mauve border-ctp-mauve/55 shadow-[0_0_15px_rgba(203,166,247,0.16)]'
-                : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                ? 'bg-zinc-100 text-zinc-950'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Flame className="w-4 h-4" />
+            <Flame className="w-3.5 h-3.5" />
             <span>{t.chartTabStripes}</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('decomposition')}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition border ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
               activeTab === 'decomposition'
-                ? 'bg-ctp-teal/20 text-ctp-teal border-ctp-teal/55 shadow-[0_0_15px_rgba(148,226,213,0.16)]'
-                : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                ? 'bg-zinc-100 text-zinc-950'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Layers className="w-4 h-4" />
+            <Layers className="w-3.5 h-3.5" />
             <span>{t.chartTabDecomp}</span>
           </button>
         </div>
 
         {/* Contextual Switcher for Dipole Comparison or Decomposition Region */}
         {activeTab === 'timeseries' && hasRegionB && (
-          <div className="flex items-center gap-1.5 bg-ctp-crust p-1 rounded-xl border border-ctp-surface0 text-xs">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-ctp-subtext0 ml-2 mr-1" />
+          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-xs">
+            <SlidersHorizontal className="w-3 h-3 text-zinc-500 ml-2 mr-1" />
             <button
               type="button"
               onClick={() => setDipoleView('anomalies')}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
                 dipoleView === 'anomalies'
-                  ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/45 font-semibold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-800 text-zinc-100 font-medium'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {t.chartAnomaliesToggle}
@@ -161,10 +158,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             <button
               type="button"
               onClick={() => setDipoleView('absolute')}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
                 dipoleView === 'absolute'
-                  ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/45 font-semibold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-800 text-zinc-100 font-medium'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {t.chartAbsoluteToggle} ({variableMeta.unit})
@@ -173,14 +170,14 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         )}
 
         {activeTab === 'decomposition' && hasRegionB && (
-          <div className="flex items-center gap-1.5 bg-ctp-crust p-1 rounded-xl border border-ctp-surface0 text-xs">
+          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-xs">
             <button
               type="button"
               onClick={() => setDecompRegion('A')}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
                 decompRegion === 'A'
-                  ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/45 font-semibold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-sky-500/15 text-sky-400 font-medium'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {t.chartRegionABtn}: {regionA.location.name}
@@ -188,10 +185,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             <button
               type="button"
               onClick={() => setDecompRegion('B')}
-              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
                 decompRegion === 'B'
-                  ? 'bg-ctp-peach/20 text-ctp-peach border border-ctp-peach/45 font-semibold'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-orange-500/15 text-orange-400 font-medium'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
               {t.chartRegionBBtn}: {regionB?.location.name}
@@ -200,319 +197,133 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         )}
       </div>
 
-      {/* TAB 1: TIME SERIES + SEN'S TREND + 95% CONFIDENCE INTERVAL */}
-      {activeTab === 'timeseries' && (
-        <div className="w-full space-y-2">
-          {/* Dedicated HTML Title Bar to prevent collision with Plotly legend */}
-          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-            <h4 className="text-xs sm:text-sm font-mono font-bold text-ctp-text">
-              {useAnomalyAxis
-                ? `${t.chartTitleDivergence} — ${
-                    lang === 'en'
-                      ? variableMeta.name
-                      : variableMeta.name_ua || variableMeta.name
-                  } (${variableMeta.unit})`
-                : `${t.chartTitleDynamics} — ${
-                    lang === 'en'
-                      ? variableMeta.name
-                      : variableMeta.name_ua || variableMeta.name
-                  } (${variableMeta.unit})`}
-            </h4>
-            <div className="flex items-center gap-2 text-[11px] font-mono">
-              <span className="px-2 py-0.5 rounded bg-ctp-yellow/15 text-ctp-yellow border border-ctp-yellow/35 font-semibold">
-                {t.verdictSeasonLabel}: {seasonMode}
-              </span>
-              <span className="text-ctp-subtext0">
-                95% Student-t Confidence Band
-              </span>
-            </div>
-          </div>
-
-          <Plot
-            data={[
-              // Region A 95% Confidence Band
-              {
-                x: [...yearsA, ...[...yearsA].reverse()],
-                y: [...yCiUpperA, ...[...yCiLowerA].reverse()],
-                fill: 'toself',
-                fillcolor: 'rgba(137, 180, 250, 0.14)',
-                line: { color: 'transparent' },
-                name: '95% Довірчий інтервал (A)',
-                hoverinfo: 'skip',
-                showlegend: true,
-                type: 'scatter',
-              },
-              // Region A Observations
-              {
-                x: yearsA,
-                y: ySeriesA,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: `${regionA.location.name} (Спостереження)`,
-                line: {
-                  color: 'rgba(137, 180, 250, 0.5)',
-                  width: 1.6,
-                },
-                marker: {
-                  color: '#89b4fa',
-                  size: 5.5,
-                  opacity: 0.85,
-                },
-              },
-              // Region A LOESS Smoothed Trend (only in Single mode)
-              ...(!hasRegionB
-                ? [
-                    {
-                      x: yearsA,
-                      y: loessA,
-                      type: 'scatter' as const,
-                      mode: 'lines' as const,
-                      name: `${regionA.location.name} (LOESS згладжений)`,
-                      line: {
-                        color: '#cba6f7',
-                        width: 2,
-                        dash: 'dot' as const,
-                      },
-                    },
-                  ]
-                : []),
-              // Region A Sen's Robust Trend Line
-              {
-                x: yearsA,
-                y: yTrendA,
-                type: 'scatter',
-                mode: 'lines',
-                name: `Тренд Сена A (${regionA.statistics.change_per_decade >= 0 ? '+' : ''}${regionA.statistics.change_per_decade.toFixed(3)} ${variableMeta.unit}/дек)`,
-                line: {
-                  color: '#89b4fa',
-                  width: 3.2,
-                },
-              },
-              // Region B Traces if Dipole Comparison mode is active
-              ...(hasRegionB && regionB
-                ? [
-                    {
-                      x: [...yearsB, ...[...yearsB].reverse()],
-                      y: [...yCiUpperB, ...[...yCiLowerB].reverse()],
-                      fill: 'toself' as const,
-                      fillcolor: 'rgba(250, 179, 135, 0.14)',
-                      line: { color: 'transparent' },
-                      name: '95% Довірчий інтервал (B)',
-                      hoverinfo: 'skip' as const,
-                      showlegend: true,
-                      type: 'scatter' as const,
-                    },
-                    {
-                      x: yearsB,
-                      y: ySeriesB,
-                      type: 'scatter' as const,
-                      mode: 'lines+markers' as const,
-                      name: `${regionB.location.name} (Спостереження)`,
-                      line: {
-                        color: 'rgba(250, 179, 135, 0.5)',
-                        width: 1.6,
-                      },
-                      marker: {
-                        color: '#fab387',
-                        size: 5.5,
-                        opacity: 0.85,
-                      },
-                    },
-                    {
-                      x: yearsB,
-                      y: yTrendB,
-                      type: 'scatter' as const,
-                      mode: 'lines' as const,
-                      name: `Тренд Сена B (${regionB.statistics.change_per_decade >= 0 ? '+' : ''}${regionB.statistics.change_per_decade.toFixed(3)} ${variableMeta.unit}/дек)`,
-                      line: {
-                        color: '#fab387',
-                        width: 3.2,
-                      },
-                    },
-                  ]
-                : []),
-            ]}
-            layout={{
-              autosize: true,
-              height: 420,
-              paper_bgcolor: 'rgba(0,0,0,0)',
-              plot_bgcolor: 'rgba(17,17,27,0.75)',
-              font: {
-                family: 'JetBrains Mono, Inter, sans-serif',
-                color: '#cdd6f4',
-                size: 11,
-              },
-              margin: { l: 62, r: 24, t: 54, b: 48 },
-              xaxis: {
-                title: { text: `Рік спостереження (Season: ${seasonMode})` },
-                gridcolor: 'rgba(69, 71, 90, 0.4)',
-                zerolinecolor: 'rgba(88, 91, 112, 0.6)',
-              },
-              yaxis: {
-                title: {
-                  text: useAnomalyAxis
-                    ? `Аномалія (${variableMeta.unit})`
-                    : `${variableMeta.name} (${variableMeta.unit})`,
-                },
-                gridcolor: 'rgba(69, 71, 90, 0.4)',
-                zeroline: true,
-                zerolinecolor: 'rgba(166, 173, 200, 0.4)',
-                zerolinewidth: 1.4,
-              },
-              legend: {
-                orientation: 'h',
-                yanchor: 'bottom',
-                y: 1.03,
-                xanchor: 'left',
-                x: 0,
-                bgcolor: 'rgba(24, 24, 37, 0.85)',
-              },
-              hovermode: 'x unified',
-            }}
-            config={{
-              responsive: true,
-              displaylogo: false,
-            }}
-            style={{ width: '100%' }}
-          />
-        </div>
-      )}
-
-      {/* TAB 2: CLIMATE STRIPES & ANOMALY HEATMAP */}
-      {activeTab === 'stripes' && (
-        <div className="space-y-5">
-          <div>
-            <div className="flex items-center justify-between mb-1.5 px-1">
-              <span className="text-xs font-mono font-bold text-ctp-blue">
-                CLIMATE STRIPES — REGION A: {regionA.location.name}
-              </span>
-              <span className="text-[11px] font-mono text-ctp-subtext0">
-                Базова норма: {regionA.statistics.baseline_mean?.toFixed(3)}{' '}
-                {variableMeta.unit}
-              </span>
-            </div>
-            <Plot
-              data={[
-                {
-                  x: yearsA,
-                  y: ['Аномалія (A)'],
-                  z: [anomaliesA],
-                  type: 'heatmap',
-                  colorscale: CLIMATE_STRIPES_COLORSCALE,
-                  zmid: 0,
-                  showscale: true,
-                  colorbar: {
-                    title: { text: variableMeta.unit, side: 'right' },
-                    thickness: 12,
-                    len: 0.9,
-                  },
-                  hovertemplate:
-                    'Рік: %{x}<br>Аномалія: %{z:+.3f} ' +
-                    variableMeta.unit +
-                    '<extra></extra>',
-                },
-              ]}
-              layout={{
-                autosize: true,
-                height: 155,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(17,17,27,0.85)',
-                font: {
-                  family: 'JetBrains Mono, monospace',
-                  color: '#cdd6f4',
-                  size: 11,
-                },
-                margin: { l: 95, r: 65, t: 10, b: 32 },
-                xaxis: { gridcolor: 'transparent' },
-                yaxis: { gridcolor: 'transparent' },
-              }}
-              config={{ responsive: true, displaylogo: false }}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          {hasRegionB && regionB && (
-            <div>
-              <div className="flex items-center justify-between mb-1.5 px-1">
-                <span className="text-xs font-mono font-bold text-ctp-peach">
-                  CLIMATE STRIPES — REGION B: {regionB.location.name}
+      <div className="p-4">
+        {/* TAB 1: TIME SERIES + SEN'S TREND + 95% CONFIDENCE INTERVAL */}
+        {activeTab === 'timeseries' && (
+          <div className="w-full space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+              <h4 className="text-xs font-mono font-medium text-zinc-200">
+                {useAnomalyAxis
+                  ? `${t.chartTitleDivergence} — ${
+                      lang === 'en'
+                        ? variableMeta.name
+                        : variableMeta.name_ua || variableMeta.name
+                    } (${variableMeta.unit})`
+                  : `${t.chartTitleDynamics} — ${
+                      lang === 'en'
+                        ? variableMeta.name
+                        : variableMeta.name_ua || variableMeta.name
+                    } (${variableMeta.unit})`}
+              </h4>
+              <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
+                <span>
+                  {t.verdictSeasonLabel}:{' '}
+                  <strong className="text-zinc-300">{seasonMode}</strong>
                 </span>
-                <span className="text-[11px] font-mono text-ctp-subtext0">
-                  Базова норма: {regionB.statistics.baseline_mean?.toFixed(3)}{' '}
-                  {variableMeta.unit}
-                </span>
+                <span>·</span>
+                <span>95% Student-t CI</span>
               </div>
-              <Plot
-                data={[
-                  {
-                    x: yearsB,
-                    y: ['Аномалія (B)'],
-                    z: [anomaliesB],
-                    type: 'heatmap',
-                    colorscale: CLIMATE_STRIPES_COLORSCALE,
-                    zmid: 0,
-                    showscale: true,
-                    colorbar: {
-                      title: { text: variableMeta.unit, side: 'right' },
-                      thickness: 12,
-                      len: 0.9,
-                    },
-                    hovertemplate:
-                      'Рік: %{x}<br>Аномалія: %{z:+.3f} ' +
-                      variableMeta.unit +
-                      '<extra></extra>',
-                  },
-                ]}
-                layout={{
-                  autosize: true,
-                  height: 155,
-                  paper_bgcolor: 'rgba(0,0,0,0)',
-                  plot_bgcolor: 'rgba(17,17,27,0.85)',
-                  font: {
-                    family: 'JetBrains Mono, monospace',
-                    color: '#cdd6f4',
-                    size: 11,
-                  },
-                  margin: { l: 95, r: 65, t: 10, b: 32 },
-                  xaxis: { gridcolor: 'transparent' },
-                  yaxis: { gridcolor: 'transparent' },
-                }}
-                config={{ responsive: true, displaylogo: false }}
-                style={{ width: '100%' }}
-              />
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <div className="px-1 text-xs font-mono font-bold text-ctp-text">
-              Щорічні кліматичні аномалії відносно базової норми ({variableMeta.unit})
-            </div>
             <Plot
               data={[
+                // Region A 95% Confidence Band
+                {
+                  x: [...yearsA, ...[...yearsA].reverse()],
+                  y: [...yCiUpperA, ...[...yCiLowerA].reverse()],
+                  fill: 'toself',
+                  fillcolor: 'rgba(56, 189, 248, 0.10)',
+                  line: { color: 'transparent' },
+                  name: `${t.chartCiBandLegend} (A)`,
+                  hoverinfo: 'skip',
+                  showlegend: true,
+                  type: 'scatter',
+                },
+                // Region A Observations
                 {
                   x: yearsA,
-                  y: anomaliesA,
-                  type: 'bar',
-                  name: `Аномалія А (${regionA.location.name})`,
+                  y: ySeriesA,
+                  type: 'scatter',
+                  mode: 'lines+markers',
+                  name: `${regionA.location.name} (${t.chartObsLegend})`,
+                  line: {
+                    color: 'rgba(56, 189, 248, 0.45)',
+                    width: 1.5,
+                  },
                   marker: {
-                    color: anomaliesA.map((val) =>
-                      val >= 0 ? '#89b4fa' : '#74c7ec'
-                    ),
-                    opacity: 0.88,
+                    color: '#38bdf8',
+                    size: 5,
+                    opacity: 0.85,
                   },
                 },
+                // Region A LOESS Smoothed Trend (only in Single mode)
+                ...(!hasRegionB
+                  ? [
+                      {
+                        x: yearsA,
+                        y: loessA,
+                        type: 'scatter' as const,
+                        mode: 'lines' as const,
+                        name: `${regionA.location.name} (${t.chartLoessLegend})`,
+                        line: {
+                          color: '#a1a1aa',
+                          width: 1.75,
+                          dash: 'dot' as const,
+                        },
+                      },
+                    ]
+                  : []),
+                // Region A Sen's Robust Trend Line
+                {
+                  x: yearsA,
+                  y: yTrendA,
+                  type: 'scatter',
+                  mode: 'lines',
+                  name: `${t.chartSensLegend} A (${regionA.statistics.change_per_decade >= 0 ? '+' : ''}${regionA.statistics.change_per_decade.toFixed(3)} ${variableMeta.unit}/dec)`,
+                  line: {
+                    color: '#38bdf8',
+                    width: 2.5,
+                  },
+                },
+                // Region B Traces if Dipole Comparison mode is active
                 ...(hasRegionB && regionB
                   ? [
                       {
+                        x: [...yearsB, ...[...yearsB].reverse()],
+                        y: [...yCiUpperB, ...[...yCiLowerB].reverse()],
+                        fill: 'toself' as const,
+                        fillcolor: 'rgba(249, 115, 22, 0.10)',
+                        line: { color: 'transparent' },
+                        name: `${t.chartCiBandLegend} (B)`,
+                        hoverinfo: 'skip' as const,
+                        showlegend: true,
+                        type: 'scatter' as const,
+                      },
+                      {
                         x: yearsB,
-                        y: anomaliesB,
-                        type: 'bar' as const,
-                        name: `Аномалія Б (${regionB.location.name})`,
+                        y: ySeriesB,
+                        type: 'scatter' as const,
+                        mode: 'lines+markers' as const,
+                        name: `${regionB.location.name} (${t.chartObsLegend})`,
+                        line: {
+                          color: 'rgba(249, 115, 22, 0.45)',
+                          width: 1.5,
+                        },
                         marker: {
-                          color: anomaliesB.map((val) =>
-                            val >= 0 ? '#fab387' : '#f38ba8'
-                          ),
+                          color: '#f97316',
+                          size: 5,
                           opacity: 0.85,
+                        },
+                      },
+                      {
+                        x: yearsB,
+                        y: yTrendB,
+                        type: 'scatter' as const,
+                        mode: 'lines' as const,
+                        name: `${t.chartSensLegend} B (${regionB.statistics.change_per_decade >= 0 ? '+' : ''}${regionB.statistics.change_per_decade.toFixed(3)} ${variableMeta.unit}/dec)`,
+                        line: {
+                          color: '#f97316',
+                          width: 2.5,
                         },
                       },
                     ]
@@ -520,211 +331,389 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               ]}
               layout={{
                 autosize: true,
-                height: 250,
-                barmode: 'group',
+                height: 410,
                 paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(17,17,27,0.75)',
+                plot_bgcolor: '#09090b',
                 font: {
-                  family: 'JetBrains Mono, monospace',
-                  color: '#cdd6f4',
+                  family: 'JetBrains Mono, Inter, sans-serif',
+                  color: '#a1a1aa',
                   size: 11,
                 },
-                margin: { l: 58, r: 24, t: 38, b: 38 },
-                xaxis: { gridcolor: 'rgba(69, 71, 90, 0.35)' },
-                yaxis: {
-                  title: { text: `Δ (${variableMeta.unit})` },
-                  gridcolor: 'rgba(69, 71, 90, 0.35)',
-                  zeroline: true,
-                  zerolinecolor: '#a6adc8',
-                },
-                legend: {
-                  orientation: 'h',
-                  yanchor: 'bottom',
-                  y: 1.03,
-                  xanchor: 'left',
-                  x: 0,
-                },
-              }}
-              config={{ responsive: true, displaylogo: false }}
-              style={{ width: '100%' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: STL DECOMPOSITION (TREND, SEASONALITY, RESIDUAL NOISE) */}
-      {activeTab === 'decomposition' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2">
-            <div className="text-xs font-mono font-bold text-ctp-text px-1">
-              Чистий тренд STL та Залишковий шум — {targetDecompAnalysis.location.name}
-            </div>
-            <Plot
-              data={[
-                {
-                  x: targetDecompAnalysis.time_series.map((d) => d.year),
-                  y: targetDecompAnalysis.time_series.map((d) => d.value),
-                  type: 'scatter',
-                  mode: 'lines',
-                  name: 'Спостережуваний ряд',
-                  line: { color: 'rgba(166, 173, 200, 0.45)', width: 1.5 },
-                },
-                {
-                  x: targetDecompAnalysis.time_series.map((d) => d.year),
-                  y: targetDecompAnalysis.time_series.map(
-                    (d) => d.loess_trend ?? d.trend_line
-                  ),
-                  type: 'scatter',
-                  mode: 'lines',
-                  name: 'STL Тренд (LOESS)',
-                  line: { color: targetDecompColor, width: 3 },
-                },
-                {
-                  x: targetDecompAnalysis.time_series.map((d) => d.year),
-                  y: targetDecompAnalysis.time_series.map(
-                    (d) => d.residual ?? 0
-                  ),
-                  type: 'bar',
-                  name: 'Шум (Residuals)',
-                  marker: { color: '#6c7086', opacity: 0.6 },
-                  yaxis: 'y2',
-                },
-              ]}
-              layout={{
-                autosize: true,
-                height: 350,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(17,17,27,0.75)',
-                font: {
-                  family: 'JetBrains Mono, monospace',
-                  color: '#cdd6f4',
-                  size: 11,
-                },
-                margin: { l: 54, r: 54, t: 42, b: 42 },
+                margin: { l: 58, r: 20, t: 48, b: 44 },
                 xaxis: {
-                  title: { text: 'Рік' },
-                  gridcolor: 'rgba(69, 71, 90, 0.35)',
-                },
-                yaxis: {
-                  title: { text: `Тренд (${variableMeta.unit})` },
-                  gridcolor: 'rgba(69, 71, 90, 0.35)',
-                },
-                yaxis2: {
-                  title: { text: 'Шум (Residuals)' },
-                  overlaying: 'y',
-                  side: 'right',
-                  showgrid: false,
-                  zeroline: true,
-                  zerolinecolor: 'rgba(166,173,200,0.25)',
-                },
-                legend: {
-                  orientation: 'h',
-                  yanchor: 'bottom',
-                  y: 1.03,
-                  xanchor: 'left',
-                  x: 0,
-                },
-                hovermode: 'x unified',
-              }}
-              config={{ responsive: true, displaylogo: false }}
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2">
-            <div className="text-xs font-mono font-bold text-ctp-text px-1">
-              Сезонна хвиля (12-місячний кліматичний профіль) —{' '}
-              {targetDecompAnalysis.location.name}
-            </div>
-            <Plot
-              data={[
-                {
-                  x:
-                    targetDecompAnalysis.stl_decomposition?.annual_seasonal_cycle?.map(
-                      (c) => c.month_name
-                    ) || [
-                      'Січ',
-                      'Лют',
-                      'Бер',
-                      'Кві',
-                      'Тра',
-                      'Чер',
-                      'Лип',
-                      'Сер',
-                      'Вер',
-                      'Жов',
-                      'Лис',
-                      'Гру',
-                    ],
-                  y:
-                    targetDecompAnalysis.stl_decomposition?.annual_seasonal_cycle?.map(
-                      (c) => c.seasonal_effect
-                    ) || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                  type: 'scatter',
-                  mode: 'lines+markers',
-                  fill: 'tozeroy',
-                  fillcolor:
-                    decompRegion === 'B' && hasRegionB
-                      ? 'rgba(250, 179, 135, 0.16)'
-                      : 'rgba(137, 180, 250, 0.16)',
-                  name: 'Сезонна гармоніка (STL Seasonal)',
-                  line: {
-                    color: targetDecompColor,
-                    width: 3,
-                    shape: 'spline',
-                  },
-                  marker: {
-                    color: targetDecompColor,
-                    size: 7,
-                  },
-                },
-              ]}
-              layout={{
-                autosize: true,
-                height: 350,
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: 'rgba(17,17,27,0.75)',
-                font: {
-                  family: 'JetBrains Mono, monospace',
-                  color: '#cdd6f4',
-                  size: 11,
-                },
-                margin: { l: 54, r: 24, t: 42, b: 42 },
-                xaxis: {
-                  title: { text: 'Місяць року' },
-                  gridcolor: 'rgba(69, 71, 90, 0.35)',
+                  title: { text: `Year (${seasonMode})` },
+                  gridcolor: '#18181c',
+                  zerolinecolor: '#27272a',
                 },
                 yaxis: {
                   title: {
-                    text: `Сезонний внесок (${variableMeta.unit})`,
+                    text: useAnomalyAxis
+                      ? `Anomaly (${variableMeta.unit})`
+                      : `${variableMeta.code} (${variableMeta.unit})`,
                   },
-                  gridcolor: 'rgba(69, 71, 90, 0.35)',
+                  gridcolor: '#18181c',
                   zeroline: true,
-                  zerolinecolor: 'rgba(166,173,200,0.4)',
+                  zerolinecolor: '#27272a',
+                  zerolinewidth: 1,
                 },
                 legend: {
                   orientation: 'h',
                   yanchor: 'bottom',
-                  y: 1.03,
+                  y: 1.02,
                   xanchor: 'left',
                   x: 0,
+                  bgcolor: 'rgba(9, 9, 11, 0.85)',
                 },
+                hovermode: 'x unified',
               }}
-              config={{ responsive: true, displaylogo: false }}
+              config={{
+                responsive: true,
+                displaylogo: false,
+              }}
               style={{ width: '100%' }}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Contextual Deep-Links Bar under Charts ("Verify in NASA Giovanni", "Explore in AppEEARS", "Check in KNMI Climate Explorer") */}
-      <ContextDeepLinksBar
-        variable={variableMeta.code as ClimateVariableCode}
-        regionA={regionA.location}
-        startYear={yearsA[0] || 1985}
-        endYear={yearsA[yearsA.length - 1] || 2026}
-        onOpenResourcesModal={onOpenResourcesModal || (() => {})}
-      />
+        {/* TAB 2: CLIMATE STRIPES & ANOMALY HEATMAP */}
+        {activeTab === 'stripes' && (
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center justify-between mb-1.5 px-1">
+                <span className="text-xs font-mono font-medium text-sky-400">
+                  CLIMATE STRIPES — REGION A: {regionA.location.name}
+                </span>
+                <span className="text-[11px] font-mono text-zinc-500">
+                  Baseline: {regionA.statistics.baseline_mean?.toFixed(3)}{' '}
+                  {variableMeta.unit}
+                </span>
+              </div>
+              <Plot
+                data={[
+                  {
+                    x: yearsA,
+                    y: ['Anomaly (A)'],
+                    z: [anomaliesA],
+                    type: 'heatmap',
+                    colorscale: CLIMATE_STRIPES_COLORSCALE,
+                    zmid: 0,
+                    showscale: true,
+                    colorbar: {
+                      title: { text: variableMeta.unit, side: 'right' },
+                      thickness: 10,
+                      len: 0.9,
+                    },
+                    hovertemplate:
+                      'Year: %{x}<br>Anomaly: %{z:+.3f} ' +
+                      variableMeta.unit +
+                      '<extra></extra>',
+                  },
+                ]}
+                layout={{
+                  autosize: true,
+                  height: 145,
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: '#09090b',
+                  font: {
+                    family: 'JetBrains Mono, monospace',
+                    color: '#a1a1aa',
+                    size: 11,
+                  },
+                  margin: { l: 90, r: 60, t: 8, b: 30 },
+                  xaxis: { gridcolor: 'transparent' },
+                  yaxis: { gridcolor: 'transparent' },
+                }}
+                config={{ responsive: true, displaylogo: false }}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            {hasRegionB && regionB && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5 px-1">
+                  <span className="text-xs font-mono font-medium text-orange-400">
+                    CLIMATE STRIPES — REGION B: {regionB.location.name}
+                  </span>
+                  <span className="text-[11px] font-mono text-zinc-500">
+                    Baseline: {regionB.statistics.baseline_mean?.toFixed(3)}{' '}
+                    {variableMeta.unit}
+                  </span>
+                </div>
+                <Plot
+                  data={[
+                    {
+                      x: yearsB,
+                      y: ['Anomaly (B)'],
+                      z: [anomaliesB],
+                      type: 'heatmap',
+                      colorscale: CLIMATE_STRIPES_COLORSCALE,
+                      zmid: 0,
+                      showscale: true,
+                      colorbar: {
+                        title: { text: variableMeta.unit, side: 'right' },
+                        thickness: 10,
+                        len: 0.9,
+                      },
+                      hovertemplate:
+                        'Year: %{x}<br>Anomaly: %{z:+.3f} ' +
+                        variableMeta.unit +
+                        '<extra></extra>',
+                    },
+                  ]}
+                  layout={{
+                    autosize: true,
+                    height: 145,
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: '#09090b',
+                    font: {
+                      family: 'JetBrains Mono, monospace',
+                      color: '#a1a1aa',
+                      size: 11,
+                    },
+                    margin: { l: 90, r: 60, t: 8, b: 30 },
+                    xaxis: { gridcolor: 'transparent' },
+                    yaxis: { gridcolor: 'transparent' },
+                  }}
+                  config={{ responsive: true, displaylogo: false }}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <div className="px-1 text-xs font-mono font-medium text-zinc-300">
+                Annual Anomalies vs. Baseline ({variableMeta.unit})
+              </div>
+              <Plot
+                data={[
+                  {
+                    x: yearsA,
+                    y: anomaliesA,
+                    type: 'bar',
+                    name: `Anomaly A (${regionA.location.name})`,
+                    marker: {
+                      color: anomaliesA.map((val) =>
+                        val >= 0 ? '#38bdf8' : '#0284c7'
+                      ),
+                      opacity: 0.85,
+                    },
+                  },
+                  ...(hasRegionB && regionB
+                    ? [
+                        {
+                          x: yearsB,
+                          y: anomaliesB,
+                          type: 'bar' as const,
+                          name: `Anomaly B (${regionB.location.name})`,
+                          marker: {
+                            color: anomaliesB.map((val) =>
+                              val >= 0 ? '#f97316' : '#ef4444'
+                            ),
+                            opacity: 0.85,
+                          },
+                        },
+                      ]
+                    : []),
+                ]}
+                layout={{
+                  autosize: true,
+                  height: 240,
+                  barmode: 'group',
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: '#09090b',
+                  font: {
+                    family: 'JetBrains Mono, monospace',
+                    color: '#a1a1aa',
+                    size: 11,
+                  },
+                  margin: { l: 54, r: 20, t: 36, b: 36 },
+                  xaxis: { gridcolor: '#18181c' },
+                  yaxis: {
+                    title: { text: `Δ (${variableMeta.unit})` },
+                    gridcolor: '#18181c',
+                    zeroline: true,
+                    zerolinecolor: '#3f3f46',
+                  },
+                  legend: {
+                    orientation: 'h',
+                    yanchor: 'bottom',
+                    y: 1.02,
+                    xanchor: 'left',
+                    x: 0,
+                  },
+                }}
+                config={{ responsive: true, displaylogo: false }}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: STL DECOMPOSITION (TREND, SEASONALITY, RESIDUAL NOISE) */}
+        {activeTab === 'decomposition' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-2">
+              <div className="text-xs font-mono font-medium text-zinc-300 px-1">
+                STL Trend &amp; Residuals — {targetDecompAnalysis.location.name}
+              </div>
+              <Plot
+                data={[
+                  {
+                    x: targetDecompAnalysis.time_series.map((d) => d.year),
+                    y: targetDecompAnalysis.time_series.map((d) => d.value),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Observed',
+                    line: { color: 'rgba(161, 161, 170, 0.45)', width: 1.25 },
+                  },
+                  {
+                    x: targetDecompAnalysis.time_series.map((d) => d.year),
+                    y: targetDecompAnalysis.time_series.map(
+                      (d) => d.loess_trend ?? d.trend_line
+                    ),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'STL Trend (LOESS)',
+                    line: { color: targetDecompColor, width: 2.5 },
+                  },
+                  {
+                    x: targetDecompAnalysis.time_series.map((d) => d.year),
+                    y: targetDecompAnalysis.time_series.map(
+                      (d) => d.residual ?? 0
+                    ),
+                    type: 'bar',
+                    name: 'Residuals',
+                    marker: { color: '#52525b', opacity: 0.55 },
+                    yaxis: 'y2',
+                  },
+                ]}
+                layout={{
+                  autosize: true,
+                  height: 340,
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: '#09090b',
+                  font: {
+                    family: 'JetBrains Mono, monospace',
+                    color: '#a1a1aa',
+                    size: 11,
+                  },
+                  margin: { l: 50, r: 50, t: 38, b: 38 },
+                  xaxis: {
+                    title: { text: 'Year' },
+                    gridcolor: '#18181c',
+                  },
+                  yaxis: {
+                    title: { text: `Trend (${variableMeta.unit})` },
+                    gridcolor: '#18181c',
+                  },
+                  yaxis2: {
+                    title: { text: 'Residuals' },
+                    overlaying: 'y',
+                    side: 'right',
+                    showgrid: false,
+                    zeroline: true,
+                    zerolinecolor: '#27272a',
+                  },
+                  legend: {
+                    orientation: 'h',
+                    yanchor: 'bottom',
+                    y: 1.02,
+                    xanchor: 'left',
+                    x: 0,
+                  },
+                  hovermode: 'x unified',
+                }}
+                config={{ responsive: true, displaylogo: false }}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-2">
+              <div className="text-xs font-mono font-medium text-zinc-300 px-1">
+                12-Month Seasonal Harmonic Profile —{' '}
+                {targetDecompAnalysis.location.name}
+              </div>
+              <Plot
+                data={[
+                  {
+                    x:
+                      targetDecompAnalysis.stl_decomposition?.annual_seasonal_cycle?.map(
+                        (c) => c.month_name
+                      ) || [
+                        'Jan',
+                        'Feb',
+                        'Mar',
+                        'Apr',
+                        'May',
+                        'Jun',
+                        'Jul',
+                        'Aug',
+                        'Sep',
+                        'Oct',
+                        'Nov',
+                        'Dec',
+                      ],
+                    y:
+                      targetDecompAnalysis.stl_decomposition?.annual_seasonal_cycle?.map(
+                        (c) => c.seasonal_effect
+                      ) || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    fill: 'tozeroy',
+                    fillcolor:
+                      decompRegion === 'B' && hasRegionB
+                        ? 'rgba(249, 115, 22, 0.12)'
+                        : 'rgba(56, 189, 248, 0.12)',
+                    name: 'STL Seasonal Harmonic',
+                    line: {
+                      color: targetDecompColor,
+                      width: 2.2,
+                      shape: 'spline',
+                    },
+                    marker: {
+                      color: targetDecompColor,
+                      size: 6,
+                    },
+                  },
+                ]}
+                layout={{
+                  autosize: true,
+                  height: 340,
+                  paper_bgcolor: 'rgba(0,0,0,0)',
+                  plot_bgcolor: '#09090b',
+                  font: {
+                    family: 'JetBrains Mono, monospace',
+                    color: '#a1a1aa',
+                    size: 11,
+                  },
+                  margin: { l: 50, r: 20, t: 38, b: 38 },
+                  xaxis: {
+                    title: { text: 'Month' },
+                    gridcolor: '#18181c',
+                  },
+                  yaxis: {
+                    title: {
+                      text: `Seasonal Effect (${variableMeta.unit})`,
+                    },
+                    gridcolor: '#18181c',
+                    zeroline: true,
+                    zerolinecolor: '#27272a',
+                  },
+                  legend: {
+                    orientation: 'h',
+                    yanchor: 'bottom',
+                    y: 1.02,
+                    xanchor: 'left',
+                    x: 0,
+                  },
+                }}
+                config={{ responsive: true, displaylogo: false }}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

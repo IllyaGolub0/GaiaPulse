@@ -387,85 +387,81 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
       : 'https://www.asc-csa.gc.ca/eng/satellites/swot/';
 
   return (
-    <div className="mt-4 pt-3.5 border-t border-ctp-surface0 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext0">
-        <Compass className="w-4 h-4 text-ctp-blue shrink-0" />
+    <div className="py-2 border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+      <div className="flex items-center gap-2 text-zinc-500">
+        <span>{t.externalVerifyLabel}</span>
+        <span className="text-zinc-200 font-medium">{variable}</span>
         <span>
-          {t.externalVerifyLabel}{' '}
-          <strong className="text-ctp-text">{variable}</strong> (
-          {regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}° • {startYear}–
-          {endYear}):
+          [{regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}° · {startYear}–
+          {endYear}]
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
         <a
           href={giovanniUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-blue/20 border border-ctp-blue/40 text-xs font-mono font-semibold text-ctp-blue transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
-          <Satellite className="w-3.5 h-3.5" />
-          <span>Verify in NASA Giovanni</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>NASA Giovanni</span>
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <a
           href={appeearsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-mauve/20 border border-ctp-mauve/40 text-xs font-mono font-semibold text-ctp-mauve transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
-          <Globe className="w-3.5 h-3.5" />
-          <span>Explore in AppEEARS</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>AppEEARS</span>
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <a
           href={knmiUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-teal/20 border border-ctp-teal/40 text-xs font-mono font-semibold text-ctp-teal transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Check in KNMI Climate Explorer</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>KNMI Explorer</span>
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <a
           href={gesDiscHydrologyUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-sapphire/20 border border-ctp-surface1 text-xs font-mono text-ctp-subtext1 hover:text-ctp-sapphire transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
-          <span>GES DISC Hydrology</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>GES DISC</span>
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <a
           href={noaaCdoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-green/20 border border-ctp-surface1 text-xs font-mono text-ctp-subtext1 hover:text-ctp-green transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>NOAA CDO</span>
-          <ExternalLink className="w-3 h-3" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <a
           href={csaSwotRcmUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="px-3 py-1.5 rounded-xl bg-ctp-crust hover:bg-ctp-yellow/20 border border-ctp-surface1 text-xs font-mono text-ctp-subtext1 hover:text-ctp-yellow transition flex items-center gap-1.5"
+          className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
-          <span>CSA SWOT / RCM</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>CSA SWOT/RCM</span>
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
         </a>
 
         <button
           type="button"
           onClick={onOpenResourcesModal}
-          className="px-3 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 border border-ctp-surface1 text-xs font-mono font-bold text-ctp-lavender transition"
+          className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
         >
           {t.all13ResourcesBtn}
         </button>

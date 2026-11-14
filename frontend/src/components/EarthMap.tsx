@@ -449,7 +449,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   }, [mode, regionB, roiShape]);
 
   return (
-    <div className="w-full h-[640px] min-h-[580px] rounded-2xl overflow-hidden border border-ctp-surface0 bg-ctp-mantle shadow-xl flex flex-col">
+    <div className="w-full h-[640px] min-h-[580px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#0c0c0f] flex flex-col">
       {/* Row 1: Primary Map Controls (2D/3D, Click Target, Basemap, GIBS Opacity) */}
       <div className="px-3.5 py-2 bg-ctp-mantle border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2 z-20">
         <div className="flex flex-wrap items-center gap-2">
