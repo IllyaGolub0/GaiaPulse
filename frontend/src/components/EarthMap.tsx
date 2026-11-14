@@ -499,13 +499,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   const floatBtn =
     'h-9 px-2.5 rounded-md text-sm transition flex items-center gap-1.5';
   const floatGroup =
-    'flex items-center p-0.5 rounded-md bg-[#0c0c0f]/95 backdrop-blur border border-[#2a2a32] shadow-lg';
+    'pointer-events-auto flex items-center p-0.5 rounded-md bg-[#0c0c0f]/95 backdrop-blur border border-[#2a2a32] shadow-lg';
 
   return (
-    <div className="relative isolate w-full h-full min-h-[360px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#070709]">
+    <div className="relative isolate w-full h-full min-h-[260px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#070709]">
       <div className="absolute inset-0 z-0 overflow-hidden">
         {/* Floating controls: projection + active point (top-left) */}
-        <div className="absolute top-3 left-3 z-[1000] flex flex-wrap items-center gap-2">
+        <div className="absolute top-3 left-3 z-[1000] max-w-[calc(100%-7.5rem)] flex flex-wrap items-center gap-2 pointer-events-none">
           <div className={floatGroup}>
             <button
               type="button"
@@ -574,7 +574,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         </div>
 
         {/* Floating controls: layers popover (top-right) */}
-        <div className="absolute top-3 right-3 z-[1001] flex flex-col items-end gap-2">
+        <div className="absolute top-3 right-3 bottom-3 z-[1001] flex flex-col items-end gap-2 pointer-events-none">
           <div className={floatGroup}>
             <button
               type="button"
@@ -592,7 +592,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
           </div>
 
           {layersOpen && (
-            <div className="w-80 max-w-[calc(100vw-2rem)] rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-3 space-y-3 text-sm text-zinc-100">
+            <div className="pointer-events-auto min-h-0 overflow-y-auto w-80 max-w-[calc(100vw-3rem)] rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-3 space-y-3 text-sm text-zinc-100">
               <div className="space-y-1.5">
                 <div className="text-xs text-zinc-400">
                   {en ? 'Base map' : 'Підкладка'}

@@ -150,7 +150,7 @@ export const VerdictHero: React.FC<VerdictHeroProps> = ({
           </div>
           <h2
             className={`font-semibold text-zinc-50 leading-snug ${
-              compact ? 'text-base' : 'text-xl'
+              compact ? 'text-base' : 'text-lg sm:text-xl'
             }`}
           >
             {headline}

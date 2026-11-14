@@ -1,3 +1,4 @@
+import { useMediaQuery } from '../utils/useMediaQuery';
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
 import {
@@ -44,6 +45,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   regionB,
 }) => {
   const { t, lang } = useLanguage();
+  const isNarrow = !useMediaQuery('(min-width: 640px)');
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
   const [dipoleView, setDipoleView] = useState<DipoleViewMode>('anomalies');
   const [decompRegion, setDecompRegion] = useState<'A' | 'B'>('A');
@@ -372,6 +374,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   zerolinecolor: '#27272a',
                   zerolinewidth: 1,
                 },
+                showlegend: !isNarrow,
                 legend: {
                   orientation: 'h',
                   yanchor: 'bottom',
@@ -428,6 +431,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               config={{
                 responsive: true,
                 displaylogo: false,
+                displayModeBar: !isNarrow,
               }}
               style={{ width: '100%' }}
             />
@@ -482,7 +486,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   xaxis: { gridcolor: 'transparent' },
                   yaxis: { gridcolor: 'transparent' },
                 }}
-                config={{ responsive: true, displaylogo: false }}
+                config={{ responsive: true, displaylogo: false, displayModeBar: !isNarrow }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -533,7 +537,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     xaxis: { gridcolor: 'transparent' },
                     yaxis: { gridcolor: 'transparent' },
                   }}
-                  config={{ responsive: true, displaylogo: false }}
+                  config={{ responsive: true, displaylogo: false, displayModeBar: !isNarrow }}
                   style={{ width: '100%' }}
                 />
               </div>
@@ -593,6 +597,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     zeroline: true,
                     zerolinecolor: '#3f3f46',
                   },
+                  showlegend: !isNarrow,
                   legend: {
                     orientation: 'h',
                     yanchor: 'bottom',
@@ -601,7 +606,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     x: 0,
                   },
                 }}
-                config={{ responsive: true, displaylogo: false }}
+                config={{ responsive: true, displaylogo: false, displayModeBar: !isNarrow }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -673,6 +678,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     zeroline: true,
                     zerolinecolor: '#27272a',
                   },
+                  showlegend: !isNarrow,
                   legend: {
                     orientation: 'h',
                     yanchor: 'bottom',
@@ -682,7 +688,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   },
                   hovermode: 'x unified',
                 }}
-                config={{ responsive: true, displaylogo: false }}
+                config={{ responsive: true, displaylogo: false, displayModeBar: !isNarrow }}
                 style={{ width: '100%' }}
               />
             </div>
@@ -776,6 +782,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     zeroline: true,
                     zerolinecolor: '#27272a',
                   },
+                  showlegend: !isNarrow,
                   legend: {
                     orientation: 'h',
                     yanchor: 'bottom',
@@ -784,7 +791,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     x: 0,
                   },
                 }}
-                config={{ responsive: true, displaylogo: false }}
+                config={{ responsive: true, displaylogo: false, displayModeBar: !isNarrow }}
                 style={{ width: '100%' }}
               />
             </div>

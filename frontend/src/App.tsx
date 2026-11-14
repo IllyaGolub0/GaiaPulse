@@ -62,6 +62,7 @@ import { TrendCharts } from './components/TrendCharts';
 import { VerdictCard } from './components/VerdictCard';
 import { VerdictHero } from './components/VerdictHero';
 import { formatP } from './utils/format';
+import { useMediaQuery } from './utils/useMediaQuery';
 import { PhenomenaDrawer } from './components/PhenomenaDrawer';
 import {
   ContextDeepLinksBar,
@@ -151,6 +152,10 @@ const MiniSparkline: React.FC<{
 
 export const App: React.FC = () => {
   const { lang, setLang, t } = useLanguage();
+  const isWide = useMediaQuery('(min-width: 1024px)');
+  const isXl = useMediaQuery('(min-width: 1280px)');
+  const isMobile = !useMediaQuery('(min-width: 768px)');
+  const [mobileParamsOpen, setMobileParamsOpen] = useState<boolean>(false);
 
   // Workbench Navigation & Split Layout State
   const [activeView, setActiveView] = useState<WorkbenchView>('split');
@@ -293,7 +298,7 @@ export const App: React.FC = () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
     };
-  }, [splitLayout, sidebarCollapsed, activeView]);
+  }, [splitLayout, sidebarCollapsed, activeView, isWide, isXl]);
 
   // Load variable catalog & phenomena archive on mount
   useEffect(() => {
@@ -545,7 +550,9 @@ export const App: React.FC = () => {
   }, [loading]);
   const isAnalysisView =
     activeView === 'split' || activeView === 'map' || activeView === 'analytics';
-  const isFixedView = activeView === 'split' || activeView === 'map';
+  const isFixedView =
+    isWide && (activeView === 'split' || activeView === 'map');
+  const navCollapsed = sidebarCollapsed || !isXl;
 
   const navItems: Array<{
     id: WorkbenchView;
@@ -636,17 +643,43 @@ export const App: React.FC = () => {
       ?.label || 'custom';
   const fieldLabelCls = 'block text-xs text-zinc-400 mb-1';
   const fieldCtlCls =
-    'h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-sky-500';
+    'h-11 md:h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-sky-500';
 
   // Compact parameter bar: Where / What / When, everything else under "Advanced"
   const renderMissionControlPanel = () => (
     <div className="shrink-0 rounded-md bg-[#0c0c0f] border border-[#1f1f24]">
-      <div className="px-3 py-2.5 flex flex-wrap items-end gap-3">
-        <div className="min-w-[180px] flex-1">
+      <button
+        type="button"
+        onClick={() => setMobileParamsOpen((prev) => !prev)}
+        aria-expanded={mobileParamsOpen}
+        className="md:hidden w-full min-h-[44px] px-3 py-2 flex items-center justify-between gap-2 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block text-xs text-zinc-400">
+            {L('Параметри аналізу', 'Analysis parameters')}
+          </span>
+          <span className="block text-sm text-zinc-100 truncate">
+            {varDisplayName} · {seasonLabelFull} · {startYear}–{endYear}
+          </span>
+        </span>
+        {mobileParamsOpen ? (
+          <ChevronUp className="w-5 h-5 text-zinc-300 shrink-0" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-zinc-300 shrink-0" />
+        )}
+      </button>
+
+      <div
+        className={`${
+          mobileParamsOpen ? 'flex' : 'hidden'
+        } md:flex px-3 py-2.5 flex-wrap items-end gap-3 border-t border-[#1f1f24] md:border-t-0`}
+      >
+        <div className="w-full md:w-auto md:min-w-[180px] md:flex-1">
           <span className={fieldLabelCls}>{L('Де', 'Where')}</span>
           <button
             type="button"
-            onClick={() => setAdvancedOpen(true)}
+            onClick={() => setAdvancedOpen((prev) => !prev)}
+            aria-expanded={advancedOpen}
             title={L(
               'Клацніть на карті, щоб обрати місце, або відкрийте точні координати',
               'Click the map to pick a place, or open exact coordinates'
@@ -661,7 +694,7 @@ export const App: React.FC = () => {
           </button>
         </div>
 
-        <label className="min-w-[280px] flex-[2]">
+        <label className="w-full md:w-auto md:min-w-[280px] md:flex-[2]">
           <span className={fieldLabelCls}>{L('Що вимірюємо', 'What we measure')}</span>
           <select
             value={variable}
@@ -688,7 +721,7 @@ export const App: React.FC = () => {
           </select>
         </label>
 
-        <label className="w-64">
+        <label className="flex-1 min-w-[150px] md:flex-none md:w-64">
           <span className={fieldLabelCls}>{L('Сезон', 'Season')}</span>
           <select
             value={seasonMode}
@@ -703,7 +736,7 @@ export const App: React.FC = () => {
           </select>
         </label>
 
-        <label className="w-40">
+        <label className="flex-1 min-w-[120px] md:flex-none md:w-40">
           <span className={fieldLabelCls}>{L('Період', 'Period')}</span>
           <select
             value={periodPresetValue}
@@ -736,7 +769,7 @@ export const App: React.FC = () => {
             type="button"
             onClick={() => setAdvancedOpen((prev) => !prev)}
             aria-expanded={advancedOpen}
-            className={`h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
+            className={`h-11 md:h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
               advancedOpen
                 ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
                 : 'bg-[#121216] text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
@@ -755,14 +788,14 @@ export const App: React.FC = () => {
             disabled={loading}
             title={t.reAnalyzeBtn}
             aria-label={t.reAnalyzeBtn}
-            className="h-9 w-9 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 border border-[#2a2a32] transition flex items-center justify-center"
+            className="h-11 w-11 md:h-9 md:w-9 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 border border-[#2a2a32] transition flex items-center justify-center"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {advancedOpen && (
+      {advancedOpen && (!isMobile || mobileParamsOpen) && (
         <div className="border-t border-[#1f1f24]">
           <div className="px-3 py-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
@@ -1136,7 +1169,7 @@ export const App: React.FC = () => {
         <>
           {renderVerdictHeroes()}
 
-          <div className="flex items-center gap-1 border-b border-[#1f1f24]">
+          <div className="flex items-center gap-1 border-b border-[#1f1f24] overflow-x-auto">
             {(
               [
                 { id: 'charts', label: L('Графіки', 'Charts'), icon: <BarChart3 className="w-4 h-4" /> },
@@ -1148,7 +1181,7 @@ export const App: React.FC = () => {
                 key={tab.id}
                 type="button"
                 onClick={() => setInspectorTab(tab.id)}
-                className={`h-9 px-3 -mb-px text-sm border-b-2 transition flex items-center gap-1.5 ${
+                className={`h-11 md:h-9 px-3 -mb-px text-sm border-b-2 transition flex items-center gap-1.5 whitespace-nowrap ${
                   inspectorTab === tab.id
                     ? 'border-sky-400 text-zinc-50 font-medium'
                     : 'border-transparent text-zinc-400 hover:text-zinc-100'
@@ -1277,7 +1310,7 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        <div className="max-h-72 overflow-y-auto">
+        <div className="max-h-72 overflow-auto">
           <table className="w-full text-left border-collapse text-sm font-mono">
             <thead className="sticky top-0 bg-[#09090b] text-zinc-400 border-b border-[#1f1f24] text-[13px]">
               <tr>
@@ -1376,11 +1409,11 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="h-screen overflow-hidden bg-[#09090b] text-zinc-100 flex selection:bg-zinc-200 selection:text-zinc-950">
+    <div className="h-[100dvh] overflow-hidden bg-[#09090b] text-zinc-100 flex flex-col md:flex-row selection:bg-zinc-200 selection:text-zinc-950">
       <aside
         className={`${
-          sidebarCollapsed ? 'w-14' : 'w-52'
-        } shrink-0 bg-[#070709] border-r border-[#1f1f24] flex flex-col justify-between h-screen z-40 transition-all duration-150 select-none`}
+          navCollapsed ? 'w-14' : 'w-52'
+        } shrink-0 bg-[#070709] border-r border-[#1f1f24] hidden md:flex flex-col justify-between h-full z-40 transition-all duration-150 select-none`}
       >
         <div>
           <div className="h-12 px-3 border-b border-[#1f1f24] flex items-center justify-between gap-2">
@@ -1388,13 +1421,13 @@ export const App: React.FC = () => {
               <div className="w-7 h-7 rounded-md bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0">
                 GP
               </div>
-              {!sidebarCollapsed && (
+              {!navCollapsed && (
                 <span className="text-base font-semibold tracking-tight text-zinc-50 truncate">
                   GaiaPulse
                 </span>
               )}
             </div>
-            {!sidebarCollapsed && (
+            {!navCollapsed && (
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed(true)}
@@ -1408,7 +1441,7 @@ export const App: React.FC = () => {
           </div>
 
           <nav className="p-2 space-y-1">
-            {sidebarCollapsed && (
+            {sidebarCollapsed && isXl && (
               <button
                 type="button"
                 onClick={() => setSidebarCollapsed(false)}
@@ -1430,7 +1463,7 @@ export const App: React.FC = () => {
                   title={`${item.label}: ${item.subtitle}`}
                   aria-current={isSelected ? 'page' : undefined}
                   className={`w-full h-10 rounded-md px-2.5 transition flex items-center gap-2.5 text-sm ${
-                    sidebarCollapsed ? 'justify-center' : ''
+                    navCollapsed ? 'justify-center' : ''
                   } ${
                     isSelected
                       ? 'bg-[#1a1a20] text-zinc-50 font-medium'
@@ -1440,7 +1473,7 @@ export const App: React.FC = () => {
                   <span className={isSelected ? 'text-sky-400' : 'text-zinc-400'}>
                     {item.icon}
                   </span>
-                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  {!navCollapsed && <span className="truncate">{item.label}</span>}
                 </button>
               );
             })}
@@ -1453,16 +1486,16 @@ export const App: React.FC = () => {
               eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
             }`}
           />
-          {!sidebarCollapsed && (
+          {!navCollapsed && (
             <span>{eonetIsLive ? t.eonetLive : t.eonetCache}</span>
           )}
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col h-screen">
-        <header className="relative z-30 h-12 shrink-0 border-b border-[#1f1f24] bg-[#09090b] px-4 flex items-center justify-between gap-4">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col md:h-full">
+        <header className="relative z-30 h-12 shrink-0 border-b border-[#1f1f24] bg-[#09090b] px-3 md:px-4 flex items-center justify-between gap-2 md:gap-4">
           <div className="flex items-baseline gap-3 min-w-0">
-            <h1 className="text-base font-semibold text-zinc-50 whitespace-nowrap">
+            <h1 className="text-base font-semibold text-zinc-50 truncate">
               {regionA.name}
               {mode === 'dipole' && (
                 <span className="text-orange-400"> ↔ {regionB.name}</span>
@@ -1478,7 +1511,7 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             {isAnalysisView && (
               <div
-                className="inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
+                className="hidden lg:inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
                 role="group"
                 aria-label={L('Вигляд', 'View')}
               >
@@ -1508,7 +1541,7 @@ export const App: React.FC = () => {
                 setCommandQuery('');
                 setCommandPaletteOpen(true);
               }}
-              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2"
+              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] hidden sm:flex items-center gap-2"
               title={L('Пошук показників, кейсів і розділів (Ctrl+K)', 'Search variables, cases and sections (Ctrl+K)')}
             >
               <Search className="w-4 h-4" />
@@ -1529,7 +1562,7 @@ export const App: React.FC = () => {
               ) : (
                 <>
                   <Link2 className="w-4 h-4" />
-                  <span>{L('Поділитися', 'Share')}</span>
+                  <span className="hidden sm:inline">{L('Поділитися', 'Share')}</span>
                 </>
               )}
             </button>
@@ -1544,7 +1577,7 @@ export const App: React.FC = () => {
                 className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                <span>{L('Експорт', 'Export')}</span>
+                <span className="hidden sm:inline">{L('Експорт', 'Export')}</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
               {exportOpen && (
@@ -1632,7 +1665,7 @@ export const App: React.FC = () => {
           className={
             isFixedView
               ? 'flex-1 min-h-0 p-3 flex flex-col gap-3 overflow-hidden'
-              : 'flex-1 min-h-0 p-4 space-y-3 overflow-y-auto'
+              : 'flex-1 min-h-0 p-3 md:p-4 space-y-3 overflow-y-auto overflow-x-hidden'
           }
         >
           {/* VIEW: MAP + RESULT (default) */}
@@ -1640,10 +1673,15 @@ export const App: React.FC = () => {
             <>
               {renderMissionControlPanel()}
 
-              <div ref={splitContainerRef} className="flex-1 min-h-0 flex">
+              <div
+                ref={splitContainerRef}
+                className={isWide ? 'flex-1 min-h-0 flex' : 'flex flex-col gap-3'}
+              >
                 <div
-                  style={{ width: `${splitPct}%` }}
-                  className="min-w-0 h-full"
+                  style={isWide ? { width: `${splitPct}%` } : undefined}
+                  className={
+                    isWide ? 'min-w-0 h-full' : 'h-[45dvh] min-h-[300px]'
+                  }
                 >
                   <EarthMap
                     mode={mode}
@@ -1672,7 +1710,7 @@ export const App: React.FC = () => {
                     'Перетягніть, щоб змінити ширину карти',
                     'Drag to resize the map'
                   )}
-                  className="w-3 shrink-0 cursor-col-resize flex items-center justify-center group"
+                  className="hidden lg:flex w-3 shrink-0 cursor-col-resize items-center justify-center group"
                 >
                   <span
                     className={`w-1 h-14 rounded-full transition ${
@@ -1683,7 +1721,11 @@ export const App: React.FC = () => {
                   />
                 </div>
 
-                <div className="flex-1 min-w-0 h-full overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#1f1f24]">
+                <div
+                  className={`rounded-md bg-[#0c0c0f] border border-[#1f1f24] ${
+                    isWide ? 'flex-1 min-w-0 h-full overflow-y-auto' : ''
+                  }`}
+                >
                   {renderResultsPanel()}
                 </div>
               </div>
@@ -1699,7 +1741,13 @@ export const App: React.FC = () => {
             <>
               {renderMissionControlPanel()}
 
-              <div className="relative flex-1 min-h-0">
+              <div
+                className={
+                  isWide
+                    ? 'relative flex-1 min-h-0'
+                    : 'relative h-[55dvh] min-h-[320px]'
+                }
+              >
                 <EarthMap
                   mode={mode}
                   variable={variable}
@@ -1711,12 +1759,14 @@ export const App: React.FC = () => {
                   onToggleActiveTarget={setActiveTarget}
                 />
 
-                {analysisResult && !errorMsg && (
+                {isWide && analysisResult && !errorMsg && (
                   <div className="absolute bottom-4 right-16 z-[500] w-[380px] max-w-[calc(100%-5rem)] shadow-2xl">
                     {renderVerdictHeroes(true)}
                   </div>
                 )}
               </div>
+
+              {!isWide && analysisResult && !errorMsg && renderVerdictHeroes(true)}
             </>
           )}
 
@@ -1905,7 +1955,7 @@ export const App: React.FC = () => {
         </main>
 
         {/* Minimalist Footer */}
-        {!isFixedView && (
+        {activeView !== 'split' && activeView !== 'map' && !isMobile && (
         <footer className="mt-auto border-t border-[#1f1f24] bg-[#070709] px-4 py-2.5 text-[13px] text-zinc-400">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
@@ -1924,6 +1974,31 @@ export const App: React.FC = () => {
         </footer>
         )}
       </div>
+
+      {/* Bottom navigation for phones */}
+      <nav
+        className="md:hidden shrink-0 border-t border-[#1f1f24] bg-[#070709] grid grid-cols-4"
+        aria-label={L('Розділи', 'Sections')}
+      >
+        {navItems.map((item) => {
+          const isSelected =
+            activeView === item.id || (item.id === 'split' && isAnalysisView);
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveView(item.id)}
+              aria-current={isSelected ? 'page' : undefined}
+              className={`h-14 px-1 flex flex-col items-center justify-center gap-0.5 text-xs transition ${
+                isSelected ? 'text-zinc-50 font-medium' : 'text-zinc-400'
+              }`}
+            >
+              <span className={isSelected ? 'text-sky-400' : ''}>{item.icon}</span>
+              <span className="leading-tight text-center">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Modal Overlays */}
       <PhenomenaDrawer
