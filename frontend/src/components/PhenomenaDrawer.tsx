@@ -13,6 +13,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { PhenomenonScenario, SeasonMode } from '../types/climate';
+import { getScenarioTextI18n, useLanguage } from '../i18n/translations';
 
 export type PhenomenaFilterTab =
   | 'all'
@@ -40,8 +41,10 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
   isActive,
   onLoadAndRun,
 }) => {
+  const { lang } = useLanguage();
   const isDipole = scenario.mode === 'dipole' && Boolean(scenario.region_b);
   const isLiveEonet = scenario.source_type === 'eonet_live';
+  const i18nText = getScenarioTextI18n(scenario, lang);
 
   return (
     <div
@@ -125,12 +128,12 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
 
         {/* Scientific Explanation */}
         <p className="text-xs text-zinc-400 leading-relaxed">
-          {scenario.scientific_summary}
+          {i18nText.summary}
         </p>
 
-        {scenario.student_note && (
+        {i18nText.note && (
           <div className="text-[11px] text-zinc-400 border-l-2 border-zinc-700 pl-2.5 py-0.5">
-            {scenario.student_note}
+            {i18nText.note}
           </div>
         )}
 
@@ -159,7 +162,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
             : 'bg-[#141419] hover:bg-zinc-100 text-zinc-200 hover:text-zinc-950 border border-[#24242b]'
         }`}
       >
-        <span>Load Scenario</span>
+        <span>{lang === 'en' ? 'Load Scenario' : 'Завантажити сценарій'}</span>
         <ArrowUpRight className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -189,6 +192,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
   onRefresh,
   onSelectScenario,
 }) => {
+  const { lang } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<PhenomenaFilterTab>('all');
 
   const filteredScenarios = useMemo(() => {
@@ -217,13 +221,13 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
   }> = [
     {
       id: 'all',
-      label: 'All Scenarios',
+      label: lang === 'en' ? 'All Scenarios' : 'Усі сценарії',
       icon: <Layers className="w-3.5 h-3.5" />,
       count: scenarios.length,
     },
     {
       id: 'acker_video',
-      label: 'Dr. Acker & CSA Cases',
+      label: lang === 'en' ? 'Dr. Acker & CSA Cases' : 'Кейси Екера та CSA',
       icon: <Flame className="w-3.5 h-3.5" />,
       count: scenarios.filter(
         (s) => s.source_type === 'curated' || s.tags.includes('acker_video')
@@ -231,7 +235,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
     },
     {
       id: 'dipole',
-      label: 'Regional Dipoles',
+      label: lang === 'en' ? 'Regional Dipoles' : 'Регіональні диполі',
       icon: <GitCompareArrows className="w-3.5 h-3.5" />,
       count: scenarios.filter(
         (s) => s.mode === 'dipole' || s.tags.includes('dipole')

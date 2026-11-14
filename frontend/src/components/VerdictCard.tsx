@@ -11,7 +11,10 @@ import {
   SeasonMode,
   VariableMetadata,
 } from '../types/climate';
-import { useLanguage } from '../i18n/translations';
+import {
+  formatDipoleVerdictI18n,
+  useLanguage,
+} from '../i18n/translations';
 
 interface VerdictCardProps {
   regionKey: 'A' | 'B';
@@ -405,7 +408,13 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
   regionAName,
   regionBName,
 }) => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const dipoleI18n = formatDipoleVerdictI18n(
+    dipole,
+    regionAName,
+    regionBName,
+    lang
+  );
 
   return (
     <div className="rounded-md p-4 bg-[#0c0c0f] border border-[#1f1f24] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -413,17 +422,14 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-800 text-zinc-200 border border-zinc-700">
             <GitCompareArrows className="w-3.5 h-3.5 text-zinc-400" />
-            {dipole.badge ||
-              (dipole.is_opposite_trend
-                ? t.dipoleDetectedBadge
-                : t.crossRegionBadge)}
+            {dipoleI18n.badge}
           </span>
           <span className="text-xs text-zinc-500 font-mono">
             {regionAName} ↔ {regionBName}
           </span>
         </div>
         <p className="text-xs text-zinc-300 leading-relaxed">
-          {dipole.verdict}
+          {dipoleI18n.verdict}
         </p>
       </div>
 

@@ -28,7 +28,11 @@ import {
   SAMPLE_CSV_TEMPLATES,
   SEASON_MODE_OPTIONS,
 } from '../services/api';
-import { useLanguage } from '../i18n/translations';
+import {
+  getResourceRoleI18n,
+  getSeasonModesI18n,
+  useLanguage,
+} from '../i18n/translations';
 
 type ResourceFilterTab = 'all' | OfficialResourceCategory;
 
@@ -45,6 +49,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
   isModal = false,
   onCloseModal,
 }) => {
+  const { lang } = useLanguage();
   const [activeCategory, setActiveCategory] =
     useState<ResourceFilterTab>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -57,7 +62,10 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
   }> = [
     {
       id: 'all',
-      label: 'Усі офіційні ресурси (13)',
+      label:
+        lang === 'en'
+          ? 'All Official Resources (13)'
+          : 'Усі офіційні ресурси (13)',
       shortBadge: 'ALL 13',
       count: OFFICIAL_RESOURCES_LIST.length,
     },
@@ -93,10 +101,12 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
       }
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
+      const roleEn = getResourceRoleI18n(item.id, 'en', item.role_in_app);
       return (
         item.title.toLowerCase().includes(q) ||
         item.agency_badge.toLowerCase().includes(q) ||
         item.role_in_app.toLowerCase().includes(q) ||
+        roleEn.toLowerCase().includes(q) ||
         (item.supported_variables || []).some((v) =>
           v.toLowerCase().includes(q)
         )
@@ -113,30 +123,45 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
     }> = [
       {
         key: 'nasa_data',
-        title: 'Категорія 1: NASA Data & Resources (NASA + NOAA)',
+        title:
+          lang === 'en'
+            ? 'Category 1: NASA Data & Resources (NASA + NOAA)'
+            : 'Категорія 1: NASA Data & Resources (NASA + NOAA)',
         subtitle:
-          'Офіційні супутникові архіви NASA GSFC, GES DISC, LP DAAC AppEEARS, метеостанції NOAA CDO та наукова публікація NASA NTRS',
+          lang === 'en'
+            ? 'Official NASA GSFC, GES DISC, LP DAAC AppEEARS archives, NOAA CDO ground stations, and NASA NTRS research paper'
+            : 'Офіційні супутникові архіви NASA GSFC, GES DISC, LP DAAC AppEEARS, метеостанції NOAA CDO та наукова публікація NASA NTRS',
         items: filteredResources.filter((r) => r.category === 'nasa_data'),
       },
       {
         key: 'partner_methodology',
-        title: 'Категорія 2: Space Agency Partner & Methodology Resources',
+        title:
+          lang === 'en'
+            ? 'Category 2: Space Agency Partner & Methodology Resources'
+            : 'Категорія 2: Space Agency Partner & Methodology Resources',
         subtitle:
-          'Кліматична кореляція KNMI Climate Explorer та математична методологія перевірки статистичної значущості трендів',
+          lang === 'en'
+            ? 'KNMI Climate Explorer field correlation and mathematical trend significance testing methodology'
+            : 'Кліматична кореляція KNMI Climate Explorer та математична методологія перевірки статистичної значущості трендів',
         items: filteredResources.filter(
           (r) => r.category === 'partner_methodology'
         ),
       },
       {
         key: 'csa_resources',
-        title: 'Категорія 3: CSA (Canadian Space Agency) Resources',
+        title:
+          lang === 'en'
+            ? 'Category 3: CSA (Canadian Space Agency) Resources'
+            : 'Категорія 3: CSA (Canadian Space Agency) Resources',
         subtitle:
-          'Радарні дані RADARSAT Constellation Mission (RCM), відкритий геопортал Geo.ca, альтиметрія SWOT та SAR Python Tutorial',
+          lang === 'en'
+            ? 'RADARSAT Constellation Mission (RCM) SAR data, Geo.ca open geospatial portal, SWOT altimetry, and SAR Python Tutorial'
+            : 'Радарні дані RADARSAT Constellation Mission (RCM), відкритий геопортал Geo.ca, альтиметрія SWOT та SAR Python Tutorial',
         items: filteredResources.filter((r) => r.category === 'csa_resources'),
       },
     ];
     return groups.filter((g) => g.items.length > 0);
-  }, [filteredResources]);
+  }, [filteredResources, lang]);
 
   const content = (
     <div className="rounded-2xl bg-ctp-mantle border border-ctp-surface0 p-5 space-y-5 shadow-xl">
@@ -156,7 +181,9 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               </span>
             </div>
             <p className="text-xs text-ctp-subtext0 mt-0.5">
-              Інтегрований каталог офіційних джерел супутникових даних, гідрологічних часових рядів, радарів SAR та статистичної методології челенджу
+              {lang === 'en'
+                ? 'Integrated catalog of official satellite archives, hydrological time series, SAR radar missions, and challenge statistical methodology'
+                : 'Інтегрований каталог офіційних джерел супутникових даних, гідрологічних часових рядів, радарів SAR та статистичної методології челенджу'}
             </p>
           </div>
         </div>
@@ -169,7 +196,11 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Пошук ресурсу або змінної..."
+              placeholder={
+                lang === 'en'
+                  ? 'Search resource or variable...'
+                  : 'Пошук ресурсу або змінної...'
+              }
               className="pl-8 pr-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs text-ctp-text placeholder:text-ctp-subtext0 focus:outline-none focus:border-ctp-blue w-56"
             />
           </div>
@@ -179,7 +210,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               type="button"
               onClick={onCloseModal}
               className="p-2 rounded-xl bg-ctp-surface0 hover:bg-ctp-red/20 text-ctp-subtext1 hover:text-ctp-red border border-ctp-surface1 transition"
-              title="Закрити вікно ресурсів"
+              title={lang === 'en' ? 'Close resources modal' : 'Закрити вікно ресурсів'}
             >
               <X className="w-4 h-4" />
             </button>
@@ -272,9 +303,9 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                       {/* Role in Application */}
                       <p className="text-xs text-ctp-subtext1 leading-relaxed">
                         <span className="font-semibold text-ctp-lavender">
-                          Роль у додатку:{' '}
+                          {lang === 'en' ? 'Role in App: ' : 'Роль у додатку: '}
                         </span>
-                        {res.role_in_app}
+                        {getResourceRoleI18n(res.id, lang, res.role_in_app)}
                       </p>
 
                       {/* Supported Variables Interactive Pills */}
@@ -282,7 +313,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                         res.supported_variables.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1 pt-1">
                             <span className="text-[10px] font-mono text-ctp-subtext0 mr-1">
-                              Змінні:
+                              {lang === 'en' ? 'Variables:' : 'Змінні:'}
                             </span>
                             {res.supported_variables.map((vCode) => {
                               const isCurrent = activeVariable === vCode;
@@ -302,7 +333,11 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                                       ? 'bg-ctp-green/20 text-ctp-green border-ctp-green/50'
                                       : 'bg-ctp-mantle text-ctp-subtext1 border-ctp-surface0 hover:border-ctp-blue hover:text-ctp-blue'
                                   }`}
-                                  title={`Активувати змінну ${vCode} у додатку`}
+                                  title={
+                                    lang === 'en'
+                                      ? `Activate variable ${vCode} in workbench`
+                                      : `Активувати змінну ${vCode} у додатку`
+                                  }
                                 >
                                   {vCode}
                                 </button>
@@ -487,6 +522,8 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
   onClose,
   onRunCsvAnalysis,
 }) => {
+  const { lang } = useLanguage();
+  const seasonOptions = useMemo(() => getSeasonModesI18n(lang), [lang]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [datasetName, setDatasetName] = useState<string>(
     SAMPLE_CSV_TEMPLATES[0].datasetName
@@ -512,7 +549,11 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
     reader.onload = (event) => {
       const content = String(event.target?.result || '');
       if (!content.trim()) {
-        setLocalError('Обраний CSV-файл порожній.');
+        setLocalError(
+          lang === 'en'
+            ? 'Selected CSV file is empty.'
+            : 'Обраний CSV-файл порожній.'
+        );
         return;
       }
       setCsvText(content);
@@ -521,7 +562,11 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
       setDatasetName(cleanTitle || 'Imported NASA/NOAA CSV');
     };
     reader.onerror = () => {
-      setLocalError('Не вдалося прочитати CSV-файл.');
+      setLocalError(
+        lang === 'en'
+          ? 'Failed to read CSV file.'
+          : 'Не вдалося прочитати CSV-файл.'
+      );
     };
     reader.readAsText(file);
   };
@@ -538,7 +583,11 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
     e.preventDefault();
     setLocalError(null);
     if (!csvText.trim()) {
-      setLocalError('Вставте або завантажте CSV-дані з колонками Date та Value.');
+      setLocalError(
+        lang === 'en'
+          ? 'Paste or upload CSV data containing Date and Value columns.'
+          : 'Вставте або завантажте CSV-дані з колонками Date та Value.'
+      );
       return;
     }
     try {
@@ -556,6 +605,8 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
       setLocalError(
         err instanceof Error
           ? err.message
+          : lang === 'en'
+          ? 'Error analyzing CSV file. Check column format (Date, Value).'
           : 'Помилка аналізу CSV-файлу. Перевірте формат колонок (Date, Value).'
       );
     }
@@ -580,7 +631,9 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
               Import CSV from NASA Giovanni / AppEEARS / GES DISC / NOAA CDO
             </h2>
             <p className="text-xs text-ctp-subtext0">
-              Завантажте будь-який CSV-файл із колонками дати (Date / Year / time) та значення (Value / data) для автоматичної десезоналізації, t-тесту, Манна-Кендалла, 95% CI та Time-to-Significance
+              {lang === 'en'
+                ? 'Upload any CSV file with date (Date / Year / time) and value (Value / data) columns for automatic deseasonalization, Student’s t-test, Mann-Kendall, 95% CI, and Time-to-Significance'
+                : 'Завантажте будь-який CSV-файл із колонками дати (Date / Year / time) та значення (Value / data) для автоматичної десезоналізації, t-тесту, Манна-Кендалла, 95% CI та Time-to-Significance'}
             </p>
           </div>
         </div>
@@ -604,7 +657,9 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
         {/* Quick Sample Templates from Official Portals */}
         <div className="space-y-1.5">
           <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0">
-            Швидкі еталонні CSV-шаблони з офіційних порталів (1-клік тест):
+            {lang === 'en'
+              ? 'Quick reference CSV templates from official portals (1-click test):'
+              : 'Швидкі еталонні CSV-шаблони з офіційних порталів (1-клік тест):'}
           </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {SAMPLE_CSV_TEMPLATES.map((tpl) => (
@@ -655,15 +710,23 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
           />
           <Upload className="w-6 h-6 text-ctp-green" />
           <div className="text-xs sm:text-sm font-bold text-ctp-text">
-            Перетягніть сюди CSV-файл із Giovanni / AppEEARS / NOAA CDO або натисніть для вибору
+            {lang === 'en'
+              ? 'Drag & drop a CSV file from Giovanni / AppEEARS / NOAA CDO here, or click to browse'
+              : 'Перетягніть сюди CSV-файл із Giovanni / AppEEARS / NOAA CDO або натисніть для вибору'}
           </div>
           <div className="text-[11px] font-mono text-ctp-subtext0">
-            Підтримуються колонки: Date, Year, time, timestamp + Value, data, mean (коментарі # ігноруються автоматично)
+            {lang === 'en'
+              ? 'Supported columns: Date, Year, time, timestamp + Value, data, mean (# comments are ignored automatically)'
+              : 'Підтримуються колонки: Date, Year, time, timestamp + Value, data, mean (коментарі # ігноруються автоматично)'}
           </div>
           {uploadedFileName && (
             <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 text-ctp-green border border-ctp-green/40 text-xs font-mono font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Активний файл: {uploadedFileName}</span>
+              <span>
+                {lang === 'en'
+                  ? `Active file: ${uploadedFileName}`
+                  : `Активний файл: ${uploadedFileName}`}
+              </span>
             </div>
           )}
         </div>
@@ -672,7 +735,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-              Назва датасету / ряду
+              {lang === 'en' ? 'Dataset / Series Name' : 'Назва датасету / ряду'}
             </label>
             <input
               type="text"
@@ -684,7 +747,9 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
 
           <div>
             <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-              Код змінної (NASA / CSA)
+              {lang === 'en'
+                ? 'Variable Code (NASA / CSA)'
+                : 'Код змінної (NASA / CSA)'}
             </label>
             <input
               type="text"
@@ -696,7 +761,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
 
           <div>
             <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-              Одиниця вимірювання
+              {lang === 'en' ? 'Measurement Unit' : 'Одиниця вимірювання'}
             </label>
             <input
               type="text"
@@ -708,16 +773,18 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
 
           <div>
             <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-              Сезонний фільтр (Season Mode)
+              {lang === 'en'
+                ? 'Seasonal Filter (Season Mode)'
+                : 'Сезонний фільтр (Season Mode)'}
             </label>
             <select
               value={seasonMode}
               onChange={(e) => setSeasonMode(e.target.value as SeasonMode)}
               className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
             >
-              {SEASON_MODE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.shortLabel}
+              {seasonOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
                 </option>
               ))}
             </select>
@@ -728,10 +795,13 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="text-[10px] font-mono uppercase text-ctp-subtext0">
-              Вміст CSV (Date / Year / time, Value / data):
+              {lang === 'en'
+                ? 'CSV Content (Date / Year / time, Value / data):'
+                : 'Вміст CSV (Date / Year / time, Value / data):'}
             </label>
             <span className="text-[10px] font-mono text-ctp-subtext0">
-              {csvText.split(/\r?\n/).filter((l) => l.trim()).length} рядків
+              {csvText.split(/\r?\n/).filter((l) => l.trim()).length}{' '}
+              {lang === 'en' ? 'rows' : 'рядків'}
             </span>
           </div>
           <textarea
@@ -756,7 +826,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
               onClick={onClose}
               className="px-4 py-2 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-xs font-semibold text-ctp-subtext1 transition"
             >
-              Скасувати
+              {lang === 'en' ? 'Cancel' : 'Скасувати'}
             </button>
           )}
           <button
@@ -767,8 +837,12 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             <Sparkles className="w-4 h-4" />
             <span>
               {loading
-                ? 'Обчислення тренду та p-value...'
-                : 'Run Statistical Trend Engine on CSV'}
+                ? lang === 'en'
+                  ? 'Computing trend & p-value...'
+                  : 'Обчислення тренду та p-value...'
+                : lang === 'en'
+                ? 'Run Statistical Trend Engine on CSV'
+                : 'Запустити аналіз тренду для CSV'}
             </span>
           </button>
         </div>

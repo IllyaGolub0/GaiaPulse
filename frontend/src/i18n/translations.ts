@@ -624,6 +624,236 @@ export function getBiomeOptionsI18n(lang: Language): Array<{
   ];
 }
 
+const VARIABLE_DEFINITIONS_EN: Record<string, string> = {
+  T2M: 'Near-surface air temperature at 2 meters height (NASA MERRA-2 & Aqua AIRS). Core indicator for global warming, Arctic amplification, and thermal dipoles.',
+  PRECTOTCORR:
+    'Daily mean bias-corrected precipitation rate from NASA GPM IMERG & MERRA-2 satellites. Tracks monsoons, tropical cyclones, and El Niño (ENSO) hydrological dipoles.',
+  GWETROOT:
+    'Root zone soil moisture fraction (0 to 1) from NASA GLDAS & SMAP radar. Direct indicator of agricultural drought and steppe or forest ecosystem stress.',
+  ALLSKY_SFC_SW_DWN:
+    'Downward shortwave solar radiation flux reaching Earth’s surface through clouds, wildfire smoke plumes, and volcanic sulfate aerosols (NASA CERES).',
+  AOD: 'Dimensionless measure of solar light extinction by wildfire smoke, desert dust, and sulfate haze at 550 nm (NASA MODIS Aqua).',
+  SO2: 'Total atmospheric column sulfur dioxide concentration in Dobson Units (NASA Aura OMI). In the stratosphere, SO₂ oxidizes into reflective sulfate droplets.',
+  EVPTRNS:
+    'Total evapotranspiration water vapor flux rising into the atmosphere from soil surfaces and plant canopy transpiration (NASA GLDAS Noah).',
+  QRUNOFF:
+    'Surface and subsurface hydrological streamflow runoff rate (NASA GLDAS). Drives river discharge, flood pulses, and coastal nutrient transport into estuaries.',
+  SNODP:
+    'Mean terrestrial and cryospheric snow depth (NASA MODIS / MERRA-2), governing surface albedo across polar and alpine regions.',
+  SST: 'Radiometric skin and sea surface temperature of the upper ocean layer from infrared satellites (NASA GHRSST / MODIS Aqua).',
+  SEAWIFS_CHLA:
+    'Chlorophyll-a concentration in coastal waters and river estuaries (NASA SeaWiFS / MODIS Aqua Ocean Color via Giovanni), tracking nutrient-driven phytoplankton blooms.',
+  SWOT_WSE:
+    'Water Surface Elevation of lakes, rivers, reservoirs, and estuaries measured from space via KaRIn radar interferometry (NASA / CNES / CSA SWOT Mission).',
+  RCM_SAR_BACKSCATTER:
+    'Normalized C-band Synthetic Aperture Radar backscatter (σ°, dB) from the CSA RADARSAT Constellation Mission (RCM), imaging sea ice, floods, and wetlands day or night through clouds.',
+};
+
+export function getVariableDefinitionI18n(
+  code: string,
+  lang: Language,
+  fallbackUa?: string
+): string {
+  if (lang === 'en') {
+    const key = code.trim().toUpperCase();
+    return (
+      VARIABLE_DEFINITIONS_EN[key] ||
+      fallbackUa ||
+      `Satellite Earth observation parameter (${code}).`
+    );
+  }
+  return fallbackUa || '';
+}
+
+const SCENARIO_TEXT_EN: Record<
+  string,
+  { summary: string; note?: string }
+> = {
+  'wisconsin-wildfire-smoke': {
+    summary:
+      'Long-range transport of boreal wildfire smoke from central Canada into the Upper Midwest USA. Winter months show baseline noise, whereas the summer slice (JJA — June to August) reveals a statistically significant upward trend in Aerosol Optical Depth (p < 0.05).',
+    note: 'Dr. Acker’s Tip: Switch the seasonal filter from JJA (Summer) to DJF (Winter) to see how seasonal filtering isolates the wildfire signal from winter background noise!',
+  },
+  'ackers-seawifs-coastal-study': {
+    summary:
+      'Based on Challenge Author Dr. James Acker’s research paper (NASA NTRS 20090042747): river runoff (QRUNOFF from GES DISC Hydrology) delivers agricultural nutrients into the Mississippi River plume and Chesapeake Bay, driving a significant rise in Chlorophyll-a (SEAWIFS_CHLA in NASA Giovanni), while the open Gulf of Mexico shelf exhibits contrasting oligotrophic dynamics.',
+    note: 'Click the variable toggle button (SEAWIFS_CHLA ↔ QRUNOFF) to compare coastal phytoplankton blooms directly against river runoff!',
+  },
+  'csa-swot-radarsat-water-ice': {
+    summary:
+      'Combines Canadian Space Agency RADARSAT Constellation Mission (RCM) C-band SAR imagery and SWOT KaRIn radar altimetry to detect boreal lake water level shifts (SWOT_WSE) and Hudson Bay sea-ice retreat (RCM_SAR_BACKSCATTER) regardless of cloud cover or polar darkness.',
+    note: 'Toggle between SWOT_WSE (water surface elevation in meters) and RCM_SAR_BACKSCATTER (SAR radar backscatter in dB).',
+  },
+  'kasatochi-volcanic-cooling': {
+    summary:
+      'The August 2008 Kasatochi eruption in the Aleutian Islands injected massive amounts of sulfur dioxide (SO₂) into the stratosphere. Reflective sulfate aerosols blocked incoming solar radiation, triggering a regional radiative cooling trap followed by multi-year relaxation.',
+    note: 'Observe the extreme August 2008 SO₂ spike and subsequent stratospheric decay on the deseasonalized Aura OMI series.',
+  },
+  'enso-pacific-dipole': {
+    summary:
+      'A single planetary ocean-atmosphere oscillation (ENSO) drives two opposite regional hydrological trends: intensifying convective rainfall along the Peru/Ecuador coast versus deepening drought across Indonesia and Northern Australia during the peak DJF season.',
+    note: 'Core challenge benchmark: comparing two regions with opposite trends and strong negative correlation (r < -0.5).',
+  },
+  'arctic-atlantic-dipole': {
+    summary:
+      'Sea-ice loss accelerates High Arctic warming over Svalbard (p < 0.001, deseasonalized trend), while Greenland meltwater flux slows the Atlantic Meridional Overturning Circulation (AMOC), creating the subpolar North Atlantic Warming Hole.',
+    note: 'Deseasonalizing the temperature series removes the annual summer-winter swing and sharpens the t-test signal.',
+  },
+  'ukraine-steppe-soil-moisture': {
+    summary:
+      'Demonstrates an emerging trend near the statistical significance threshold (p ≈ 0.07): summer root-zone soil moisture across the Southern Ukrainian Steppe shows a clear drying slope, and the Time-to-Significance calculator estimates how many additional years of satellite observation are needed to reach p < 0.05.',
+    note: 'Illustrates why a real physical drying process over a 20-year window can yield p = 0.06–0.08 before crossing the formal 95% confidence threshold.',
+  },
+  'eonet-fallback-wildfires-canada': {
+    summary:
+      'NASA EONET catalog event (Wildfires): evaluating the multi-decadal trend in smoke Aerosol Optical Depth (MODIS Aqua AOD) during the peak summer wildfire season (JJA, 2002–2026).',
+    note: 'Automatically generated scenario anchored to NASA EONET event coordinates (Wildfires -> MODIS Aqua AOD).',
+  },
+  'eonet-fallback-volcano-reykjanes': {
+    summary:
+      'NASA EONET catalog event (Volcanoes): monitoring atmospheric sulfur dioxide column emissions (Aura OMI SO₂) with seasonal cycle removal (deseasonalized).',
+    note: 'Automatically mapped from NASA EONET API (Volcanoes -> Aura OMI SO₂).',
+  },
+  'eonet-fallback-storm-atlantic': {
+    summary:
+      'NASA EONET catalog event (Severe Storms): testing the long-term trend in extreme cyclone precipitation rate (NASA GPM IMERG) during the peak Atlantic hurricane season (SON).',
+    note: 'Automatically mapped from NASA EONET API (Severe Storms -> GPM Precipitation).',
+  },
+  'eonet-fallback-drought-amazon': {
+    summary:
+      'NASA EONET catalog event (Drought): analyzing root-zone soil moisture depletion (NASA GLDAS GWETROOT) during the Amazon Basin dry season.',
+    note: 'Automatically mapped from NASA EONET API (Drought -> GLDAS GWETROOT).',
+  },
+};
+
+export function getScenarioTextI18n(
+  scenario: {
+    id: string;
+    eonet_id?: string | null;
+    title?: string;
+    category?: string;
+    variable: string;
+    satellite_badge?: string;
+    season_mode: string;
+    start_year: number;
+    end_year: number;
+    event_date?: string | null;
+    scientific_summary: string;
+    student_note?: string | null;
+  },
+  lang: Language
+): { summary: string; note?: string } {
+  if (lang === 'ua') {
+    return {
+      summary: scenario.scientific_summary,
+      note: scenario.student_note || undefined,
+    };
+  }
+  const known = SCENARIO_TEXT_EN[scenario.id];
+  if (known) {
+    return known;
+  }
+  if (scenario.eonet_id || scenario.id.startsWith('eonet-')) {
+    const evId = scenario.eonet_id || scenario.id.toUpperCase();
+    const cat = scenario.category || 'Earth Event';
+    const sat = scenario.satellite_badge || 'NASA Satellite';
+    return {
+      summary: `Live NASA EONET event (${evId} • ${cat}): automatically paired with ${scenario.variable} (${sat}) using seasonal filter "${scenario.season_mode}" over ${scenario.start_year}–${scenario.end_year} to test the multi-decadal climate background.`,
+      note: `Satellite detection date: ${scenario.event_date || 'Live'}. Check whether this event is part of a statistically significant long-term trend (p < 0.05)!`,
+    };
+  }
+  return {
+    summary: scenario.scientific_summary,
+    note: scenario.student_note || undefined,
+  };
+}
+
+const RESOURCE_ROLE_EN: Record<string, string> = {
+  'nasa-giovanni':
+    'Primary portal for satellite Earth observation time series (MODIS AOD, SeaWiFS Chlorophyll-a, AIRS, Aura OMI, GPM).',
+  'ges-disc-hydrology':
+    'Source of GLDAS/NLDAS hydrological time series (root zone soil moisture, evapotranspiration, streamflow runoff).',
+  'nasa-appeears':
+    'Geospatial point and polygon time-series extraction and transformation across NASA Earthdata Cloud.',
+  'noaa-cdo':
+    'Historical ground weather station records used to cross-validate satellite-derived climate trends.',
+  'nasa-ntrs-seawifs-paper':
+    'Reference methodology by Dr. James Acker for constructing coastal time series and testing trend significance in estuaries.',
+  'knmi-climate-explorer':
+    'Reference research platform for climate field correlation and teleconnection dipole analysis.',
+  'statistical-test-methods-medium':
+    'Theoretical foundation for our statistical engine (Mann-Kendall test, Sen’s slope estimator, Student’s t-test).',
+  'statsig-statistical-significance':
+    'Educational guide for interpreting p-value < 0.05 thresholds, signal-to-noise ratios, and 95% confidence intervals.',
+  'csa-rcm-data':
+    'All-weather day/night C-band SAR monitoring of sea ice, coastal flooding, wetlands, and surface moisture.',
+  'canada-geoca':
+    'Canada’s open geospatial data hub for regional environmental monitoring (boreal wildfires, surface water, cryosphere).',
+  'csa-swot-mission':
+    'High-precision KaRIn radar interferometry measuring water surface elevation across 90% of global lakes, rivers, and reservoirs.',
+  'csa-monitoring-ecosystems':
+    'Educational framework on how spaceborne sensors monitor and protect terrestrial and marine ecosystems.',
+  'csa-sar-python-tutorial':
+    'Python methods for processing Synthetic Aperture Radar (SAR) backscatter imagery to detect surface change.',
+};
+
+export function getResourceRoleI18n(
+  id: string,
+  lang: Language,
+  fallbackUa: string
+): string {
+  if (lang === 'en') {
+    return RESOURCE_ROLE_EN[id] || fallbackUa;
+  }
+  return fallbackUa;
+}
+
+export function formatDipoleVerdictI18n(
+  dipole: {
+    pearson_r: number;
+    correlation_p_value: number;
+    is_opposite_trend: boolean;
+    badge?: string;
+    verdict: string;
+  },
+  nameA: string,
+  nameB: string,
+  lang: Language
+): { badge: string; verdict: string } {
+  if (lang === 'ua') {
+    return {
+      badge:
+        dipole.badge ||
+        (dipole.is_opposite_trend ? 'ПРОТИЛЕЖНИЙ ДИПОЛЬ' : 'СИНХРОННИЙ РУХ'),
+      verdict: dipole.verdict,
+    };
+  }
+  const rStr = `${dipole.pearson_r >= 0 ? '+' : ''}${dipole.pearson_r.toFixed(2)}`;
+  const pStr = dipole.correlation_p_value.toFixed(4);
+  if (dipole.is_opposite_trend && dipole.pearson_r < -0.3) {
+    return {
+      badge: 'STRONG REGIONAL DIPOLE',
+      verdict: `Strong regional dipole contrast detected: "${nameA}" and "${nameB}" exhibit opposite trends with negative correlation (r = ${rStr}, p = ${pStr}).`,
+    };
+  }
+  if (dipole.is_opposite_trend) {
+    return {
+      badge: 'OPPOSITE TRENDS',
+      verdict: `Opposite trend directions detected between "${nameA}" and "${nameB}" (r = ${rStr}, p = ${pStr}).`,
+    };
+  }
+  if (dipole.pearson_r > 0.4) {
+    return {
+      badge: 'SYNCHRONOUS VARIABILITY',
+      verdict: `Both regions ("${nameA}" and "${nameB}") co-vary synchronously in the same direction (r = ${rStr}, p = ${pStr}).`,
+    };
+  }
+  return {
+    badge: 'INDEPENDENT DYNAMICS',
+    verdict: `Weak or independent regional correlation between "${nameA}" and "${nameB}" (r = ${rStr}, p = ${pStr}).`,
+  };
+}
+
 interface LanguageContextValue {
   lang: Language;
   setLang: (lang: Language) => void;

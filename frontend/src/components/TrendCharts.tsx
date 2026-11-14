@@ -697,7 +697,25 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   {
                     x:
                       targetDecompAnalysis.stl_decomposition?.annual_seasonal_cycle?.map(
-                        (c) => c.month_name
+                        (c) => {
+                          const enMonths = [
+                            'Jan',
+                            'Feb',
+                            'Mar',
+                            'Apr',
+                            'May',
+                            'Jun',
+                            'Jul',
+                            'Aug',
+                            'Sep',
+                            'Oct',
+                            'Nov',
+                            'Dec',
+                          ];
+                          return lang === 'en'
+                            ? enMonths[(c.month - 1) % 12] || c.month_name
+                            : c.month_name;
+                        }
                       ) || [
                         'Jan',
                         'Feb',

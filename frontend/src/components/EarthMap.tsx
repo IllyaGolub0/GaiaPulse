@@ -35,6 +35,7 @@ import {
   ROIShapeMode,
   buildROIPolygonCoords,
 } from './Globe3DView';
+import { Language, useLanguage } from '../i18n/translations';
 
 interface EarthMapProps {
   mode: AnalysisMode;
@@ -53,6 +54,7 @@ type BasemapTheme = 'dark' | 'night' | 'satellite';
 interface GibsLayerConfig {
   id: string;
   label: string;
+  labelEn: string;
   layerName: string;
   matrixSet: string;
   format: 'png' | 'jpg';
@@ -60,9 +62,13 @@ interface GibsLayerConfig {
   colorbar?: {
     gradientCss: string;
     minLabel: string;
+    minLabelEn?: string;
     midLabel: string;
+    midLabelEn?: string;
     maxLabel: string;
+    maxLabelEn?: string;
     unit: string;
+    unitEn?: string;
   };
 }
 
@@ -70,6 +76,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   T2M: {
     id: 'T2M',
     label: 'MODIS: Температура поверхні (LST Day)',
+    labelEn: 'MODIS: Land Surface Temperature (LST Day)',
     layerName: 'MODIS_Terra_Land_Surface_Temp_Day',
     matrixSet: 'GoogleMapsCompatible_Level7',
     format: 'png',
@@ -85,6 +92,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   PRECTOTCORR: {
     id: 'PRECTOTCORR',
     label: 'GPM IMERG: Інтенсивність опадів',
+    labelEn: 'GPM IMERG: Precipitation Rate',
     layerName: 'IMERG_Precipitation_Rate',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
@@ -95,11 +103,13 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       midLabel: '10',
       maxLabel: '50+',
       unit: 'мм/год',
+      unitEn: 'mm/hr',
     },
   },
   GWETROOT: {
     id: 'GWETROOT',
     label: 'SMAP L4: Вологість ґрунту (Root Zone)',
+    labelEn: 'SMAP L4: Root Zone Soil Moisture',
     layerName: 'SMAP_L4_Analyzed_Root_Zone_Soil_Moisture',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
@@ -107,14 +117,18 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       gradientCss:
         'linear-gradient(90deg, #fab387 0%, #f9e2af 30%, #a6e3a1 65%, #89b4fa 100%)',
       minLabel: '0.05 (Посуха)',
+      minLabelEn: '0.05 (Dry)',
       midLabel: '0.35',
       maxLabel: '0.65 (Волого)',
+      maxLabelEn: '0.65 (Wet)',
       unit: 'м³/м³',
+      unitEn: 'm³/m³',
     },
   },
   AOD: {
     id: 'AOD',
     label: 'MODIS Aqua/Terra: Аерозолі та Дим Пожеж (AOD)',
+    labelEn: 'MODIS Aqua/Terra: Wildfire Smoke & Aerosols (AOD)',
     layerName: 'MODIS_Terra_Aerosol',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
@@ -130,6 +144,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   SO2: {
     id: 'SO2',
     label: 'Aura OMI / MODIS: Вулканічний шлейф та сульфати (SO₂/AOD)',
+    labelEn: 'Aura OMI / MODIS: Volcanic Plume & Sulfates (SO₂/AOD)',
     layerName: 'MODIS_Terra_Aerosol',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
@@ -145,6 +160,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   ALLSKY_SFC_SW_DWN: {
     id: 'ALLSKY_SFC_SW_DWN',
     label: 'MODIS Terra: True Color (Хмарність та Радіація)',
+    labelEn: 'MODIS Terra: True Color (Clouds & Solar Flux)',
     layerName: 'MODIS_Terra_CorrectedReflectance_TrueColor',
     matrixSet: 'GoogleMapsCompatible_Level9',
     format: 'jpg',
@@ -152,6 +168,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   SNODP: {
     id: 'SNODP',
     label: 'MODIS: Сніговий та льодовий покрив (NDSI)',
+    labelEn: 'MODIS: Snow & Ice Cover (NDSI)',
     layerName: 'MODIS_Terra_NDSI_Snow_Cover',
     matrixSet: 'GoogleMapsCompatible_Level8',
     format: 'png',
@@ -162,11 +179,13 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       midLabel: '50%',
       maxLabel: '100%',
       unit: 'Сніг/Лід',
+      unitEn: 'Snow/Ice',
     },
   },
   TERRA_BANDS_721: {
     id: 'TERRA_BANDS_721',
     label: 'MODIS Terra: ІЧ-композит Bands 7-2-1 (Повені / Згарища)',
+    labelEn: 'MODIS Terra: SWIR Bands 7-2-1 (Floods / Burn Scars)',
     layerName: 'MODIS_Terra_CorrectedReflectance_Bands721',
     matrixSet: 'GoogleMapsCompatible_Level9',
     format: 'jpg',
@@ -174,6 +193,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   ASTER_RELIEF: {
     id: 'ASTER_RELIEF',
     label: 'ASTER GDEM: Кольоровий рельєф висот Землі',
+    labelEn: 'ASTER GDEM: Color Shaded Relief Elevation',
     layerName: 'ASTER_GDEM_Color_Shaded_Relief',
     matrixSet: 'GoogleMapsCompatible_Level12',
     format: 'jpg',
@@ -182,14 +202,19 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       gradientCss:
         'linear-gradient(90deg, #a6e3a1 0%, #f9e2af 45%, #fab387 75%, #cdd6f4 100%)',
       minLabel: '0 м',
+      minLabelEn: '0 m',
       midLabel: '1500 м',
+      midLabelEn: '1500 m',
       maxLabel: '5000+ м',
+      maxLabelEn: '5000+ m',
       unit: 'Висота',
+      unitEn: 'Elevation',
     },
   },
   SEAWIFS_CHLA: {
     id: 'SEAWIFS_CHLA',
     label: 'MODIS Aqua / SeaWiFS: Прибережний хлорофіл-а (Ocean Color)',
+    labelEn: 'MODIS Aqua / SeaWiFS: Coastal Chlorophyll-a (Ocean Color)',
     layerName: 'MODIS_Aqua_Chlorophyll_A',
     matrixSet: 'GoogleMapsCompatible_Level7',
     format: 'png',
@@ -205,6 +230,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   SWOT_WSE: {
     id: 'SWOT_WSE',
     label: 'SWOT / MODIS Bands 7-2-1: Рівень поверхневих вод та озер (WSE)',
+    labelEn: 'SWOT / MODIS Bands 7-2-1: Water Surface Elevation (WSE)',
     layerName: 'MODIS_Terra_CorrectedReflectance_Bands721',
     matrixSet: 'GoogleMapsCompatible_Level9',
     format: 'jpg',
@@ -212,14 +238,18 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       gradientCss:
         'linear-gradient(90deg, #1e3a8a 0%, #89b4fa 45%, #94e2d5 75%, #a6e3a1 100%)',
       minLabel: 'Низький',
+      minLabelEn: 'Low',
       midLabel: 'Норма',
+      midLabelEn: 'Normal',
       maxLabel: 'Паводок',
+      maxLabelEn: 'Flood',
       unit: 'm (WSE)',
     },
   },
   RCM_SAR_BACKSCATTER: {
     id: 'RCM_SAR_BACKSCATTER',
     label: 'CSA RADARSAT / MODIS: Морський лід та вологість поверхні (SAR σ°)',
+    labelEn: 'CSA RADARSAT / MODIS: Sea Ice & Surface Moisture (SAR σ°)',
     layerName: 'MODIS_Terra_NDSI_Snow_Cover',
     matrixSet: 'GoogleMapsCompatible_Level8',
     format: 'png',
@@ -227,8 +257,10 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       gradientCss:
         'linear-gradient(90deg, #1e1e2e 0%, #74c7ec 40%, #89b4fa 70%, #cdd6f4 100%)',
       minLabel: '-22 dB (Вода)',
+      minLabelEn: '-22 dB (Water)',
       midLabel: '-13 dB',
       maxLabel: '-5 dB (Лід)',
+      maxLabelEn: '-5 dB (Ice)',
       unit: 'dB (σ°)',
     },
   },
@@ -254,6 +286,7 @@ const BASEMAP_THEMES: Record<
   BasemapTheme,
   {
     label: string;
+    labelEn: string;
     baseUrl: string;
     refUrl?: string;
     attribution: string;
@@ -261,6 +294,7 @@ const BASEMAP_THEMES: Record<
 > = {
   dark: {
     label: 'Темна',
+    labelEn: 'Dark',
     baseUrl:
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     refUrl:
@@ -269,6 +303,7 @@ const BASEMAP_THEMES: Record<
   },
   night: {
     label: 'Нічна',
+    labelEn: 'Night',
     baseUrl:
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_CityLights_2012/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
     refUrl:
@@ -277,6 +312,7 @@ const BASEMAP_THEMES: Record<
   },
   satellite: {
     label: 'Супутник',
+    labelEn: 'Satellite',
     baseUrl:
       'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',
     refUrl:
@@ -324,8 +360,9 @@ function createCatppuccinMarkerIcon(
 const MapClickHandler: React.FC<{
   mode: AnalysisMode;
   activeTarget: 'A' | 'B';
+  lang: Language;
   onMapClickRegion: (target: 'A' | 'B', location: RegionLocation) => void;
-}> = ({ mode, activeTarget, onMapClickRegion }) => {
+}> = ({ mode, activeTarget, lang, onMapClickRegion }) => {
   useMapEvents({
     click(e) {
       const lat = Number(e.latlng.lat.toFixed(3));
@@ -334,10 +371,15 @@ const MapClickHandler: React.FC<{
         ((((rawLon + 180) % 360 + 360) % 360) - 180).toFixed(3)
       );
       const target: 'A' | 'B' = mode === 'single' ? 'A' : activeTarget;
-      const pointLabel =
+      const prefix =
         target === 'A'
-          ? `Точка А (${lat.toFixed(2)}°, ${normalizedLon.toFixed(2)}°)`
-          : `Точка Б (${lat.toFixed(2)}°, ${normalizedLon.toFixed(2)}°)`;
+          ? lang === 'en'
+            ? 'Point A'
+            : 'Точка А'
+          : lang === 'en'
+          ? 'Point B'
+          : 'Точка Б';
+      const pointLabel = `${prefix} (${lat.toFixed(2)}°, ${normalizedLon.toFixed(2)}°)`;
 
       onMapClickRegion(target, {
         name: pointLabel,
@@ -389,6 +431,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   onMapClickRegion,
   onToggleActiveTarget,
 }) => {
+  const { lang } = useLanguage();
   const [viewMode, setViewMode] = useState<ViewProjectionMode>('2d');
   const [basemapTheme, setBasemapTheme] = useState<BasemapTheme>('dark');
   const [gibsEnabled, setGibsEnabled] = useState<boolean>(true);
@@ -448,6 +491,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({
     );
   }, [mode, regionB, roiShape]);
 
+  const activeLayerDisplayLabel =
+    lang === 'en' ? gibsConfig.labelEn : gibsConfig.label;
+
   return (
     <div className="w-full h-[640px] min-h-[580px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#0c0c0f] flex flex-col">
       {/* Row 1: Primary Map Controls (2D/3D, Click Target, Basemap, GIBS Opacity) */}
@@ -467,7 +513,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               }`}
             >
               <MapIcon className="w-3.5 h-3.5" />
-              <span>2D Мапа</span>
+              <span>{lang === 'en' ? '2D Map' : '2D Мапа'}</span>
             </button>
 
             <button
@@ -480,7 +526,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>3D Глобус</span>
+              <span>{lang === 'en' ? '3D Globe' : '3D Глобус'}</span>
             </button>
           </div>
 
@@ -491,7 +537,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
             />
             {mode === 'single' ? (
               <span className="font-mono font-semibold text-ctp-blue">
-                Клік → Точка А
+                {lang === 'en' ? 'Click → Point A' : 'Клік → Точка А'}
               </span>
             ) : (
               <div className="flex items-center gap-1">
@@ -504,7 +550,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                       : 'text-ctp-subtext0 hover:text-ctp-text'
                   }`}
                 >
-                  Точка А
+                  {lang === 'en' ? 'Point A' : 'Точка А'}
                 </button>
                 <span className="text-ctp-surface2">/</span>
                 <button
@@ -516,7 +562,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                       : 'text-ctp-subtext0 hover:text-ctp-text'
                   }`}
                 >
-                  Точка Б
+                  {lang === 'en' ? 'Point B' : 'Точка Б'}
                 </button>
               </div>
             )}
@@ -537,7 +583,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                       : 'text-ctp-subtext0 hover:text-ctp-text'
                   }`}
                 >
-                  {BASEMAP_THEMES[themeKey].label}
+                  {lang === 'en'
+                    ? BASEMAP_THEMES[themeKey].labelEn
+                    : BASEMAP_THEMES[themeKey].label}
                 </button>
               )
             )}
@@ -590,11 +638,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               className="bg-ctp-mantle text-ctp-text border border-ctp-surface0 rounded-md px-2 py-1 text-[11px] font-mono focus:outline-none focus:border-ctp-blue"
             >
               <option value="AUTO">
-                Авто-шар GIBS (змінна: {variable})
+                {lang === 'en'
+                  ? `Auto GIBS Layer (var: ${variable})`
+                  : `Авто-шар GIBS (змінна: ${variable})`}
               </option>
               {Object.values(TERRA_GIBS_CATALOG).map((layer) => (
                 <option key={layer.id} value={layer.id}>
-                  {layer.label}
+                  {lang === 'en' ? layer.labelEn : layer.label}
                 </option>
               ))}
             </select>
@@ -603,7 +653,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({
           {!gibsConfig.isStaticDate && (
             <div className="flex items-center gap-1.5 bg-ctp-mantle px-2 py-0.5 rounded-md border border-ctp-surface0">
               <Calendar className="w-3 h-3 text-ctp-sapphire" />
-              <span className="text-ctp-subtext0">Дата GIBS:</span>
+              <span className="text-ctp-subtext0">
+                {lang === 'en' ? 'GIBS Date:' : 'Дата GIBS:'}
+              </span>
               <input
                 type="date"
                 min="2001-01-01"
@@ -621,7 +673,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         <div className="flex flex-wrap items-center gap-1.5">
           <div className="flex items-center gap-1 bg-ctp-mantle px-2 py-0.5 rounded-md border border-ctp-surface0">
             <Scan className="w-3 h-3 text-ctp-mauve" />
-            <span className="text-ctp-subtext0">Зона ROI:</span>
+            <span className="text-ctp-subtext0">
+              {lang === 'en' ? 'ROI Zone:' : 'Зона ROI:'}
+            </span>
             {(['circle', 'box', 'off'] as ROIShapeMode[]).map((shape) => (
               <button
                 key={shape}
@@ -634,9 +688,15 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 }`}
               >
                 {shape === 'circle'
-                  ? 'Коло'
+                  ? lang === 'en'
+                    ? 'Circle'
+                    : 'Коло'
                   : shape === 'box'
-                  ? 'Квадрат'
+                  ? lang === 'en'
+                    ? 'Box'
+                    : 'Квадрат'
+                  : lang === 'en'
+                  ? 'Off'
                   : 'Вимк'}
               </button>
             ))}
@@ -654,7 +714,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 }`}
               >
                 <Grid className="w-3 h-3" />
-                <span>Сітка</span>
+                <span>{lang === 'en' ? 'Grid' : 'Сітка'}</span>
               </button>
 
               <button
@@ -669,7 +729,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 <RotateCw
                   className={`w-3 h-3 ${autoRotate ? 'animate-spin' : ''}`}
                 />
-                <span>Обертання [A]</span>
+                <span>{lang === 'en' ? 'Rotate [A]' : 'Обертання [A]'}</span>
               </button>
             </>
           )}
@@ -682,10 +742,12 @@ export const EarthMap: React.FC<EarthMapProps> = ({
           <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
             <div className="flex items-center justify-between text-[10px] font-mono text-ctp-text mb-1">
               <span className="font-semibold truncate max-w-[150px]">
-                {gibsConfig.label.split(':')[1] || gibsConfig.label}
+                {activeLayerDisplayLabel.split(':')[1] || activeLayerDisplayLabel}
               </span>
               <span className="text-ctp-blue font-bold ml-2">
-                {gibsConfig.colorbar.unit}
+                {lang === 'en' && gibsConfig.colorbar.unitEn
+                  ? gibsConfig.colorbar.unitEn
+                  : gibsConfig.colorbar.unit}
               </span>
             </div>
             <div
@@ -693,9 +755,21 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               style={{ background: gibsConfig.colorbar.gradientCss }}
             />
             <div className="flex items-center justify-between text-[9px] font-mono text-ctp-subtext0 mt-1">
-              <span>{gibsConfig.colorbar.minLabel}</span>
-              <span>{gibsConfig.colorbar.midLabel}</span>
-              <span>{gibsConfig.colorbar.maxLabel}</span>
+              <span>
+                {lang === 'en' && gibsConfig.colorbar.minLabelEn
+                  ? gibsConfig.colorbar.minLabelEn
+                  : gibsConfig.colorbar.minLabel}
+              </span>
+              <span>
+                {lang === 'en' && gibsConfig.colorbar.midLabelEn
+                  ? gibsConfig.colorbar.midLabelEn
+                  : gibsConfig.colorbar.midLabel}
+              </span>
+              <span>
+                {lang === 'en' && gibsConfig.colorbar.maxLabelEn
+                  ? gibsConfig.colorbar.maxLabelEn
+                  : gibsConfig.colorbar.maxLabel}
+              </span>
             </div>
           </div>
         )}
@@ -758,6 +832,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
             <MapClickHandler
               mode={mode}
               activeTarget={activeTarget}
+              lang={lang}
               onMapClickRegion={onMapClickRegion}
             />
 
@@ -877,7 +952,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         <div className="text-ctp-subtext0 truncate">
           NASA GIBS:{' '}
           <span className="text-ctp-teal">
-            {gibsEnabled ? gibsConfig.layerName : 'Вимкнено'}
+            {gibsEnabled
+              ? gibsConfig.layerName
+              : lang === 'en'
+              ? 'Disabled'
+              : 'Вимкнено'}
           </span>
         </div>
       </div>

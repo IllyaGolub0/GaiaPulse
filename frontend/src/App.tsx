@@ -50,8 +50,11 @@ import {
   NASA_OFFICIAL_DISCLAIMER,
 } from './services/api';
 import {
+  formatDipoleVerdictI18n,
   getBiomeOptionsI18n,
+  getScenarioTextI18n,
   getSeasonModesI18n,
+  getVariableDefinitionI18n,
   useLanguage,
 } from './i18n/translations';
 import { EarthMap } from './components/EarthMap';
@@ -886,10 +889,11 @@ export const App: React.FC = () => {
             </select>
             {currentVarMeta?.student_definition && (
               <p className="text-[11px] text-zinc-500 leading-snug line-clamp-2">
-                {lang === 'en'
-                  ? currentVarMeta.description ||
-                    currentVarMeta.student_definition
-                  : currentVarMeta.student_definition}
+                {getVariableDefinitionI18n(
+                  currentVarMeta.code,
+                  lang,
+                  currentVarMeta.student_definition
+                )}
               </p>
             )}
           </div>
@@ -1674,7 +1678,7 @@ export const App: React.FC = () => {
                             </span>
                           </div>
                           <p className="text-xs text-zinc-400 leading-relaxed">
-                            {activeScenario.scientific_summary}
+                            {getScenarioTextI18n(activeScenario, lang).summary}
                           </p>
                         </div>
 
@@ -1865,7 +1869,14 @@ export const App: React.FC = () => {
                                       </span>
                                     </div>
                                     <p className="text-xs text-zinc-400">
-                                      {analysisResult.dipole_comparison.verdict}
+                                      {
+                                        formatDipoleVerdictI18n(
+                                          analysisResult.dipole_comparison,
+                                          regionA.name,
+                                          regionB?.name || 'Region B',
+                                          lang
+                                        ).verdict
+                                      }
                                     </p>
                                   </div>
                                 )}
@@ -1908,14 +1919,23 @@ export const App: React.FC = () => {
                                     {activeScenario.title}
                                   </h3>
                                   <p className="text-xs text-zinc-400 leading-relaxed">
-                                    {activeScenario.scientific_summary}
+                                    {
+                                      getScenarioTextI18n(activeScenario, lang)
+                                        .summary
+                                    }
                                   </p>
-                                  {activeScenario.student_note && (
+                                  {getScenarioTextI18n(activeScenario, lang)
+                                    .note && (
                                     <div className="border-l-2 border-zinc-700 pl-3 py-0.5 text-xs text-zinc-400">
                                       <span className="font-medium text-zinc-200">
                                         {t.studentTipLabel}
                                       </span>
-                                      {activeScenario.student_note}
+                                      {
+                                        getScenarioTextI18n(
+                                          activeScenario,
+                                          lang
+                                        ).note
+                                      }
                                     </div>
                                   )}
                                 </div>
@@ -2058,14 +2078,26 @@ export const App: React.FC = () => {
                           <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-medium">
                             Dipole Teleconnection Verdict
                           </span>
-                          {analysisResult.dipole_comparison.badge && (
-                            <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#141419] text-zinc-300 border border-[#24242b]">
-                              {analysisResult.dipole_comparison.badge}
-                            </span>
-                          )}
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#141419] text-zinc-300 border border-[#24242b]">
+                            {
+                              formatDipoleVerdictI18n(
+                                analysisResult.dipole_comparison,
+                                regionA.name,
+                                regionB?.name || 'Region B',
+                                lang
+                              ).badge
+                            }
+                          </span>
                         </div>
                         <p className="text-xs text-zinc-300">
-                          {analysisResult.dipole_comparison.verdict}
+                          {
+                            formatDipoleVerdictI18n(
+                              analysisResult.dipole_comparison,
+                              regionA.name,
+                              regionB?.name || 'Region B',
+                              lang
+                            ).verdict
+                          }
                         </p>
                       </div>
 
@@ -2531,12 +2563,34 @@ export const App: React.FC = () => {
                   : 'Науковий висновок детективу'}
               </div>
               <p className="text-xs text-zinc-200 leading-relaxed">
-                {analysisResult.region_a_analysis.human_summary}
+                {lang === 'en'
+                  ? `In "${regionA.name}" over ${startYear}–${endYear} (mode: ${seasonMode}), ${currentVarMeta.name} exhibits ${
+                      statsA.is_significant
+                        ? `a statistically significant ${statsA.mk_trend} trend`
+                        : `an emerging ${statsA.mk_trend} signal not yet crossing p < 0.05`
+                    } (${
+                      statsA.change_per_decade >= 0 ? '+' : ''
+                    }${statsA.change_per_decade.toFixed(4)} ${
+                      currentVarMeta.unit
+                    }/decade, Mann-Kendall p = ${statsA.p_value.toFixed(
+                      4
+                    )}, Student's t = ${
+                      statsA.student_t_test?.t_stat.toFixed(2) ?? '0.00'
+                    }, SNR = ${statsA.signal_to_noise_ratio.toFixed(2)}).`
+                  : analysisResult.region_a_analysis.human_summary}
               </p>
               {statsA.time_to_significance && (
                 <p className="text-[11px] font-mono text-zinc-400">
                   Time-to-Significance (Weatherhead et al., 1998):{' '}
-                  {statsA.time_to_significance.message}
+                  {lang === 'en'
+                    ? statsA.time_to_significance.is_already_significant
+                      ? `Trend already exceeds the 95% confidence threshold (p = ${statsA.p_value.toFixed(
+                          4
+                        )} < 0.05) across ${
+                          statsA.time_to_significance.current_years
+                        } observed years.`
+                      : `At the current slope and variance, ~${statsA.time_to_significance.additional_years_needed} additional years of satellite observations are needed (~${statsA.time_to_significance.total_years_required} years total) to cross p < 0.05.`
+                    : statsA.time_to_significance.message}
                 </p>
               )}
             </div>

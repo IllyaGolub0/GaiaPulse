@@ -5,6 +5,7 @@ import {
   AnalysisMode,
   RegionLocation,
 } from '../types/climate';
+import { useLanguage } from '../i18n/translations';
 
 export type ROIShapeMode = 'circle' | 'box' | 'off';
 
@@ -204,6 +205,7 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
   onStopAutoRotate,
   onMapClickRegion,
 }) => {
+  const { lang } = useLanguage();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerARef = useRef<maplibregl.Marker | null>(null);
@@ -213,6 +215,7 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
   const clickStateRef = useRef({
     mode,
     activeTarget,
+    lang,
     onMapClickRegion,
     onStopAutoRotate,
   });
@@ -220,10 +223,11 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
     clickStateRef.current = {
       mode,
       activeTarget,
+      lang,
       onMapClickRegion,
       onStopAutoRotate,
     };
-  }, [mode, activeTarget, onMapClickRegion, onStopAutoRotate]);
+  }, [mode, activeTarget, lang, onMapClickRegion, onStopAutoRotate]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -370,6 +374,7 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
       const {
         mode: curMode,
         activeTarget: curTarget,
+        lang: curLang,
         onMapClickRegion: cb,
       } = clickStateRef.current;
       const lat = Number(Math.max(-85, Math.min(85, e.lngLat.lat)).toFixed(3));
@@ -378,10 +383,15 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
         ((((rawLon + 180) % 360 + 360) % 360) - 180).toFixed(3)
       );
       const target: 'A' | 'B' = curMode === 'single' ? 'A' : curTarget;
-      const label =
+      const prefix =
         target === 'A'
-          ? `Точка А (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`
-          : `Точка Б (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
+          ? curLang === 'en'
+            ? 'Point A'
+            : 'Точка А'
+          : curLang === 'en'
+          ? 'Point B'
+          : 'Точка Б';
+      const label = `${prefix} (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
       cb(target, { name: label, lat, lon });
     });
 
