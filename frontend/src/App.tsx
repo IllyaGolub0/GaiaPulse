@@ -819,6 +819,8 @@ export const App: React.FC = () => {
     QUICK_YEAR_PRESETS.find((p) => p.start === startYear && p.end === endYear)
       ?.label || 'custom';
   const fieldLabelCls = 'block text-xs text-zinc-400 mb-1';
+  const toolBtnCls =
+    'h-10 px-3.5 rounded-md bg-[#1a1a1a] hover:bg-[#262626] text-zinc-100 text-[15px] transition border border-[#2a2a2a] flex items-center gap-2';
   const fieldCtlCls =
     'h-11 md:h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-sky-500';
 
@@ -1579,163 +1581,160 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#09090b] text-zinc-100 flex flex-col md:flex-row selection:bg-zinc-200 selection:text-zinc-950">
-      <aside
-        className={`${
-          navCollapsed ? 'w-14' : 'w-52'
-        } shrink-0 bg-[#070709] border-r border-[#1f1f24] hidden md:flex flex-col justify-between h-full z-40 transition-all duration-150 select-none`}
-      >
-        <div>
-          <div className="h-12 px-3 border-b border-[#1f1f24] flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-7 h-7 rounded-md bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0">
-                GP
-              </div>
-              {!navCollapsed && (
-                <span className="text-base font-semibold tracking-tight text-zinc-50 truncate">
-                  GaiaPulse
-                </span>
-              )}
-            </div>
-            {!navCollapsed && (
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(true)}
-                className="w-8 h-8 rounded-md hover:bg-[#16161b] text-zinc-400 hover:text-zinc-100 transition shrink-0 flex items-center justify-center"
-                title={t.toggleSidebarTitle}
-                aria-label={t.toggleSidebarTitle}
+    <div className="h-[100dvh] overflow-hidden bg-black text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+        {/* Top bar: brand, section tabs, language, guide */}
+        <header className="relative z-30 shrink-0 h-12 md:h-16 bg-[#4b4b4b] px-3 md:px-5 flex items-stretch justify-between gap-3">
+          <div className="flex items-stretch gap-4 xl:gap-10 min-w-0">
+            <button
+              type="button"
+              onClick={() => setActiveView('split')}
+              className="flex items-center gap-3 shrink-0"
+              aria-label="GaiaPulse"
+            >
+              <svg
+                viewBox="0 0 62 60"
+                className="h-8 md:h-11 w-auto shrink-0"
+                fill="none"
+                aria-hidden="true"
               >
-                <PanelLeftClose className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          <nav data-tour="nav" className="p-2 space-y-1">
-            {sidebarCollapsed && isXl && (
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed(false)}
-                className="w-full h-9 rounded-md hover:bg-[#16161b] text-zinc-400 hover:text-zinc-100 transition flex items-center justify-center"
-                title={t.toggleSidebarTitle}
-                aria-label={t.toggleSidebarTitle}
-              >
-                <PanelLeftOpen className="w-4 h-4" />
-              </button>
-            )}
-            {navItems.map((item) => {
-              const isSelected =
-                activeView === item.id || (item.id === 'split' && isAnalysisView);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveView(item.id)}
-                  title={`${item.label}: ${item.subtitle}`}
-                  aria-current={isSelected ? 'page' : undefined}
-                  className={`w-full h-10 rounded-md px-2.5 transition flex items-center gap-2.5 text-sm ${
-                    navCollapsed ? 'justify-center' : ''
-                  } ${
-                    isSelected
-                      ? 'bg-[#1a1a20] text-zinc-50 font-medium'
-                      : 'text-zinc-300 hover:bg-[#111115] hover:text-zinc-50'
-                  }`}
-                >
-                  <span className={isSelected ? 'text-sky-400' : 'text-zinc-400'}>
-                    {item.icon}
-                  </span>
-                  {!navCollapsed && <span className="truncate">{item.label}</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="p-3 border-t border-[#1f1f24] flex items-center gap-2 text-xs text-zinc-400">
-          <span
-            className={`w-2 h-2 rounded-full shrink-0 ${
-              eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
-            }`}
-          />
-          {!navCollapsed && (
-            <span>{eonetIsLive ? t.eonetLive : t.eonetCache}</span>
-          )}
-        </div>
-      </aside>
-
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col md:h-full">
-        <header className="relative z-30 h-12 shrink-0 border-b border-[#1f1f24] bg-[#09090b] px-3 md:px-4 flex items-center justify-between gap-2 md:gap-4">
-          <div className="flex items-baseline gap-3 min-w-0">
-            <h1 className="text-base font-semibold text-zinc-50 truncate">
-              {regionA.name}
-              {mode === 'dipole' && (
-                <span className="text-orange-400"> ↔ {regionB.name}</span>
-              )}
-            </h1>
-            {!isAnalysisView && (
-              <span className="text-[13px] text-zinc-400 truncate hidden lg:inline">
-                {varDisplayName} · {seasonLabelFull} · {startYear}–{endYear}
+                <path
+                  d="M30.9375 0C30.9263 0.338621 30.918 0.679041 30.918 1.02051C30.9183 17.0723 43.3772 30.0847 58.7451 30.085C59.8462 30.085 60.9323 30.0147 62 29.8848V30.2832C60.9324 30.1533 59.8461 30.085 58.7451 30.085C43.377 30.0852 30.918 43.0983 30.918 59.1504C30.918 59.4346 30.9239 59.7178 30.9316 60H30.9053C30.913 59.7178 30.918 59.4346 30.918 59.1504C30.9179 43.0983 18.46 30.0851 3.0918 30.085C2.04668 30.085 1.01521 30.1464 0 30.2637V29.9043C1.01525 30.0215 2.04663 30.0849 3.0918 30.085C18.4598 30.0848 30.9176 17.0723 30.918 1.02051C30.918 0.679044 30.9106 0.338618 30.8994 0H30.9375Z"
+                  fill="#F2F2F2"
+                />
+                <g stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="31" cy="30" r="10" fill="#4b4b4b" />
+                  <path d="M31 20C28.4322 22.6962 27 26.2767 27 30C27 33.7233 28.4322 37.3038 31 40C33.5678 37.3038 35 33.7233 35 30C35 26.2767 33.5678 22.6962 31 20Z" />
+                  <path d="M21 30H41" />
+                </g>
+              </svg>
+              <span className="font-display text-2xl lg:text-3xl xl:text-[40px] text-white leading-none whitespace-nowrap hidden min-[480px]:inline md:hidden lg:inline">
+                GAIA PULSE
               </span>
-            )}
-          </div>
+            </button>
 
-          <div data-tour="header-actions" className="flex items-center gap-2 shrink-0">
-            {isAnalysisView && (
-              <div
-                className="hidden lg:inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
-                role="group"
-                aria-label={L('Вигляд', 'View')}
-              >
-                {viewModes.map((vm) => (
+            <nav
+              data-tour="nav"
+              className="hidden md:flex items-end gap-1"
+              aria-label={L('Розділи', 'Sections')}
+            >
+              {navItems.map((item) => {
+                const isSelected =
+                  activeView === item.id ||
+                  (item.id === 'split' && isAnalysisView);
+                return (
                   <button
-                    key={vm.id}
+                    key={item.id}
                     type="button"
-                    onClick={() => setActiveView(vm.id)}
-                    title={vm.label}
-                    aria-pressed={activeView === vm.id}
-                    className={`h-8 px-2.5 rounded text-sm transition flex items-center gap-1.5 ${
-                      activeView === vm.id
-                        ? 'bg-zinc-100 text-zinc-950 font-medium'
-                        : 'text-zinc-300 hover:text-zinc-50'
+                    onClick={() => setActiveView(item.id)}
+                    title={item.subtitle}
+                    aria-current={isSelected ? 'page' : undefined}
+                    className={`h-[calc(100%-8px)] px-3 lg:px-4 xl:px-5 rounded-t-xl font-nav uppercase text-base xl:text-xl whitespace-nowrap transition ${
+                      isSelected
+                        ? 'bg-black text-white'
+                        : 'text-zinc-100 hover:bg-black/25'
                     }`}
                   >
-                    {vm.icon}
-                    <span className="hidden xl:inline">{vm.label}</span>
+                    {item.label}
                   </button>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </nav>
+          </div>
 
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
             <button
               type="button"
               onClick={() => {
                 setCommandQuery('');
                 setCommandPaletteOpen(true);
               }}
-              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] hidden sm:flex items-center gap-2"
+              className="h-9 md:h-11 px-2.5 md:px-3 rounded-lg bg-black/35 hover:bg-black/60 text-white font-nav uppercase text-base xl:text-lg transition flex items-center gap-2"
               title={L('Пошук показників, кейсів і розділів (Ctrl+K)', 'Search variables, cases and sections (Ctrl+K)')}
+              aria-label={L('Пошук', 'Search')}
             >
               <Search className="w-4 h-4" />
-              <span className="hidden 2xl:inline">{L('Пошук', 'Search')}</span>
+              <span className="hidden xl:inline">{L('Пошук', 'Search')}</span>
             </button>
+
+            <div
+              className="inline-flex items-stretch rounded-lg bg-black h-9 md:h-11 p-1 md:p-1.5"
+              title={t.languageToggleTitle}
+            >
+              {(['ua', 'en'] as const).map((code) => {
+                const active = lang === code;
+                // The white plate fills its half up to the box edge and is cut
+                // with one shared slanted edge between the two languages
+                const clip =
+                  code === 'en'
+                    ? 'polygon(14px 0, 100% 0, 100% 100%, 0 100%)'
+                    : 'polygon(0 0, 100% 0, calc(100% - 14px) 100%, 0 100%)';
+                return (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLang(code)}
+                    aria-pressed={active}
+                    style={active ? { clipPath: clip } : undefined}
+                    className={`relative flex items-center font-nav uppercase text-base md:text-lg leading-none transition-colors ${
+                      code === 'en'
+                        ? 'pl-4 pr-2.5 md:pl-5 md:pr-3 -ml-1.5 rounded-r-md'
+                        : 'pl-2.5 pr-4 md:pl-3 md:pr-5 -mr-1.5 rounded-l-md'
+                    } ${
+                      active
+                        ? 'bg-white text-black z-10'
+                        : 'text-white hover:text-zinc-300'
+                    }`}
+                  >
+                    {code === 'en' ? 'ENG' : 'UA'}
+                  </button>
+                );
+              })}
+            </div>
 
             <button
               type="button"
-              onClick={handleCopyShareLink}
-              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2"
-              title={L('Скопіювати посилання на це дослідження', 'Copy a link to this investigation')}
-            >
-              {copiedLink ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">{L('Скопійовано', 'Copied')}</span>
-                </>
-              ) : (
-                <>
-                  <Link2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">{L('Поділитися', 'Share')}</span>
-                </>
+              onClick={() => setTourStep(0)}
+              className="h-9 md:h-11 px-2.5 md:px-3.5 rounded-lg bg-white hover:bg-zinc-200 text-black font-nav uppercase text-base xl:text-lg transition flex items-center gap-2"
+              title={L(
+                'Покроковий гід по основних можливостях сайту',
+                'Step-by-step tour of the main features'
               )}
+              aria-label={L('Гід', 'Guide')}
+            >
+              <Compass className="w-4 h-4 md:w-5 md:h-5" />
+              <span className="hidden sm:inline">{L('Гід', 'Guide')}</span>
             </button>
+          </div>
+        </header>
+
+        {/* Action bar under the header */}
+        <div
+          data-tour="header-actions"
+          className={`relative z-20 shrink-0 px-3 pt-3 flex-wrap items-center justify-center gap-2 ${
+            isAnalysisView ? 'flex' : 'hidden'
+          }`}
+        >
+          {isAnalysisView && (
+            <>
+              <button
+                type="button"
+                onClick={handleCopyShareLink}
+                className={toolBtnCls}
+                title={L('Скопіювати посилання на це дослідження', 'Copy a link to this investigation')}
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400">{L('Скопійовано', 'Copied')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="w-4 h-4" />
+                    <span>{L('Поділитися', 'Share')}</span>
+                  </>
+                )}
+              </button>
 
             <div className="relative">
               <button
@@ -1744,10 +1743,10 @@ export const App: React.FC = () => {
                 disabled={!analysisResult}
                 aria-haspopup="menu"
                 aria-expanded={exportOpen}
-                className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2 disabled:opacity-50"
+                className={`${toolBtnCls} disabled:opacity-50`}
               >
                 <Download className="w-4 h-4" />
-                <span className="hidden sm:inline">{L('Експорт', 'Export')}</span>
+                <span>{L('Експорт', 'Export')}</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
               {exportOpen && (
@@ -1758,7 +1757,7 @@ export const App: React.FC = () => {
                   />
                   <div
                     role="menu"
-                    className="absolute right-0 top-full mt-1 z-[1200] w-56 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
+                    className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-[1200] w-56 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
                   >
                     <button
                       type="button"
@@ -1801,41 +1800,32 @@ export const App: React.FC = () => {
               )}
             </div>
 
-            <div
-              className="inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
-              title={t.languageToggleTitle}
-            >
-              {(['ua', 'en'] as const).map((code) => (
-                <button
-                  key={code}
-                  type="button"
-                  onClick={() => setLang(code)}
-                  aria-pressed={lang === code}
-                  className={`h-8 px-2 rounded text-xs font-medium transition ${
-                    lang === code
-                      ? 'bg-zinc-100 text-zinc-950'
-                      : 'text-zinc-300 hover:text-zinc-50'
-                  }`}
-                >
-                  {code.toUpperCase()}
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setTourStep(0)}
-              className="h-9 px-2.5 rounded-md bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-sm font-medium transition border border-sky-500/40 flex items-center gap-2"
-              title={L(
-                'Покроковий гід по основних можливостях сайту',
-                'Step-by-step tour of the main features'
-              )}
-            >
-              <Compass className="w-4 h-4" />
-              <span className="hidden sm:inline">{L('Гід', 'Tour')}</span>
-            </button>
-          </div>
-        </header>
+              <div
+                className="hidden lg:inline-flex items-center rounded-md bg-[#1a1a1a] p-0.5 border border-[#2a2a2a]"
+                role="group"
+                aria-label={L('Вигляд', 'View')}
+              >
+                {viewModes.map((vm) => (
+                  <button
+                    key={vm.id}
+                    type="button"
+                    onClick={() => setActiveView(vm.id)}
+                    title={vm.label}
+                    aria-pressed={activeView === vm.id}
+                    className={`h-9 px-3 rounded text-[15px] transition flex items-center gap-1.5 ${
+                      activeView === vm.id
+                        ? 'bg-zinc-100 text-zinc-950 font-medium'
+                        : 'text-zinc-300 hover:text-zinc-50'
+                    }`}
+                  >
+                    {vm.icon}
+                    <span className="hidden xl:inline 2xl:inline">{vm.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {errorMsg && activeView !== 'split' && (
           <div className="mx-4 mt-3 shrink-0">{renderErrorState()}</div>

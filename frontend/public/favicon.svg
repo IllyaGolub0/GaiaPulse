@@ -1,0 +1,16 @@
+<svg width="62" height="60" viewBox="0 0 62 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="62" height="60" fill="#1E1E1E"/>
+<g id="Combined star and globe" clip-path="url(#clip0_0_1)">
+<path id="Subtract" d="M30.9375 0C30.9263 0.338621 30.918 0.679041 30.918 1.02051C30.9183 17.0723 43.3772 30.0847 58.7451 30.085C59.8462 30.085 60.9323 30.0147 62 29.8848V30.2832C60.9324 30.1533 59.8461 30.085 58.7451 30.085C43.377 30.0852 30.918 43.0983 30.918 59.1504C30.918 59.4346 30.9239 59.7178 30.9316 60H30.9053C30.913 59.7178 30.918 59.4346 30.918 59.1504C30.9179 43.0983 18.46 30.0851 3.0918 30.085C2.04668 30.085 1.01521 30.1464 0 30.2637V29.9043C1.01525 30.0215 2.04663 30.0849 3.0918 30.085C18.4598 30.0848 30.9176 17.0723 30.918 1.02051C30.918 0.679044 30.9106 0.338618 30.8994 0H30.9375Z" fill="#D9D9D9"/>
+<g id="globe-icon 1">
+<path id="Vector" d="M41 30C41 35.5228 36.5228 40 31 40C25.4772 40 21 35.5228 21 30C21 24.4772 25.4772 20 31 20C36.5228 20 41 24.4772 41 30Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#4B4B4B"/>
+<path id="Vector_2" d="M31 20C28.4322 22.6962 27 26.2767 27 30C27 33.7233 28.4322 37.3038 31 40C33.5678 37.3038 35 33.7233 35 30C35 26.2767 33.5678 22.6962 31 20Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#4B4B4B"/>
+<path id="Vector_3" d="M21 30H41" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="#4B4B4B"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_1">
+<rect width="62" height="60" fill="white"/>
+</clipPath>
+</defs>
+</svg>

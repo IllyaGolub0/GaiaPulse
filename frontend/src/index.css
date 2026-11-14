@@ -114,3 +114,16 @@ body {
   border: 1.5px solid #f97316;
   animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
+
+/* Brand typography from the design mockup */
+.font-display {
+  font-family: 'Gajraj One', 'Impact', sans-serif;
+  font-weight: 400;
+}
+
+/* Koulen has no Cyrillic glyphs: Ukrainian labels fall back to Oswald */
+.font-nav {
+  font-family: 'Koulen', 'Oswald', 'Arial Narrow', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
