@@ -1419,7 +1419,7 @@ function normalCdf(x: number): number {
 /**
  * Client-side CSV parser + statistical engine fallback (when FastAPI backend is offline).
  */
-function analyzeCsvClientSideFallback(
+export function analyzeCsvClientSideFallback(
   payload: AnalyzeCsvRequest
 ): AnalyzeTrendResponse {
   const seasonMode: SeasonMode = payload.season_mode || 'deseasonalized';

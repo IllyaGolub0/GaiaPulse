@@ -57,7 +57,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
   const tts = statistics.time_to_significance;
 
   return (
-    <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden flex flex-col justify-between">
+    <div className="verdict-card rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden flex flex-col justify-between">
       {/* Top Header Strip */}
       <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#1f1f24]">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -108,79 +108,94 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         </div>
       </div>
 
-      {/* Swiss 5-Column Telemetry Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-[#1f1f24] bg-[#09090b] border-b border-[#1f1f24]">
+      {/* Swiss Container-Aware Telemetry Grid */}
+      <div className="verdict-telemetry-grid border-b border-[#1f1f24]">
         {/* Col 1: Sen's Slope (Hero Metric) */}
-        <div className="col-span-2 sm:col-span-2 p-3.5 flex items-center justify-between gap-2">
-          <div>
+        <div className="verdict-telemetry-hero bg-[#09090b] p-3.5 min-w-0">
+          <div className="flex items-center justify-between gap-2">
             <div className="text-xs font-mono text-zinc-400">
               Sen&apos;s Slope / {t.verdictPerDecade}
             </div>
-            <div className="flex items-baseline gap-1.5 mt-1">
-              <span
-                className={`text-xl font-mono font-semibold tracking-tight ${
-                  slopeDecade > 0
-                    ? isRegionA
-                      ? 'text-sky-400'
-                      : 'text-orange-400'
-                    : slopeDecade < 0
-                    ? 'text-rose-400'
-                    : 'text-zinc-100'
-                }`}
-              >
-                {slopeSign}
-                {slopeDecade.toFixed(3)}
-              </span>
-              <span className="text-[13px] font-mono text-zinc-400">
-                {variableMeta.unit} ({yearSign}
-                {slopeYear.toFixed(4)}/{t.verdictPerYear})
-              </span>
-            </div>
-            {statistics.slope_ci_lower_decade !== undefined &&
-              statistics.slope_ci_upper_decade !== undefined && (
-                <div className="text-xs font-mono text-zinc-400 mt-0.5">
-                  95% CI: [{statistics.slope_ci_lower_decade.toFixed(3)},{' '}
-                  {statistics.slope_ci_upper_decade.toFixed(3)}]
-                </div>
+            <div className="text-zinc-400 shrink-0">
+              {statistics.mk_trend === 'increasing' && (
+                <TrendingUp className="w-4 h-4 text-[#597B8A]" />
               )}
+              {statistics.mk_trend === 'decreasing' && (
+                <TrendingDown className="w-4 h-4 text-orange-400" />
+              )}
+              {statistics.mk_trend !== 'increasing' &&
+                statistics.mk_trend !== 'decreasing' && (
+                  <Minus className="w-4 h-4 text-zinc-400" />
+                )}
+            </div>
           </div>
 
-          <div className="text-zinc-400 pr-1">
-            {statistics.mk_trend === 'increasing' && (
-              <TrendingUp className="w-4 h-4 text-[#597B8A]" />
-            )}
-            {statistics.mk_trend === 'decreasing' && (
-              <TrendingDown className="w-4 h-4 text-orange-400" />
-            )}
-            {statistics.mk_trend !== 'increasing' &&
-              statistics.mk_trend !== 'decreasing' && (
-                <Minus className="w-4 h-4 text-zinc-400" />
-              )}
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 mt-1">
+            <span
+              className={`text-xl font-mono font-semibold tracking-tight whitespace-nowrap ${
+                slopeDecade > 0
+                  ? isRegionA
+                    ? 'text-sky-400'
+                    : 'text-orange-400'
+                  : slopeDecade < 0
+                  ? 'text-rose-400'
+                  : 'text-zinc-100'
+              }`}
+            >
+              {slopeSign}
+              {slopeDecade.toFixed(3)}
+            </span>
+            <span className="text-[13px] font-mono text-zinc-400">
+              {variableMeta.unit}
+            </span>
+            <span className="text-[13px] font-mono text-zinc-400 whitespace-nowrap">
+              ({yearSign}
+              {slopeYear.toFixed(4)}/{t.verdictPerYear})
+            </span>
           </div>
+
+          {statistics.slope_ci_lower_decade !== undefined &&
+            statistics.slope_ci_upper_decade !== undefined && (
+              <div className="text-xs font-mono text-zinc-400 mt-1 flex flex-wrap items-baseline gap-x-1.5">
+                <span className="whitespace-nowrap">95% CI:</span>
+                <span className="whitespace-nowrap">
+                  [{statistics.slope_ci_lower_decade.toFixed(3)},{' '}
+                  {statistics.slope_ci_upper_decade.toFixed(3)}]
+                </span>
+              </div>
+            )}
         </div>
 
         {/* Col 2: Mann-Kendall Z & Student t */}
-        <div className="p-3.5">
-          <div className="text-xs font-mono text-zinc-400">
+        <div className="bg-[#09090b] p-3.5 min-w-0">
+          <div className="text-xs font-mono text-zinc-400 whitespace-nowrap">
             MK Z / t-stat
           </div>
-          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
-            {statistics.z_score > 0
-              ? `+${statistics.z_score.toFixed(2)}`
-              : statistics.z_score.toFixed(2)}
-            σ · t={tStat > 0 ? `+${tStat.toFixed(2)}` : tStat.toFixed(2)}
+          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1 flex flex-wrap items-baseline gap-x-1.5">
+            <span className="whitespace-nowrap">
+              {statistics.z_score > 0
+                ? `+${statistics.z_score.toFixed(2)}`
+                : statistics.z_score.toFixed(2)}
+              σ
+            </span>
+            <span className="text-zinc-500 font-normal" aria-hidden="true">
+              ·
+            </span>
+            <span className="whitespace-nowrap">
+              t={tStat > 0 ? `+${tStat.toFixed(2)}` : tStat.toFixed(2)}
+            </span>
           </div>
-          <div className="text-xs font-mono text-zinc-400 mt-0.5">
+          <div className="text-xs font-mono text-zinc-400 mt-0.5 whitespace-nowrap">
             p = {formattedTPValue}
           </div>
         </div>
 
         {/* Col 3: Signal to Noise */}
-        <div className="p-3.5">
-          <div className="text-xs font-mono text-zinc-400">
+        <div className="bg-[#09090b] p-3.5 min-w-0">
+          <div className="text-xs font-mono text-zinc-400 whitespace-nowrap">
             SNR
           </div>
-          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
+          <div className="text-sm font-mono font-semibold text-zinc-100 mt-1 whitespace-nowrap">
             {statistics.signal_to_noise_ratio.toFixed(2)}
           </div>
           <div className="w-full h-1 bg-zinc-800 rounded-none overflow-hidden mt-2">
@@ -198,15 +213,18 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         </div>
 
         {/* Col 4: Total Shift */}
-        <div className="p-3.5">
+        <div className="verdict-telemetry-tail bg-[#09090b] p-3.5 min-w-0">
           <div className="text-xs font-mono text-zinc-400">
             {t.verdictTotalDelta}
           </div>
           <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
-            {absDeltaSign}
-            {statistics.total_change_abs.toFixed(2)} {variableMeta.unit}
+            <span className="whitespace-nowrap">
+              {absDeltaSign}
+              {statistics.total_change_abs.toFixed(2)}
+            </span>{' '}
+            <span className="font-normal text-zinc-300">{variableMeta.unit}</span>
           </div>
-          <div className="text-xs font-mono text-zinc-400 mt-0.5">
+          <div className="text-xs font-mono text-zinc-400 mt-0.5 whitespace-nowrap">
             R² ={' '}
             {statistics.ols_r_squared !== undefined
               ? statistics.ols_r_squared.toFixed(2)
@@ -240,27 +258,31 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
         {/* Pettitt Change-Point (Regime Shift) & Hamed-Rao AR(1) Diagnostics */}
         {(statistics.regime_shift || statistics.autocorrelation) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[13px]">
+          <div className="verdict-diag-grid font-mono text-[13px]">
             {statistics.regime_shift && (
-              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
-                <div>
+              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <div className="text-xs text-zinc-400">
                     {lang === 'en'
                       ? 'Pettitt Regime Shift'
                       : 'Точка зламу (Pettitt Test)'}
                   </div>
-                  <div className="text-zinc-200 font-medium mt-0.5">
-                    {statistics.regime_shift.change_point_year}{' '}
+                  <div className="text-zinc-200 font-medium mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="whitespace-nowrap">
+                      {statistics.regime_shift.change_point_year}
+                    </span>
                     <span className="text-zinc-400">
                       (Δ{' '}
-                      {statistics.regime_shift.step_delta >= 0 ? '+' : ''}
-                      {statistics.regime_shift.step_delta.toFixed(3)}{' '}
+                      <span className="whitespace-nowrap">
+                        {statistics.regime_shift.step_delta >= 0 ? '+' : ''}
+                        {statistics.regime_shift.step_delta.toFixed(3)}
+                      </span>{' '}
                       {variableMeta.unit})
                     </span>
                   </div>
                 </div>
                 <span
-                  className={`px-1.5 py-0.5 rounded text-xs border ${
+                  className={`px-2 py-0.5 rounded text-xs border whitespace-nowrap shrink-0 ${
                     statistics.regime_shift.is_significant
                       ? 'bg-[#597B8A]/15 text-[#597B8A] border-[#597B8A]/40'
                       : 'bg-zinc-900 text-zinc-400 border-zinc-800'
@@ -275,21 +297,28 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             )}
 
             {statistics.autocorrelation && (
-              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
-                <div>
+              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-3">
+                <div className="min-w-0">
                   <div className="text-xs text-zinc-400">
                     {lang === 'en'
                       ? 'AR(1) & Hamed-Rao MK'
                       : 'Автокореляція AR(1) · Hamed-Rao'}
                   </div>
-                  <div className="text-zinc-200 font-medium mt-0.5">
-                    r₁ = {statistics.autocorrelation.lag1_r >= 0 ? '+' : ''}
-                    {statistics.autocorrelation.lag1_r.toFixed(2)} · N_eff ={' '}
-                    {statistics.autocorrelation.effective_sample_size}
+                  <div className="text-zinc-200 font-medium mt-0.5 flex flex-wrap items-center gap-x-1.5">
+                    <span className="whitespace-nowrap">
+                      r₁ = {statistics.autocorrelation.lag1_r >= 0 ? '+' : ''}
+                      {statistics.autocorrelation.lag1_r.toFixed(2)}
+                    </span>
+                    <span className="text-zinc-500 font-normal" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="whitespace-nowrap">
+                      N_eff = {statistics.autocorrelation.effective_sample_size}
+                    </span>
                   </div>
                 </div>
                 <span
-                  className={`px-1.5 py-0.5 rounded text-xs border ${
+                  className={`px-2 py-0.5 rounded text-xs border whitespace-nowrap shrink-0 ${
                     statistics.autocorrelation.is_significant_adjusted
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                       : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
@@ -308,15 +337,15 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         {/* Multi-Season Fingerprint Heatmap Matrix (DJF, MAM, JJA, SON, Deseas, Raw) */}
         {statistics.seasonal_matrix && statistics.seasonal_matrix.length > 0 && (
           <div className="rounded bg-[#09090b] border border-[#1f1f24] p-2.5 space-y-1.5">
-            <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs font-mono text-zinc-400">
               <span className="tracking-wider">
                 {lang === 'en'
                   ? 'Seasonal Fingerprint Matrix (Click to switch season)'
                   : 'Матриця сезонного підпису (клік — перемкнути сезон)'}
               </span>
-              <span>Slope/dec · p-val</span>
+              <span className="whitespace-nowrap">Slope/dec · p-val</span>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 font-mono text-xs">
+            <div className="verdict-season-grid font-mono text-xs">
               {statistics.seasonal_matrix.map((row) => {
                 const isCurrent =
                   (statistics.season_mode || 'raw') === row.season_mode;

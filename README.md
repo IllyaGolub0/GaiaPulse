@@ -246,7 +246,7 @@ docker compose up --build
   ```
 
 #### Варіант 3: Ручний запуск для розробки
-1. **Запуск Backend (порт `8000`)**:
+1. ***Запуск Backend (порт `8000`)**:
    ```bash
    python -m venv .venv
    # Windows PowerShell:
