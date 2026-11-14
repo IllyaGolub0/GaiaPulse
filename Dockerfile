@@ -1,3 +1,13 @@
+# Stage 1: Build React + Vite frontend bundle
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --include=dev
+COPY frontend/ ./
+RUN npm run build
+
+# Stage 2: Python FastAPI runtime serving API + compiled SPA
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -8,7 +18,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py nasa_client.py phenomena_service.py presets.py statistics_engine.py ./
+COPY main.py nasa_client.py phenomena_service.py presets.py statistics_engine.py schemas.py csv_parser.py ./
+COPY routers/ ./routers/
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 EXPOSE 8000
 

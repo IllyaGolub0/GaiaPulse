@@ -5,6 +5,7 @@ and presets router for GaiaPulse / Earth System Trend Detective v2.
 """
 
 from typing import Any, Dict, List
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/api", tags=["Presets & Metadata"])

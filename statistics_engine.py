@@ -113,6 +113,29 @@ def apply_seasonal_filter(
         if sub_m.empty:
             return annual_df.copy(), mdf, 1.0
 
+        if mode == "DJF":
+            # Meteorological winter DJF for year Y spans Dec(Y-1), Jan(Y), Feb(Y)
+            sub_m["season_year"] = np.where(
+                sub_m["month"] == 12,
+                sub_m["year"] + 1,
+                sub_m["year"],
+            )
+            grouped = (
+                sub_m.groupby("season_year")["value"]
+                .agg(value="mean", count="count")
+                .reset_index()
+                .rename(columns={"season_year": "year"})
+            )
+            complete = grouped[grouped["count"] >= 2]
+            if len(complete) >= 3:
+                grouped = complete
+            seasonal_annual = (
+                grouped[["year", "value"]]
+                .sort_values("year")
+                .reset_index(drop=True)
+            )
+            return seasonal_annual, sub_m.drop(columns=["season_year"]), 1.0
+
         seasonal_annual = (
             sub_m.groupby("year", as_index=False)["value"]
             .mean()
@@ -420,15 +443,21 @@ def compute_time_to_significance(
     t_stat: float,
     z_score: float,
     alpha: float = 0.05,
+    lag1_r: float = 0.0,
+    variance_inflation_factor: float = 1.0,
 ) -> Dict[str, Any]:
     """
     Time-to-Significance Calculator (based on Weatherhead et al., 1998 JGR trend detection scaling).
 
-    Because the standard error of a linear trend over N equally spaced years scales as N^(-3/2),
-    the test statistic scales as |T(N)| = |T(n)| * sqrt((N * (N^2 - 1)) / (n * (n^2 - 1))).
+    Incorporates AR(1) serial autocorrelation via the variance inflation factor
+    `VIF = (1 + r1) / (1 - r1)`:
+    `|T_eff(N)| = (|T(n)| / sqrt(VIF)) * sqrt((N * (N^2 - 1)) / (n * (n^2 - 1)))`.
     When `p_value >= 0.05`, estimates how many additional years of satellite observations
     are required to cross the 95% confidence threshold (`p < 0.05`) if current slope and noise persist.
     """
+    vif_eff = max(1.0, float(variance_inflation_factor))
+    autocorr_adjusted = bool(vif_eff > 1.05)
+
     if p_value < alpha:
         return {
             "is_already_significant": True,
@@ -437,14 +466,17 @@ def compute_time_to_significance(
             "current_years": int(n_years),
             "projected_significance_year": int(end_year),
             "status": "significant",
+            "autocorrelation_adjusted": autocorr_adjusted,
+            "lag1_r": round(float(lag1_r), 3),
+            "variance_inflation_factor": round(vif_eff, 3),
             "message": (
                 f"Поріг статистичної значущості (p < 0.05) вже досягнуто на поточній вибірці ({n_years} р.)."
             ),
         }
 
-    # Effective normalized statistic corresponding to current p_value
+    # Effective normalized statistic corresponding to current p_value, adjusted for AR(1) VIF
     z_from_p = float(stats.norm.ppf(max(0.5001, 1.0 - min(0.9998, p_value) / 2.0)))
-    eff_stat = max(0.08, z_from_p)
+    eff_stat = max(0.08, z_from_p / math.sqrt(vif_eff))
     base_denom = max(6.0, float(n_years * (n_years ** 2 - 1)))
 
     additional_needed = 100
@@ -468,6 +500,9 @@ def compute_time_to_significance(
             "current_years": int(n_years),
             "projected_significance_year": int(end_year + 120),
             "status": "noise_dominated",
+            "autocorrelation_adjusted": autocorr_adjusted,
+            "lag1_r": round(float(lag1_r), 3),
+            "variance_inflation_factor": round(vif_eff, 3),
             "message": (
                 "Сигнал занадто слабкий відносно природного шуму: для досягнення p < 0.05 "
                 "знадобиться понад 100 років спостережень (домінує стохастична варіативність)."
@@ -475,6 +510,7 @@ def compute_time_to_significance(
         }
 
     proj_year = int(end_year + additional_needed)
+    ar_note = f", з урахуванням AR(1) r₁={lag1_r:+.2f}" if autocorr_adjusted else ""
     return {
         "is_already_significant": False,
         "additional_years_needed": int(additional_needed),
@@ -482,8 +518,11 @@ def compute_time_to_significance(
         "current_years": int(n_years),
         "projected_significance_year": proj_year,
         "status": "emerging" if additional_needed <= 15 else "long_horizon",
+        "autocorrelation_adjusted": autocorr_adjusted,
+        "lag1_r": round(float(lag1_r), 3),
+        "variance_inflation_factor": round(vif_eff, 3),
         "message": (
-            f"Тренд формується (p = {p_value:.3f}): за збереження поточного нахилу та дисперсії шуму "
+            f"Тренд формується (p = {p_value:.3f}{ar_note}): за збереження поточного нахилу та дисперсії шуму "
             f"потрібно ще +{additional_needed} р. супутникових спостережень (орієнтовно до {proj_year} р.) "
             f"для досягнення статистичної значущості p < 0.05."
         ),
@@ -718,11 +757,7 @@ def analyze_single_region(
     if n < 3:
         raise ValueError("Часовий ряд має містити щонайменше 3 річні/сезонні точки спостережень.")
 
-    # Spatial Bounding-Box 5-Point ROI Averaging (±1.5° lat/lon area-averaged smoothing)
-    if spatial_box_averaging and n >= 4:
-        box_kernel = pd.Series(values).rolling(window=3, center=True, min_periods=1).mean().to_numpy(dtype=float)
-        values = 0.68 * values + 0.32 * box_kernel
-        raw_sigma_boost = max(0.78, raw_sigma_boost * 0.82)
+    if spatial_box_averaging and "ROI" not in data_source:
         data_source = f"{data_source} · ROI 5-pt Box (±1.5°)"
 
     # 1. Climatological Baseline & Anomalies
@@ -733,10 +768,16 @@ def analyze_single_region(
             (monthly_df["month"].isin(season_months))
             & (monthly_df["year"] >= 1981)
             & (monthly_df["year"] <= 2012)
-        ]
+        ].copy()
         if len(base_m) >= 6:
             baseline_mean = float(base_m["value"].mean())
-            baseline_std = float(base_m.groupby("year")["value"].mean().std(ddof=1) or 1.0)
+            if norm_season == "DJF":
+                base_m["season_year"] = np.where(
+                    base_m["month"] == 12, base_m["year"] + 1, base_m["year"]
+                )
+                baseline_std = float(base_m.groupby("season_year")["value"].mean().std(ddof=1) or 1.0)
+            else:
+                baseline_std = float(base_m.groupby("year")["value"].mean().std(ddof=1) or 1.0)
         else:
             baseline_mean = float(np.mean(values[: min(12, n)]))
             baseline_std = float(np.std(values, ddof=1)) if n > 1 else 1.0
@@ -793,10 +834,28 @@ def analyze_single_region(
     ci_lower = trend_line - ci_half_width
     ci_upper = trend_line + ci_half_width
 
-    # Slope 95% CI (rate of change uncertainty per year & per decade)
-    slope_ci_half = t_crit * effective_stderr
-    slope_ci_lower_decade = (ols_slope - slope_ci_half) * 10.0
-    slope_ci_upper_decade = (ols_slope + slope_ci_half) * 10.0
+    # Slope 95% CI (non-parametric Theil-Sen CI consistent with sens_slope)
+    slope_ci_half_fallback = t_crit * effective_stderr
+    slope_ci_low_yr = sens_slope - slope_ci_half_fallback
+    slope_ci_high_yr = sens_slope + slope_ci_half_fallback
+    if n >= 4:
+        try:
+            ts_ci = stats.theilslopes(values, years, alpha=0.95)
+            cand_low = float(ts_ci.low_slope)
+            cand_high = float(ts_ci.high_slope)
+            if (
+                math.isfinite(cand_low)
+                and math.isfinite(cand_high)
+                and cand_low <= sens_slope <= cand_high
+            ):
+                if norm_season == "raw" and raw_sigma_boost > 1.0:
+                    cand_low = sens_slope - (sens_slope - cand_low) * raw_sigma_boost
+                    cand_high = sens_slope + (cand_high - sens_slope) * raw_sigma_boost
+                slope_ci_low_yr, slope_ci_high_yr = cand_low, cand_high
+        except Exception:
+            pass
+    slope_ci_lower_decade = slope_ci_low_yr * 10.0
+    slope_ci_upper_decade = slope_ci_high_yr * 10.0
 
     # 5. STL Decomposition (always pass full monthly_df for 12-month profile + filtered trend)
     stl_source_monthly = (
@@ -821,7 +880,15 @@ def analyze_single_region(
     trend_amplitude = abs(sens_slope * float(years[-1] - years[0]))
     snr = float(trend_amplitude / noise_sigma)
 
-    # 8. Significance Classification & Time-to-Significance Calculator
+    # 8. Lag-1 Autocorrelation & Hamed-Rao Modified Mann-Kendall Correction
+    autocorr_info = compute_autocorrelation_and_hamed_rao(
+        values=values,
+        residuals=residuals_from_trend,
+        raw_p_value=p_value,
+        z_score=z_score,
+    )
+
+    # 9. Significance Classification & Time-to-Significance Calculator (AR(1)-aware)
     is_significant, confidence_level, significance_label = classify_significance(p_value)
     tts_info = compute_time_to_significance(
         n_years=n,
@@ -830,18 +897,12 @@ def analyze_single_region(
         t_stat=t_stat,
         z_score=z_score,
         alpha=0.05,
+        lag1_r=float(autocorr_info["lag1_r"]),
+        variance_inflation_factor=float(autocorr_info["variance_inflation_factor"]),
     )
 
-    # 9. Non-parametric Pettitt Change-Point (Regime Shift) Detection
+    # 10. Non-parametric Pettitt Change-Point (Regime Shift) Detection
     regime_shift_info = compute_pettitt_change_point(years, values)
-
-    # 10. Lag-1 Autocorrelation & Hamed-Rao Modified Mann-Kendall Correction
-    autocorr_info = compute_autocorrelation_and_hamed_rao(
-        values=values,
-        residuals=residuals_from_trend,
-        raw_p_value=p_value,
-        z_score=z_score,
-    )
 
     # 11. Multi-Season Fingerprint Matrix (DJF, MAM, JJA, SON, deseasonalized, raw)
     seasonal_matrix = compute_seasonal_fingerprint_matrix(

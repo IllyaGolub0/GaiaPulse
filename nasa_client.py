@@ -5,6 +5,7 @@ Asynchronous NASA Earth Observation Client (NASA POWER MERRA-2/CERES + MODIS Aqu
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import math
@@ -55,6 +56,14 @@ def _get_shared_http_client() -> httpx.AsyncClient:
             limits=httpx.Limits(max_keepalive_connections=12, max_connections=24),
         )
     return _SHARED_HTTP_CLIENT
+
+
+async def close_shared_http_client() -> None:
+    """Gracefully close the shared HTTPX client on application shutdown."""
+    global _SHARED_HTTP_CLIENT
+    if _SHARED_HTTP_CLIENT is not None and not _SHARED_HTTP_CLIENT.is_closed:
+        await _SHARED_HTTP_CLIENT.aclose()
+    _SHARED_HTTP_CLIENT = None
 
 
 def _evict_if_full(cache_dict: Dict[Any, Any]) -> None:
@@ -596,7 +605,7 @@ async def _fetch_raw_nasa_power_monthly(
     api_start = max(1981, query_start_year)
     api_end = min(2025, max(api_start, query_end_year))
 
-    params = {
+    params: Dict[str, str | float] = {
         "parameters": power_param.upper(),
         "community": "AG",
         "longitude": round(lon, 4),
@@ -844,3 +853,104 @@ async def fetch_climate_series(
     _evict_if_full(_MEMORY_CACHE)
     _MEMORY_CACHE[cache_key] = fallback_bundle
     return fallback_bundle
+
+
+def _clamp_lat(lat: float) -> float:
+    return max(-89.5, min(89.5, lat))
+
+
+def _wrap_lon(lon: float) -> float:
+    wrapped = ((lon + 180.0) % 360.0) - 180.0
+    return 180.0 if wrapped == -180.0 and lon > 0 else wrapped
+
+
+async def fetch_spatial_box_series(
+    lat: float,
+    lon: float,
+    variable: str,
+    start_year: int = 1985,
+    end_year: int = 2026,
+    prefer_live_api: bool = True,
+    box_offset_deg: float = 1.5,
+) -> ClimateDataBundle:
+    """
+    Fetch and spatially average a 5-point ROI grid (center + 4 corners ±box_offset_deg)
+    in parallel to reduce single-pixel satellite/reanalysis noise without temporal smoothing.
+    """
+    roi_points: List[Tuple[float, float]] = [
+        (lat, lon),
+        (_clamp_lat(lat + box_offset_deg), _wrap_lon(lon + box_offset_deg)),
+        (_clamp_lat(lat + box_offset_deg), _wrap_lon(lon - box_offset_deg)),
+        (_clamp_lat(lat - box_offset_deg), _wrap_lon(lon + box_offset_deg)),
+        (_clamp_lat(lat - box_offset_deg), _wrap_lon(lon - box_offset_deg)),
+    ]
+
+    results = await asyncio.gather(
+        *(
+            fetch_climate_series(
+                lat=pt_lat,
+                lon=pt_lon,
+                variable=variable,
+                start_year=start_year,
+                end_year=end_year,
+                prefer_live_api=prefer_live_api,
+            )
+            for pt_lat, pt_lon in roi_points
+        ),
+        return_exceptions=True,
+    )
+
+    bundles: List[ClimateDataBundle] = [
+        res for res in results if isinstance(res, ClimateDataBundle)
+    ]
+    if not bundles:
+        raise RuntimeError(f"Failed to fetch any ROI grid points for {variable} at ({lat}, {lon})")
+
+    if len(bundles) == 1:
+        only = bundles[0]
+        return ClimateDataBundle(
+            variable=only.variable,
+            lat=lat,
+            lon=lon,
+            start_year=start_year,
+            end_year=end_year,
+            annual_df=only.annual_df.copy(),
+            monthly_df=only.monthly_df.copy(),
+            baseline_df=only.baseline_df.copy(),
+            source=f"{only.source} · ROI 1-pt fallback (±{box_offset_deg:.1f}°)",
+        )
+
+    monthly_avg = (
+        pd.concat([b.monthly_df for b in bundles], ignore_index=True)
+        .groupby(["year", "month", "timestamp"], as_index=False)["value"]
+        .mean()
+        .sort_values(["year", "month"])
+        .reset_index(drop=True)
+    )
+    annual_avg = (
+        pd.concat([b.annual_df for b in bundles], ignore_index=True)
+        .groupby("year", as_index=False)["value"]
+        .mean()
+        .sort_values("year")
+        .reset_index(drop=True)
+    )
+    baseline_avg = (
+        pd.concat([b.baseline_df for b in bundles], ignore_index=True)
+        .groupby("year", as_index=False)["value"]
+        .mean()
+        .sort_values("year")
+        .reset_index(drop=True)
+    )
+
+    center_source = bundles[0].source
+    return ClimateDataBundle(
+        variable=bundles[0].variable,
+        lat=lat,
+        lon=lon,
+        start_year=start_year,
+        end_year=end_year,
+        annual_df=annual_avg,
+        monthly_df=monthly_avg,
+        baseline_df=baseline_avg,
+        source=f"{center_source} · ROI {len(bundles)}-pt Box (±{box_offset_deg:.1f}°)",
+    )
