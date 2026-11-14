@@ -115,6 +115,35 @@ export interface TimeToSignificanceResult {
   message: string;
 }
 
+export interface RegimeShiftResult {
+  change_point_year: number;
+  k_statistic: number;
+  p_value: number;
+  is_significant: boolean;
+  mean_before: number;
+  mean_after: number;
+  step_delta: number;
+  direction: 'upward_shift' | 'downward_shift' | 'gradual' | 'none' | string;
+}
+
+export interface AutocorrelationResult {
+  lag1_r: number;
+  effective_sample_size: number;
+  variance_inflation_factor: number;
+  hamed_rao_z: number;
+  hamed_rao_p_value: number;
+  is_significant_adjusted: boolean;
+}
+
+export interface SeasonalFingerprintEntry {
+  season_mode: SeasonMode | string;
+  change_per_decade: number;
+  p_value: number;
+  z_score: number;
+  snr: number;
+  is_significant: boolean;
+}
+
 export interface TrendStatistics {
   season_mode?: SeasonMode;
   season_label?: string;
@@ -143,6 +172,9 @@ export interface TrendStatistics {
   significance_label?: string;
   signal_to_noise_ratio: number;
   time_to_significance?: TimeToSignificanceResult;
+  regime_shift?: RegimeShiftResult;
+  autocorrelation?: AutocorrelationResult;
+  seasonal_matrix?: SeasonalFingerprintEntry[];
 }
 
 export interface RegionAnalysis {
@@ -174,6 +206,7 @@ export interface AnalyzeTrendRequest {
   region_a: RegionLocation;
   region_b?: RegionLocation | null;
   prefer_live_api?: boolean;
+  spatial_box_averaging?: boolean;
 }
 
 export interface CsvImportMetadata {

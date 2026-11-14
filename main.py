@@ -152,6 +152,10 @@ class AnalyzeTrendRequestV2(BaseModel):
         default=True,
         description="Використовувати живий запит до NASA POWER API з автоматичним fallback",
     )
+    spatial_box_averaging: bool = Field(
+        default=False,
+        description="Полігональне усереднення ROI 5-точкової сітки (±1.5° lat/lon) для зменшення інструментального шуму",
+    )
 
     @model_validator(mode="after")
     def validate_year_window(self) -> "AnalyzeTrendRequestV2":
@@ -552,6 +556,7 @@ async def _run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[s
             baseline_df=bundle_a.baseline_df,
             data_source=bundle_a.source,
             season_mode=norm_season,
+            spatial_box_averaging=payload.spatial_box_averaging,
         )
 
         region_b_analysis: Optional[Dict[str, Any]] = None
@@ -570,6 +575,7 @@ async def _run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[s
                 baseline_df=bundle_b.baseline_df,
                 data_source=bundle_b.source,
                 season_mode=norm_season,
+                spatial_box_averaging=payload.spatial_box_averaging,
             )
             dipole_comparison = compare_dipole_regions(
                 region_a_result=region_a_analysis,

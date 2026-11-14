@@ -8,6 +8,7 @@ import {
 import {
   DipoleComparison,
   RegionAnalysis,
+  SeasonMode,
   VariableMetadata,
 } from '../types/climate';
 import { useLanguage } from '../i18n/translations';
@@ -16,12 +17,14 @@ interface VerdictCardProps {
   regionKey: 'A' | 'B';
   analysis: RegionAnalysis;
   variableMeta: VariableMetadata;
+  onSelectSeasonMode?: (mode: SeasonMode) => void;
 }
 
 export const VerdictCard: React.FC<VerdictCardProps> = ({
   regionKey,
   analysis,
   variableMeta,
+  onSelectSeasonMode,
 }) => {
   const { t, lang } = useLanguage();
   const { location, statistics, human_summary, data_source } = analysis;
@@ -209,10 +212,10 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         </div>
       </div>
 
-      {/* Bottom Editorial Summary & Time-to-Significance */}
+      {/* Bottom Editorial Summary, Regime Shift, Autocorrelation & Seasonal Matrix */}
       <div className="p-4 space-y-2.5 text-xs">
         {tts && (
-          <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded bg-[#121216] border border-[#1f1f24] font-mono text-[11px]">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded bg-[#121216] border border-[#1f1f24] font-mono text-[11px]">
             <span className="text-zinc-400 uppercase tracking-wider text-[10px]">
               Time-to-Significance (p &lt; 0.05)
             </span>
@@ -229,6 +232,140 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                   : `+${tts.additional_years_needed} yrs (~${tts.projected_significance_year})`
                 : tts.message}
             </span>
+          </div>
+        )}
+
+        {/* Pettitt Change-Point (Regime Shift) & Hamed-Rao AR(1) Diagnostics */}
+        {(statistics.regime_shift || statistics.autocorrelation) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            {statistics.regime_shift && (
+              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-zinc-500">
+                    {lang === 'en'
+                      ? 'Pettitt Regime Shift'
+                      : 'Точка зламу (Pettitt Test)'}
+                  </div>
+                  <div className="text-zinc-200 font-medium mt-0.5">
+                    {statistics.regime_shift.change_point_year}{' '}
+                    <span className="text-zinc-500">
+                      (Δ{' '}
+                      {statistics.regime_shift.step_delta >= 0 ? '+' : ''}
+                      {statistics.regime_shift.step_delta.toFixed(3)}{' '}
+                      {variableMeta.unit})
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                    statistics.regime_shift.is_significant
+                      ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                      : 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                  }`}
+                >
+                  p ={' '}
+                  {statistics.regime_shift.p_value < 0.001
+                    ? '<0.001'
+                    : statistics.regime_shift.p_value.toFixed(3)}
+                </span>
+              </div>
+            )}
+
+            {statistics.autocorrelation && (
+              <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-zinc-500">
+                    {lang === 'en'
+                      ? 'AR(1) & Hamed-Rao MK'
+                      : 'Автокореляція AR(1) · Hamed-Rao'}
+                  </div>
+                  <div className="text-zinc-200 font-medium mt-0.5">
+                    r₁ = {statistics.autocorrelation.lag1_r >= 0 ? '+' : ''}
+                    {statistics.autocorrelation.lag1_r.toFixed(2)} · N_eff ={' '}
+                    {statistics.autocorrelation.effective_sample_size}
+                  </div>
+                </div>
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                    statistics.autocorrelation.is_significant_adjusted
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  }`}
+                >
+                  p* ={' '}
+                  {statistics.autocorrelation.hamed_rao_p_value < 0.0001
+                    ? '<0.0001'
+                    : statistics.autocorrelation.hamed_rao_p_value.toFixed(4)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Multi-Season Fingerprint Heatmap Matrix (DJF, MAM, JJA, SON, Deseas, Raw) */}
+        {statistics.seasonal_matrix && statistics.seasonal_matrix.length > 0 && (
+          <div className="rounded bg-[#09090b] border border-[#1f1f24] p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
+              <span className="uppercase tracking-wider">
+                {lang === 'en'
+                  ? 'Seasonal Fingerprint Matrix (Click to switch season)'
+                  : 'Матриця сезонного підпису (клік — перемкнути сезон)'}
+              </span>
+              <span>Slope/dec · p-val</span>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 font-mono text-[10px]">
+              {statistics.seasonal_matrix.map((row) => {
+                const isCurrent =
+                  (statistics.season_mode || 'raw') === row.season_mode;
+                const shortName =
+                  row.season_mode === 'deseasonalized'
+                    ? 'Deseas'
+                    : row.season_mode === 'raw'
+                    ? 'Raw'
+                    : row.season_mode;
+                return (
+                  <button
+                    key={row.season_mode}
+                    type="button"
+                    onClick={() =>
+                      onSelectSeasonMode?.(row.season_mode as SeasonMode)
+                    }
+                    className={`p-1.5 rounded border text-left transition ${
+                      isCurrent
+                        ? 'bg-zinc-800 border-zinc-500 text-zinc-100'
+                        : 'bg-[#0c0c0f] border-[#1f1f24] hover:border-zinc-700 text-zinc-400'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-semibold text-zinc-200">
+                        {shortName}
+                      </span>
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          row.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
+                        }`}
+                      />
+                    </div>
+                    <div
+                      className={`mt-0.5 ${
+                        row.change_per_decade >= 0
+                          ? 'text-sky-400'
+                          : 'text-orange-400'
+                      }`}
+                    >
+                      {row.change_per_decade >= 0 ? '+' : ''}
+                      {row.change_per_decade.toFixed(3)}
+                    </div>
+                    <div className="text-[9px] text-zinc-500">
+                      p=
+                      {row.p_value < 0.001
+                        ? '<.001'
+                        : row.p_value.toFixed(3)}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

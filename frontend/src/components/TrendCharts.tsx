@@ -47,6 +47,8 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
   const [dipoleView, setDipoleView] = useState<DipoleViewMode>('anomalies');
   const [decompRegion, setDecompRegion] = useState<'A' | 'B'>('A');
+  const [showRegimeShift, setShowRegimeShift] = useState<boolean>(true);
+  const regimeShiftA = regionA.statistics.regime_shift;
 
   const yearsA = regionA.time_series.map((d) => d.year);
   const valuesA = regionA.time_series.map((d) => d.value);
@@ -215,7 +217,21 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                         : variableMeta.name_ua || variableMeta.name
                     } (${variableMeta.unit})`}
               </h4>
-              <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-zinc-500">
+                {regimeShiftA && (
+                  <button
+                    type="button"
+                    onClick={() => setShowRegimeShift((prev) => !prev)}
+                    className={`px-2 py-0.5 rounded border text-[10px] transition ${
+                      showRegimeShift
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                        : 'bg-[#09090b] text-zinc-500 border-[#1f1f24] hover:text-zinc-300'
+                    }`}
+                  >
+                    {lang === 'en' ? 'Pettitt Shift' : 'Злам режиму'}:{' '}
+                    {regimeShiftA.change_point_year}
+                  </button>
+                )}
                 <span>
                   {t.verdictSeasonLabel}:{' '}
                   <strong className="text-zinc-300">{seasonMode}</strong>
@@ -364,6 +380,49 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   x: 0,
                   bgcolor: 'rgba(9, 9, 11, 0.85)',
                 },
+                shapes:
+                  showRegimeShift && regimeShiftA
+                    ? [
+                        {
+                          type: 'line',
+                          x0: regimeShiftA.change_point_year,
+                          x1: regimeShiftA.change_point_year,
+                          y0: 0,
+                          y1: 1,
+                          yref: 'paper',
+                          line: {
+                            color: regimeShiftA.is_significant
+                              ? '#f59e0b'
+                              : '#52525b',
+                            width: 1.5,
+                            dash: 'dash',
+                          },
+                        },
+                      ]
+                    : [],
+                annotations:
+                  showRegimeShift && regimeShiftA
+                    ? [
+                        {
+                          x: regimeShiftA.change_point_year,
+                          y: 0.98,
+                          yref: 'paper',
+                          text: `${lang === 'en' ? 'Shift' : 'Злам'} ${regimeShiftA.change_point_year} (Δ${regimeShiftA.step_delta >= 0 ? '+' : ''}${regimeShiftA.step_delta.toFixed(2)})`,
+                          showarrow: false,
+                          xanchor: 'left',
+                          xshift: 5,
+                          font: {
+                            size: 10,
+                            color: regimeShiftA.is_significant
+                              ? '#fbbf24'
+                              : '#a1a1aa',
+                            family: 'JetBrains Mono, monospace',
+                          },
+                          bgcolor: 'rgba(9, 9, 11, 0.85)',
+                          borderpad: 2,
+                        },
+                      ]
+                    : [],
                 hovermode: 'x unified',
               }}
               config={{
