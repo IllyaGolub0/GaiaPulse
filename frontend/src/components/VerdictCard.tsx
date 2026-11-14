@@ -17,6 +17,7 @@ import {
   RegionAnalysis,
   VariableMetadata,
 } from '../types/climate';
+import { useLanguage } from '../i18n/translations';
 
 interface VerdictCardProps {
   regionKey: 'A' | 'B';
@@ -29,6 +30,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
   analysis,
   variableMeta,
 }) => {
+  const { t, lang } = useLanguage();
   const { location, statistics, human_summary, data_source } = analysis;
   const isRegionA = regionKey === 'A';
 
@@ -74,7 +76,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             <span
               className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border ${accentBadge}`}
             >
-              REGION {regionKey}
+              {t.verdictRegionLabel} {regionKey}
             </span>
             <div>
               <h3 className="text-base font-bold text-ctp-text leading-tight">
@@ -83,7 +85,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
               <p className="text-[11px] font-mono text-ctp-subtext0">
                 {location.lat.toFixed(2)}° N, {location.lon.toFixed(2)}° E
                 {statistics.season_mode
-                  ? ` • Season: ${statistics.season_mode}`
+                  ? ` • ${t.verdictSeasonLabel}: ${statistics.season_mode}`
                   : ''}
                 {data_source ? ` • ${data_source}` : ''}
               </p>
@@ -95,13 +97,13 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 border border-ctp-green/55 text-ctp-green text-xs font-mono font-bold shadow-[0_0_15px_rgba(166,227,161,0.18)]">
               <ShieldCheck className="w-4 h-4 text-ctp-green shrink-0" />
               <span>
-                SIGNIFICANT: p = {formattedPValue} ({statistics.confidence_level})
+                {t.verdictSignificant}: p = {formattedPValue} ({statistics.confidence_level})
               </span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-yellow/15 border border-ctp-yellow/50 text-ctp-yellow text-xs font-mono font-bold">
               <AlertTriangle className="w-4 h-4 text-ctp-yellow shrink-0" />
-              <span>p = {formattedPValue} ≥ 0.05 (NOT YET SIGNIFICANT)</span>
+              <span>p = {formattedPValue} ≥ 0.05 ({t.verdictNotYetSig})</span>
             </div>
           )}
         </div>
@@ -110,7 +112,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         <div className="p-4 rounded-xl bg-ctp-crust border border-ctp-surface0 mb-4 flex items-center justify-between gap-4">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-ctp-subtext0 font-semibold mb-1">
-              Rate of Change (Sen&apos;s Slope / Decade &amp; Year)
+              {t.verdictRateTitle}
             </div>
             <div className="flex flex-wrap items-baseline gap-2">
               <span
@@ -128,19 +130,19 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                 {slopeDecade.toFixed(3)}
               </span>
               <span className="text-xs font-mono text-ctp-subtext0">
-                {variableMeta.unit} / декаду ({yearSign}
-                {slopeYear.toFixed(4)} / рік)
+                {variableMeta.unit} / {t.verdictPerDecade} ({yearSign}
+                {slopeYear.toFixed(4)} / {t.verdictPerYear})
               </span>
             </div>
             {statistics.slope_ci_lower_decade !== undefined &&
               statistics.slope_ci_upper_decade !== undefined && (
                 <div className="text-[11px] text-ctp-subtext0 mt-1 font-mono">
-                  95% CI нахилу: [
+                  {t.verdictSlopeCi}: [
                   {statistics.slope_ci_lower_decade > 0 ? '+' : ''}
                   {statistics.slope_ci_lower_decade.toFixed(3)},{' '}
                   {statistics.slope_ci_upper_decade > 0 ? '+' : ''}
                   {statistics.slope_ci_upper_decade.toFixed(3)}]{' '}
-                  {variableMeta.unit}/дек
+                  {variableMeta.unit}{t.perDecadeShort}
                 </div>
               )}
           </div>
@@ -198,7 +200,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
           <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
             <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Сигнал / Шум (SNR)
+              {t.verdictSnrLabel}
             </div>
             <div className="text-sm font-mono font-bold text-ctp-text mt-0.5 flex items-center gap-1.5">
               <span>{statistics.signal_to_noise_ratio.toFixed(2)}</span>
@@ -220,7 +222,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
           <div className="p-2.5 rounded-xl bg-ctp-crust border border-ctp-surface0">
             <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Сумарний зсув (Δ)
+              {t.verdictTotalDelta}
             </div>
             <div className="text-sm font-mono font-bold text-ctp-text mt-0.5">
               {absDeltaSign}
@@ -251,9 +253,15 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             )}
             <div className="text-xs leading-relaxed">
               <div className="font-mono font-bold uppercase tracking-wider text-[10px] mb-0.5">
-                Time-to-Significance Calculator (Поріг p &lt; 0.05)
+                {t.verdictTtsTitle}
               </div>
-              <p className="text-ctp-text text-xs">{tts.message}</p>
+              <p className="text-ctp-text text-xs">
+                {lang === 'en'
+                  ? tts.is_already_significant
+                    ? `Statistical significance threshold (p < 0.05) reached within the observed ${tts.current_years}-year record.`
+                    : `Requires approximately +${tts.additional_years_needed} additional years of satellite observations (until ~${tts.projected_significance_year}) to cross the p < 0.05 threshold.`
+                  : tts.message}
+              </p>
             </div>
           </div>
         )}
@@ -263,10 +271,22 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
       <div className="p-3.5 rounded-xl bg-ctp-surface0/45 border border-ctp-surface1">
         <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ctp-mauve mb-1">
           <Sparkles className="w-3.5 h-3.5 text-ctp-mauve" />
-          <span>Вердикт Кліматичного Детектива</span>
+          <span>{t.verdictSummaryTitle}</span>
         </div>
         <p className="text-xs sm:text-sm text-ctp-text leading-relaxed">
-          {human_summary}
+          {lang === 'en'
+            ? `[${statistics.season_mode || 'Annual'}] In ${location.name}, ${
+                variableMeta.name
+              } exhibits ${
+                statistics.is_significant
+                  ? `a statistically significant ${statistics.mk_trend} trend`
+                  : `an emerging ${statistics.mk_trend} signal not yet crossing p < 0.05`
+              } (${slopeSign}${slopeDecade.toFixed(3)} ${
+                variableMeta.unit
+              }/decade, Mann-Kendall p = ${formattedPValue}, Student's t = ${tStat.toFixed(
+                2
+              )}, SNR = ${statistics.signal_to_noise_ratio.toFixed(2)}).`
+            : human_summary}
         </p>
       </div>
     </div>
@@ -284,6 +304,7 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
   regionAName,
   regionBName,
 }) => {
+  const { t } = useLanguage();
   const isStrongDipole = dipole.is_opposite_trend || dipole.pearson_r < -0.4;
 
   return (
@@ -301,8 +322,8 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
               <GitCompareArrows className="w-3.5 h-3.5" />
               {dipole.badge ||
                 (dipole.is_opposite_trend
-                  ? 'Виявлено кліматичний диполь (Opposite Trends)'
-                  : 'Крос-регіональне порівняння')}
+                  ? t.dipoleDetectedBadge
+                  : t.crossRegionBadge)}
             </span>
             <span className="text-xs text-ctp-subtext0 font-mono">
               {regionAName} ↔ {regionBName}
@@ -316,7 +337,7 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
         <div className="flex items-center gap-3 shrink-0">
           <div className="px-3.5 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0 text-center min-w-[115px]">
             <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Кореляція Пірсона (r)
+              {t.pearsonLabel}
             </div>
             <div
               className={`text-lg font-mono font-extrabold ${
@@ -341,11 +362,15 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
 
           <div className="px-3.5 py-2 rounded-xl bg-ctp-crust border border-ctp-surface0 text-center min-w-[115px]">
             <div className="text-[10px] uppercase text-ctp-subtext0 font-semibold">
-              Контраст Трендів
+              {t.trendContrastLabel}
             </div>
             <div className="text-sm font-mono font-bold text-ctp-text mt-1 flex items-center justify-center gap-1">
               <Activity className="w-4 h-4 text-ctp-green" />
-              <span>{dipole.is_opposite_trend ? 'ПРОТИЛЕЖНІ' : 'СИНХРОННІ'}</span>
+              <span>
+                {dipole.is_opposite_trend
+                  ? t.contrastOpposite
+                  : t.contrastSync}
+              </span>
             </div>
             <div className="text-[10px] font-mono text-ctp-subtext0 mt-0.5">
               Spearman ρ ={' '}

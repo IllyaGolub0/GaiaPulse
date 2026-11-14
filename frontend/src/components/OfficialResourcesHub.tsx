@@ -28,6 +28,7 @@ import {
   SAMPLE_CSV_TEMPLATES,
   SEASON_MODE_OPTIONS,
 } from '../services/api';
+import { useLanguage } from '../i18n/translations';
 
 type ResourceFilterTab = 'all' | OfficialResourceCategory;
 
@@ -367,6 +368,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
   endYear,
   onOpenResourcesModal,
 }) => {
+  const { t } = useLanguage();
   const bboxStr = `${(regionA.lon - 2.0).toFixed(2)},${(
     regionA.lat - 2.0
   ).toFixed(2)},${(regionA.lon + 2.0).toFixed(2)},${(
@@ -389,7 +391,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
       <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext0">
         <Compass className="w-4 h-4 text-ctp-blue shrink-0" />
         <span>
-          Зовнішня верифікація для{' '}
+          {t.externalVerifyLabel}{' '}
           <strong className="text-ctp-text">{variable}</strong> (
           {regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}° • {startYear}–
           {endYear}):
@@ -465,7 +467,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           onClick={onOpenResourcesModal}
           className="px-3 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 border border-ctp-surface1 text-xs font-mono font-bold text-ctp-lavender transition"
         >
-          Усі 13 ресурсів
+          {t.all13ResourcesBtn}
         </button>
       </div>
     </div>

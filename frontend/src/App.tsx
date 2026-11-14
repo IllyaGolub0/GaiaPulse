@@ -27,6 +27,11 @@ import {
   Crosshair,
   ArrowUpRight,
   ArrowDownRight,
+  Maximize2,
+  Minimize2,
+  EyeOff,
+  Eye,
+  Languages,
 } from 'lucide-react';
 import {
   AnalysisMode,
@@ -48,6 +53,11 @@ import {
   fetchPresetsFromApi,
   NASA_OFFICIAL_DISCLAIMER,
 } from './services/api';
+import {
+  getBiomeOptionsI18n,
+  getSeasonModesI18n,
+  useLanguage,
+} from './i18n/translations';
 import { EarthMap } from './components/EarthMap';
 import { TrendCharts } from './components/TrendCharts';
 import { VerdictCard } from './components/VerdictCard';
@@ -68,88 +78,12 @@ export type WorkbenchView =
 
 export type InspectorTab = 'charts' | 'verdict' | 'guide';
 
-const SEASON_MODES: Array<{
-  id: SeasonMode;
-  label: string;
-  shortLabel: string;
-  badge: string;
-  hint: string;
-}> = [
-  {
-    id: 'raw',
-    label: 'All Months (Raw)',
-    shortLabel: 'Raw',
-    badge: 'ANN',
-    hint: 'Річні середні без фільтрації сезонів',
-  },
-  {
-    id: 'deseasonalized',
-    label: 'Deseasonalized',
-    shortLabel: 'Deseason',
-    badge: 'STL',
-    hint: 'Видалено річний сезонний цикл (STL)',
-  },
-  {
-    id: 'JJA',
-    label: 'Summer (JJA)',
-    shortLabel: 'Summer JJA',
-    badge: 'JJA',
-    hint: 'Червень–Серпень (лісові пожежі та посухи)',
-  },
-  {
-    id: 'DJF',
-    label: 'Winter (DJF)',
-    shortLabel: 'Winter DJF',
-    badge: 'DJF',
-    hint: 'Грудень–Лютий (зимові аномалії та ENSO)',
-  },
-  {
-    id: 'MAM',
-    label: 'Spring (MAM)',
-    shortLabel: 'Spring MAM',
-    badge: 'MAM',
-    hint: 'Березень–Травень (весняне танення та паводки)',
-  },
-  {
-    id: 'SON',
-    label: 'Autumn (SON)',
-    shortLabel: 'Autumn SON',
-    badge: 'SON',
-    hint: 'Вересень–Листопад (осінній сезон)',
-  },
-];
-
-const BIOME_QUIZ_OPTIONS: Array<{
-  id: BiomeType | 'all';
-  title: string;
-  subtitle: string;
-}> = [
-  {
-    id: 'all',
-    title: 'Усі біоми Землі',
-    subtitle: 'Повний каталог (13 змінних NASA / CSA)',
-  },
-  {
-    id: 'tidal_estuary',
-    title: 'Узбережжя та Естуарії',
-    subtitle: 'Хлорофіл SeaWiFS, SWOT рівень води, стік річок',
-  },
-  {
-    id: 'rain_forest',
-    title: 'Ліси та Рослинність',
-    subtitle: 'Евапотранспірація, дим пожеж (AOD), ґрунт',
-  },
-  {
-    id: 'desert',
-    title: 'Посушливі Степи',
-    subtitle: 'Сонячна радіація, пил, дефіцит вологи',
-  },
-  {
-    id: 'cryosphere',
-    title: 'Кріосфера та Арктика',
-    subtitle: 'Радар льоду RADARSAT, глибина снігу, T2M',
-  },
-];
+export type SplitLayoutMode =
+  | 'balanced'
+  | 'wide-globe'
+  | 'wide-chart'
+  | 'only-globe'
+  | 'only-chart';
 
 const QUICK_YEAR_PRESETS: Array<{
   label: string;
@@ -216,8 +150,11 @@ const MiniSparkline: React.FC<{
 };
 
 export const App: React.FC = () => {
-  // Workbench Navigation State
+  const { lang, setLang, t } = useLanguage();
+
+  // Workbench Navigation & Split Layout State
   const [activeView, setActiveView] = useState<WorkbenchView>('split');
+  const [splitLayout, setSplitLayout] = useState<SplitLayoutMode>('balanced');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>('charts');
   const [controlsExpanded, setControlsExpanded] = useState<boolean>(true);
@@ -274,6 +211,20 @@ export const App: React.FC = () => {
     useState<AnalyzeTrendResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Trigger resize event when splitLayout or sidebarCollapsed changes so Leaflet, 3D Globe, and Plotly resize smoothly
+  useEffect(() => {
+    const t1 = window.setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 60);
+    const t2 = window.setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 240);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [splitLayout, sidebarCollapsed, activeView]);
 
   // Load variable catalog & phenomena archive on mount
   useEffect(() => {
@@ -416,6 +367,8 @@ export const App: React.FC = () => {
     DEFAULT_VARIABLES[0];
 
   const activeScenario = scenarios.find((s) => s.id === activeScenarioId);
+  const seasonModesList = useMemo(() => getSeasonModesI18n(lang), [lang]);
+  const biomeOptionsList = useMemo(() => getBiomeOptionsI18n(lang), [lang]);
 
   const exportData = (format: 'json' | 'csv') => {
     if (!analysisResult) return;
@@ -486,25 +439,25 @@ export const App: React.FC = () => {
     {
       id: 'split',
       shortcut: '1',
-      label: 'Split Studio',
-      subtitle: 'Мапа + Графіки поруч',
+      label: t.navSplitLabel,
+      subtitle: t.navSplitSub,
       icon: <Columns className="w-4 h-4" />,
-      badge: 'DEFAULT',
+      badge: 'STUDIO',
       accent: 'text-ctp-mauve',
     },
     {
       id: 'map',
       shortcut: '2',
-      label: 'Full Geo-Stage',
-      subtitle: '2D Карта / 3D Глобус + HUD',
+      label: t.navMapLabel,
+      subtitle: t.navMapSub,
       icon: <Globe2 className="w-4 h-4" />,
       accent: 'text-ctp-blue',
     },
     {
       id: 'analytics',
       shortcut: '3',
-      label: 'Statistical Lab',
-      subtitle: 'Вердикти, STL та таблиця',
+      label: t.navAnalyticsLabel,
+      subtitle: t.navAnalyticsSub,
       icon: <BarChart3 className="w-4 h-4" />,
       badge: statsA ? (statsA.is_significant ? 'SIG' : 'NOISE') : undefined,
       accent: 'text-ctp-green',
@@ -512,8 +465,8 @@ export const App: React.FC = () => {
     {
       id: 'phenomena',
       shortcut: '4',
-      label: 'Phenomena & EONET',
-      subtitle: 'Кейси Екера, CSA та події',
+      label: t.navPhenomenaLabel,
+      subtitle: t.navPhenomenaSub,
       icon: <Satellite className="w-4 h-4" />,
       badge: `${scenarios.length}`,
       accent: 'text-ctp-sapphire',
@@ -521,16 +474,16 @@ export const App: React.FC = () => {
     {
       id: 'csv',
       shortcut: '5',
-      label: 'CSV Time-Series Lab',
-      subtitle: 'Імпорт Giovanni / AppEEARS',
+      label: t.navCsvLabel,
+      subtitle: t.navCsvSub,
       icon: <FileSpreadsheet className="w-4 h-4" />,
       accent: 'text-ctp-teal',
     },
     {
       id: 'resources',
       shortcut: '6',
-      label: 'Official Resources',
-      subtitle: '13 порталів NASA / CSA / NOAA',
+      label: t.navResourcesLabel,
+      subtitle: t.navResourcesSub,
       icon: <Library className="w-4 h-4" />,
       badge: '13',
       accent: 'text-ctp-peach',
@@ -545,7 +498,7 @@ export const App: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-ctp-mauve font-bold">
             <Sliders className="w-3.5 h-3.5" />
-            <span>Mission Parameters</span>
+            <span>{t.missionParamsTitle}</span>
           </span>
 
           {/* Single vs Dipole Mode Toggle */}
@@ -560,7 +513,7 @@ export const App: React.FC = () => {
               }`}
             >
               <MapPin className="w-3 h-3" />
-              <span>Single Region</span>
+              <span>{t.singleRegionBtn}</span>
             </button>
             <button
               type="button"
@@ -572,7 +525,7 @@ export const App: React.FC = () => {
               }`}
             >
               <GitCompareArrows className="w-3 h-3" />
-              <span>Dipole (A vs B)</span>
+              <span>{t.dipoleModeBtn}</span>
             </button>
           </div>
 
@@ -585,7 +538,7 @@ export const App: React.FC = () => {
                 ? 'bg-ctp-sapphire/20 text-ctp-sapphire border-ctp-sapphire/50'
                 : 'bg-ctp-surface0/50 text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
             }`}
-            title="Ручне введення точних координат Lat / Lon"
+            title={t.manualCoordsTitle}
           >
             <Crosshair className="w-3 h-3" />
             <span>
@@ -604,7 +557,7 @@ export const App: React.FC = () => {
             <RefreshCw
               className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`}
             />
-            <span>Re-Analyze</span>
+            <span>{t.reAnalyzeBtn}</span>
           </button>
 
           <button
@@ -615,12 +568,12 @@ export const App: React.FC = () => {
             {controlsExpanded ? (
               <>
                 <ChevronUp className="w-3.5 h-3.5" />
-                <span>Згорнути</span>
+                <span>{t.collapseBtn}</span>
               </>
             ) : (
               <>
                 <ChevronDown className="w-3.5 h-3.5" />
-                <span>Параметри</span>
+                <span>{t.expandParamsBtn}</span>
               </>
             )}
           </button>
@@ -633,10 +586,10 @@ export const App: React.FC = () => {
           <div className="p-2.5 rounded-xl bg-ctp-mantle border border-ctp-blue/30 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-mono font-bold text-ctp-blue">
-                Region A Coordinates
+                {t.regionACoordsTitle}
               </span>
               <span className="text-[10px] font-mono text-ctp-subtext0">
-                Клік на мапі або ручний ввід
+                {t.regionACoordsHint}
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -646,7 +599,7 @@ export const App: React.FC = () => {
                 onChange={(e) =>
                   setRegionA({ ...regionA, name: e.target.value })
                 }
-                placeholder="Назва точки А"
+                placeholder={t.regionANamePlaceholder}
                 className="col-span-3 sm:col-span-1 px-2 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-ctp-text font-mono text-[11px]"
               />
               <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
@@ -696,10 +649,10 @@ export const App: React.FC = () => {
             <div className="p-2.5 rounded-xl bg-ctp-mantle border border-ctp-peach/30 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono font-bold text-ctp-peach">
-                  Region B Coordinates (Dipole Pair)
+                  {t.regionBCoordsTitle}
                 </span>
                 <span className="text-[10px] font-mono text-ctp-subtext0">
-                  Другий полюс порівняння
+                  {t.regionBCoordsHint}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -709,7 +662,7 @@ export const App: React.FC = () => {
                   onChange={(e) =>
                     setRegionB({ ...regionB, name: e.target.value })
                   }
-                  placeholder="Назва точки B"
+                  placeholder={t.regionBNamePlaceholder}
                   className="col-span-3 sm:col-span-1 px-2 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-ctp-text font-mono text-[11px]"
                 />
                 <label className="flex items-center gap-1 bg-ctp-crust px-2 py-1 rounded-lg border border-ctp-surface0">
@@ -765,9 +718,9 @@ export const App: React.FC = () => {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0 flex items-center gap-1 mr-1">
               <HelpCircle className="w-3 h-3 text-ctp-yellow" />
-              <span>Біом:</span>
+              <span>{t.biomeLabel}</span>
             </span>
-            {BIOME_QUIZ_OPTIONS.map((biome) => {
+            {biomeOptionsList.map((biome) => {
               const isSelected = selectedBiome === biome.id;
               return (
                 <button
@@ -801,7 +754,7 @@ export const App: React.FC = () => {
             {/* Variable Selector + Student Note (5 cols) */}
             <div className="xl:col-span-5 space-y-1.5">
               <label className="block text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                Супутникова змінна NASA / CSA ({filteredVariables.length} з 13)
+                {t.satelliteVarLabel} ({filteredVariables.length} {t.of13Label})
               </label>
               <select
                 value={variable}
@@ -813,7 +766,8 @@ export const App: React.FC = () => {
               >
                 {filteredVariables.map((v) => (
                   <option key={v.code} value={v.code}>
-                    {v.code} — {v.name} ({v.unit})
+                    {v.code} —{' '}
+                    {lang === 'ua' ? v.name_ua || v.name : v.name} ({v.unit})
                   </option>
                 ))}
               </select>
@@ -825,7 +779,10 @@ export const App: React.FC = () => {
                     <span className="font-bold text-ctp-sapphire">
                       {currentVarMeta.satellite_badge || currentVarMeta.source}:{' '}
                     </span>
-                    {currentVarMeta.student_definition}
+                    {lang === 'en'
+                      ? currentVarMeta.description ||
+                        currentVarMeta.student_definition
+                      : currentVarMeta.student_definition}
                   </p>
                 </div>
               )}
@@ -834,10 +791,10 @@ export const App: React.FC = () => {
             {/* Seasonal Filter Buttons (4 cols) */}
             <div className="xl:col-span-4 space-y-1.5">
               <label className="block text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                Сезонний зріз (Seasonal Filter)
+                {t.seasonalFilterLabel}
               </label>
               <div className="grid grid-cols-3 gap-1.5">
-                {SEASON_MODES.map((sm) => {
+                {seasonModesList.map((sm) => {
                   const selected = seasonMode === sm.id;
                   return (
                     <button
@@ -861,9 +818,10 @@ export const App: React.FC = () => {
             {/* Time Window Presets + Sliders (3 cols) */}
             <div className="xl:col-span-3 space-y-1.5">
               <div className="flex items-center justify-between text-[10px] font-mono text-ctp-subtext0">
-                <span className="uppercase">Період</span>
+                <span className="uppercase">{t.periodLabel}</span>
                 <span className="text-ctp-blue font-bold">
-                  {startYear}–{endYear} ({endYear - startYear + 1} р.)
+                  {startYear}–{endYear} ({endYear - startYear + 1}{' '}
+                  {t.yearsShort})
                 </span>
               </div>
 
@@ -937,21 +895,20 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-2">
             <Table2 className="w-4 h-4 text-ctp-sapphire" />
             <h3 className="text-sm font-bold text-ctp-text">
-              Annual Satellite Observations &amp; Anomalies Matrix (
-              {seriesA.length} Years)
+              {t.annualTableTitle} ({seriesA.length} {t.yearsCountLabel})
             </h3>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
             {maxPoint && (
               <span className="px-2.5 py-1 rounded-lg bg-ctp-red/15 text-ctp-red border border-ctp-red/30">
-                Peak: {maxPoint.year} ({maxPoint.value.toFixed(3)}{' '}
+                {t.peakLabel}: {maxPoint.year} ({maxPoint.value.toFixed(3)}{' '}
                 {currentVarMeta.unit})
               </span>
             )}
             {minPoint && (
               <span className="px-2.5 py-1 rounded-lg bg-ctp-blue/15 text-ctp-blue border border-ctp-blue/30">
-                Min: {minPoint.year} ({minPoint.value.toFixed(3)}{' '}
+                {t.minLabel}: {minPoint.year} ({minPoint.value.toFixed(3)}{' '}
                 {currentVarMeta.unit})
               </span>
             )}
@@ -962,19 +919,21 @@ export const App: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs font-mono">
             <thead className="sticky top-0 bg-ctp-crust text-ctp-subtext0 border-b border-ctp-surface0">
               <tr>
-                <th className="py-2.5 px-4">Year</th>
+                <th className="py-2.5 px-4">{t.colYear}</th>
                 <th className="py-2.5 px-4">
-                  Region A ({currentVarMeta.unit})
+                  {t.colRegionA} ({currentVarMeta.unit})
                 </th>
-                <th className="py-2.5 px-4">Anomaly A</th>
-                <th className="py-2.5 px-4">Sen&apos;s Trend A</th>
-                <th className="py-2.5 px-4">95% CI Band</th>
+                <th className="py-2.5 px-4">{t.colAnomalyA}</th>
+                <th className="py-2.5 px-4">{t.colSensTrendA}</th>
+                <th className="py-2.5 px-4">{t.colCiBand}</th>
                 {mode === 'dipole' && seriesB.length > 0 && (
                   <>
                     <th className="py-2.5 px-4 text-ctp-peach">
-                      Region B ({currentVarMeta.unit})
+                      {t.colRegionB} ({currentVarMeta.unit})
                     </th>
-                    <th className="py-2.5 px-4 text-ctp-peach">Anomaly B</th>
+                    <th className="py-2.5 px-4 text-ctp-peach">
+                      {t.colAnomalyB}
+                    </th>
                   </>
                 )}
               </tr>
@@ -1035,6 +994,25 @@ export const App: React.FC = () => {
     );
   };
 
+  // Compute grid column spans for Split Studio based on splitLayout
+  const globeColSpanClass =
+    splitLayout === 'only-globe'
+      ? 'lg:col-span-12'
+      : splitLayout === 'wide-globe'
+      ? 'lg:col-span-8'
+      : splitLayout === 'wide-chart'
+      ? 'lg:col-span-4'
+      : 'lg:col-span-6';
+
+  const chartColSpanClass =
+    splitLayout === 'only-chart'
+      ? 'lg:col-span-12'
+      : splitLayout === 'wide-globe'
+      ? 'lg:col-span-4'
+      : splitLayout === 'wide-chart'
+      ? 'lg:col-span-8'
+      : 'lg:col-span-6';
+
   return (
     <div className="min-h-screen bg-ctp-base text-ctp-text flex selection:bg-ctp-mauve selection:text-ctp-crust">
       {/* =====================================================================
@@ -1056,14 +1034,14 @@ export const App: React.FC = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-extrabold tracking-tight text-ctp-text truncate">
-                      Trend Detective
+                      {t.appTitle}
                     </span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-ctp-mauve/20 text-ctp-mauve border border-ctp-mauve/40">
                       STUDIO
                     </span>
                   </div>
                   <p className="text-[10px] font-mono text-ctp-subtext0 truncate">
-                    NASA Space Apps 2026
+                    {t.appSubtitle}
                   </p>
                 </div>
               )}
@@ -1073,7 +1051,7 @@ export const App: React.FC = () => {
               type="button"
               onClick={() => setSidebarCollapsed((prev) => !prev)}
               className="p-1.5 rounded-lg bg-ctp-mantle hover:bg-ctp-surface0 text-ctp-subtext0 hover:text-ctp-text border border-ctp-surface0 transition shrink-0"
-              title="Згорнути / Розгорнути бічну панель (клавіша [ )"
+              title={t.toggleSidebarTitle}
             >
               {sidebarCollapsed ? (
                 <PanelLeftOpen className="w-4 h-4" />
@@ -1087,8 +1065,8 @@ export const App: React.FC = () => {
           <div className="p-2.5 space-y-1">
             {!sidebarCollapsed && (
               <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                <span>Робочі простори</span>
-                <span>Keys 1–6</span>
+                <span>{t.workspacesHeader}</span>
+                <span>{t.keysHint}</span>
               </div>
             )}
 
@@ -1099,7 +1077,7 @@ export const App: React.FC = () => {
                   key={item.id}
                   type="button"
                   onClick={() => setActiveView(item.id)}
-                  title={`${item.label} — ${item.subtitle} (Клавіша ${item.shortcut})`}
+                  title={`${item.label} — ${item.subtitle} (${item.shortcut})`}
                   className={`w-full rounded-xl px-2.5 py-2 transition flex items-center justify-between gap-2 border ${
                     isSelected
                       ? 'bg-ctp-surface0/90 text-ctp-text border-ctp-mauve/60 shadow-[0_0_16px_rgba(203,166,247,0.16)]'
@@ -1153,8 +1131,10 @@ export const App: React.FC = () => {
           {!sidebarCollapsed && (
             <div className="px-2.5 pt-2 border-t border-ctp-surface0/70">
               <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-ctp-subtext0">
-                <span>Швидкі кейси NASA / CSA</span>
-                <span className="text-ctp-mauve font-bold">1-Click</span>
+                <span>{t.quickCasesHeader}</span>
+                <span className="text-ctp-mauve font-bold">
+                  {t.oneClickBadge}
+                </span>
               </div>
               <div className="space-y-1 max-h-56 overflow-y-auto pr-0.5">
                 {scenarios.slice(0, 7).map((sc) => {
@@ -1189,7 +1169,7 @@ export const App: React.FC = () => {
               <div className="flex items-center justify-between text-[10px] font-mono">
                 <span className="text-ctp-subtext0 flex items-center gap-1">
                   <Activity className="w-3 h-3 text-ctp-green" />
-                  <span>LIVE TELEMETRY</span>
+                  <span>{t.liveTelemetry}</span>
                 </span>
                 <span
                   className={`px-1.5 py-0.2 rounded font-bold ${
@@ -1198,7 +1178,7 @@ export const App: React.FC = () => {
                       : 'bg-ctp-yellow/15 text-ctp-yellow'
                   }`}
                 >
-                  {eonetIsLive ? 'EONET LIVE' : 'CACHE'}
+                  {eonetIsLive ? t.eonetLive : t.eonetCache}
                 </span>
               </div>
 
@@ -1230,7 +1210,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 onClick={handleOpenPhenomenaDrawer}
-                title="Відкрити каталог феноменів NASA"
+                title={t.openPhenomenaTitle}
                 className="p-2 rounded-xl bg-ctp-mauve/20 text-ctp-mauve hover:bg-ctp-mauve/30 transition"
               >
                 <Sparkles className="w-4 h-4" />
@@ -1278,7 +1258,7 @@ export const App: React.FC = () => {
                       ? 'bg-ctp-green/15 text-ctp-green border-ctp-green/50 hover:bg-ctp-green/25'
                       : 'bg-ctp-yellow/15 text-ctp-yellow border-ctp-yellow/50 hover:bg-ctp-yellow/25'
                   }`}
-                  title="Натисніть для перегляду статистичного доказу"
+                  title={t.verdictTooltip}
                 >
                   {statsA.is_significant ? (
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1287,10 +1267,12 @@ export const App: React.FC = () => {
                   )}
                   <span>
                     {statsA.is_significant
-                      ? `SIGNIFICANT (p = ${statsA.p_value.toFixed(4)})`
-                      : `EMERGING (p = ${statsA.p_value.toFixed(3)}${
+                      ? `${t.significantBadge} (p = ${statsA.p_value.toFixed(
+                          4
+                        )})`
+                      : `${t.emergingBadge} (p = ${statsA.p_value.toFixed(3)}${
                           statsA.time_to_significance?.additional_years_needed
-                            ? ` • +${statsA.time_to_significance.additional_years_needed} yrs`
+                            ? ` • +${statsA.time_to_significance.additional_years_needed} ${t.yrsNeeded}`
                             : ''
                         })`}
                   </span>
@@ -1301,21 +1283,54 @@ export const App: React.FC = () => {
                   )}
                   <span>
                     {statsA.change_per_decade >= 0 ? '+' : ''}
-                    {statsA.change_per_decade.toFixed(3)}/dec
+                    {statsA.change_per_decade.toFixed(3)}
+                    {t.perDecadeShort}
                   </span>
                 </button>
               )}
             </div>
 
-            {/* Right: Quick Action Buttons (Phenomena Modal, CSV Modal, Export) */}
+            {/* Right: Language Switcher (UA / EN) + Quick Action Buttons */}
             <div className="flex flex-wrap items-center gap-2">
+              {/* UA | EN Language Switcher Pill */}
+              <div
+                className="inline-flex items-center rounded-xl bg-ctp-crust p-0.5 border border-ctp-surface1"
+                title={t.languageToggleTitle}
+              >
+                <span className="pl-2 pr-1 text-ctp-mauve flex items-center">
+                  <Languages className="w-3.5 h-3.5" />
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setLang('ua')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition ${
+                    lang === 'ua'
+                      ? 'bg-ctp-mauve text-ctp-crust shadow-sm'
+                      : 'text-ctp-subtext0 hover:text-ctp-text'
+                  }`}
+                >
+                  UA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLang('en')}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition ${
+                    lang === 'en'
+                      ? 'bg-ctp-blue text-ctp-crust shadow-sm'
+                      : 'text-ctp-subtext0 hover:text-ctp-text'
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={handleOpenPhenomenaDrawer}
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-ctp-mauve via-ctp-blue to-ctp-sapphire hover:brightness-110 text-ctp-crust font-extrabold text-xs transition flex items-center gap-1.5 shadow-[0_0_18px_rgba(203,166,247,0.3)]"
               >
                 <Sparkles className="w-3.5 h-3.5 fill-current" />
-                <span>Fetch Scenarios &amp; EONET</span>
+                <span>{t.fetchScenariosBtn}</span>
                 <span className="px-1.5 py-0.2 rounded-full bg-ctp-crust/25 text-ctp-crust font-mono text-[10px]">
                   {scenarios.length}
                 </span>
@@ -1327,7 +1342,7 @@ export const App: React.FC = () => {
                 className="px-2.5 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-sapphire font-mono font-bold text-xs transition flex items-center gap-1.5 border border-ctp-sapphire/40"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>Import CSV</span>
+                <span>{t.importCsvBtn}</span>
               </button>
 
               <div className="hidden sm:flex items-center gap-1">
@@ -1377,311 +1392,533 @@ export const App: React.FC = () => {
            ================================================================= */}
         <main className="flex-1 p-4 space-y-4">
           {/* ---------------------------------------------------------------
-              VIEW 1: SPLIT STUDIO (DEFAULT — MAP + LIVE INSPECTOR SIDE-BY-SIDE)
+              VIEW 1: SPLIT STUDIO (WITH COLLAPSIBLE GLOBE & CHART ZONES)
              --------------------------------------------------------------- */}
           {activeView === 'split' && (
             <div className="space-y-3">
               {renderMissionControlPanel()}
 
+              {/* Quick Split Proportion & Zone Collapse Toolbar */}
+              <div className="rounded-xl bg-ctp-mantle/90 border border-ctp-surface0 px-3.5 py-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0 font-bold flex items-center gap-1.5 mr-1">
+                    <Columns className="w-3.5 h-3.5 text-ctp-mauve" />
+                    <span>{t.layoutToolbarLabel}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setSplitLayout('balanced')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
+                      splitLayout === 'balanced'
+                        ? 'bg-ctp-mauve/20 text-ctp-mauve border-ctp-mauve/60'
+                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                    }`}
+                  >
+                    {t.layoutBalanced}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSplitLayout('wide-globe')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
+                      splitLayout === 'wide-globe'
+                        ? 'bg-ctp-blue/20 text-ctp-blue border-ctp-blue/60'
+                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                    }`}
+                  >
+                    {t.layoutWideGlobe}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSplitLayout('wide-chart')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold border transition ${
+                      splitLayout === 'wide-chart'
+                        ? 'bg-ctp-green/20 text-ctp-green border-ctp-green/60'
+                        : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
+                    }`}
+                  >
+                    {t.layoutWideChart}
+                  </button>
+                </div>
+
+                {/* Direct 1-Click Collapse/Expand Buttons for Globe and Chart */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {splitLayout === 'only-chart' ? (
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('balanced')}
+                      className="px-3 py-1 rounded-lg bg-ctp-blue/20 hover:bg-ctp-blue/30 text-ctp-blue border border-ctp-blue/50 text-xs font-mono font-bold transition flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{t.expandGlobeBtn}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('only-chart')}
+                      className="px-3 py-1 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 hover:text-ctp-text border border-ctp-surface0 text-xs font-mono font-semibold transition flex items-center gap-1.5"
+                      title={t.maximizeChartTitle}
+                    >
+                      <EyeOff className="w-3.5 h-3.5 text-ctp-blue" />
+                      <span>{t.collapseGlobeBtn}</span>
+                    </button>
+                  )}
+
+                  {splitLayout === 'only-globe' ? (
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('balanced')}
+                      className="px-3 py-1 rounded-lg bg-ctp-green/20 hover:bg-ctp-green/30 text-ctp-green border border-ctp-green/50 text-xs font-mono font-bold transition flex items-center gap-1.5"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>{t.expandChartBtn}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setSplitLayout('only-globe')}
+                      className="px-3 py-1 rounded-lg bg-ctp-crust hover:bg-ctp-surface0 text-ctp-subtext1 hover:text-ctp-text border border-ctp-surface0 text-xs font-mono font-semibold transition flex items-center gap-1.5"
+                      title={t.maximizeGlobeTitle}
+                    >
+                      <EyeOff className="w-3.5 h-3.5 text-ctp-green" />
+                      <span>{t.collapseChartBtn}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Collapsed Globe Restore Banner (shown when Globe is collapsed so Chart is full-width) */}
+              {splitLayout === 'only-chart' && (
+                <div className="rounded-xl bg-ctp-crust/90 border border-ctp-blue/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext1">
+                    <Globe2 className="w-4 h-4 text-ctp-blue shrink-0" />
+                    <span>{t.globeCollapsedBanner}</span>
+                    <span className="text-ctp-blue font-bold">
+                      ({regionA.name}: {regionA.lat.toFixed(2)}°,{' '}
+                      {regionA.lon.toFixed(2)}°)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSplitLayout('balanced')}
+                    className="px-3 py-1 rounded-lg bg-ctp-blue text-ctp-crust font-mono font-bold text-xs transition flex items-center gap-1.5"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>{t.expandGlobeBtn}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Collapsed Chart Restore Banner (shown when Chart is collapsed so Globe is full-width) */}
+              {splitLayout === 'only-globe' && (
+                <div className="rounded-xl bg-ctp-crust/90 border border-ctp-green/40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs font-mono text-ctp-subtext1">
+                    <BarChart3 className="w-4 h-4 text-ctp-green shrink-0" />
+                    <span>{t.chartCollapsedBanner}</span>
+                    {statsA && (
+                      <span className="text-ctp-green font-bold">
+                        (p = {statsA.p_value.toFixed(4)} •{' '}
+                        {statsA.change_per_decade >= 0 ? '+' : ''}
+                        {statsA.change_per_decade.toFixed(3)}{' '}
+                        {currentVarMeta.unit}
+                        {t.perDecadeShort})
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSplitLayout('balanced')}
+                    className="px-3 py-1 rounded-lg bg-ctp-green text-ctp-crust font-mono font-bold text-xs transition flex items-center gap-1.5"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>{t.expandChartBtn}</span>
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                {/* Left Column (7 cols): Interactive 2D/3D Map + Active Scenario Banner */}
-                <div className="lg:col-span-7 space-y-3">
-                  <EarthMap
-                    mode={mode}
-                    variable={variable}
-                    regionA={regionA}
-                    regionB={regionB}
-                    activeTarget={activeTarget}
-                    cameraTrigger={cameraTrigger}
-                    onMapClickRegion={handleMapClickRegion}
-                    onToggleActiveTarget={setActiveTarget}
-                  />
-
-                  {/* Compact Scenario Context Strip under Map */}
-                  {activeScenario && (
-                    <div className="rounded-2xl bg-ctp-mantle/90 border border-ctp-mauve/40 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-bold">
-                            Active Case
-                          </span>
-                          <span className="text-xs font-bold text-ctp-text">
-                            {activeScenario.title}
-                          </span>
+                {/* LEFT ZONE: Interactive 2D/3D Map + Active Scenario Banner */}
+                {splitLayout !== 'only-chart' && (
+                  <div className={`${globeColSpanClass} space-y-3`}>
+                    <div className="rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl overflow-hidden">
+                      {/* Globe / Map Zone Header with Collapse & Maximize Controls */}
+                      <div className="px-3.5 py-2 bg-ctp-crust border-b border-ctp-surface0 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs font-bold text-ctp-text">
+                          <Globe2 className="w-4 h-4 text-ctp-blue" />
+                          <span>{t.globeZoneTitle}</span>
                         </div>
-                        <p className="text-xs text-ctp-subtext0 leading-relaxed">
-                          {activeScenario.scientific_summary}
-                        </p>
-                      </div>
 
-                      {seasonMode === 'raw' &&
-                        activeScenario.season_mode !== 'raw' && (
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() =>
-                              setSeasonMode(activeScenario.season_mode)
+                              setSplitLayout(
+                                splitLayout === 'only-globe'
+                                  ? 'balanced'
+                                  : 'only-globe'
+                              )
                             }
-                            className="px-3 py-1.5 rounded-xl bg-ctp-yellow/20 hover:bg-ctp-yellow/30 text-ctp-yellow border border-ctp-yellow/50 text-xs font-mono font-bold shrink-0 transition"
+                            className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-blue/20 text-ctp-subtext1 hover:text-ctp-blue text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
+                            title={
+                              splitLayout === 'only-globe'
+                                ? t.restoreSplitTitle
+                                : t.maximizeGlobeTitle
+                            }
                           >
-                            Switch to {activeScenario.season_mode}
-                          </button>
-                        )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Column (5 cols): Live Detective Inspector Dock */}
-                <div className="lg:col-span-5 rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl flex flex-col overflow-hidden">
-                  {/* Inspector Dock Tab Header */}
-                  <div className="px-3.5 py-2.5 bg-ctp-crust border-b border-ctp-surface0 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setInspectorTab('charts')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                          inspectorTab === 'charts'
-                            ? 'bg-ctp-blue text-ctp-crust shadow-sm'
-                            : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
-                        }`}
-                      >
-                        <BarChart3 className="w-3.5 h-3.5" />
-                        <span>Charts &amp; Trend</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setInspectorTab('verdict')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                          inspectorTab === 'verdict'
-                            ? 'bg-ctp-mauve text-ctp-crust shadow-sm'
-                            : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Verdict &amp; Proof</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setInspectorTab('guide')}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                          inspectorTab === 'guide'
-                            ? 'bg-ctp-sapphire text-ctp-crust shadow-sm'
-                            : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
-                        }`}
-                      >
-                        <Compass className="w-3.5 h-3.5" />
-                        <span>Case &amp; Guide</span>
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveView('analytics')}
-                      className="px-2 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-surface1 text-[10px] font-mono text-ctp-subtext1 transition shrink-0"
-                      title="Розгорнути на весь екран у Statistical Lab"
-                    >
-                      Full Lab
-                    </button>
-                  </div>
-
-                  {/* Inspector Body */}
-                  <div className="p-3.5 max-h-[680px] overflow-y-auto space-y-3">
-                    {!analysisResult ? (
-                      <div className="py-16 flex flex-col items-center justify-center gap-2 text-ctp-subtext0">
-                        <RefreshCw className="w-6 h-6 animate-spin text-ctp-blue" />
-                        <span className="text-xs font-mono">
-                          Обчислення тренду Сена та p-value...
-                        </span>
-                      </div>
-                    ) : (
-                      <>
-                        {/* TAB 1: CHARTS & TREND (Side-by-side with map!) */}
-                        {inspectorTab === 'charts' && (
-                          <div className="space-y-3">
-                            {/* Compact Quick Metrics Strip */}
-                            {statsA && (
-                              <div className="grid grid-cols-3 gap-2">
-                                <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                  <div className="text-[10px] font-mono text-ctp-subtext0">
-                                    p-value (MK)
-                                  </div>
-                                  <div
-                                    className={`text-sm font-mono font-extrabold ${
-                                      statsA.is_significant
-                                        ? 'text-ctp-green'
-                                        : 'text-ctp-yellow'
-                                    }`}
-                                  >
-                                    {statsA.p_value < 0.0001
-                                      ? '< 0.0001'
-                                      : statsA.p_value.toFixed(4)}
-                                  </div>
-                                  <div className="text-[10px] text-ctp-subtext0">
-                                    {statsA.is_significant
-                                      ? 'Доведений тренд'
-                                      : 'Шум / Мінливість'}
-                                  </div>
-                                </div>
-
-                                <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                  <div className="text-[10px] font-mono text-ctp-subtext0">
-                                    Sen&apos;s Slope / Dec
-                                  </div>
-                                  <div className="text-sm font-mono font-extrabold text-ctp-blue">
-                                    {statsA.change_per_decade >= 0 ? '+' : ''}
-                                    {statsA.change_per_decade.toFixed(3)}
-                                  </div>
-                                  <div className="text-[10px] text-ctp-subtext0 truncate">
-                                    {currentVarMeta.unit} / 10 р.
-                                  </div>
-                                </div>
-
-                                <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
-                                  <div className="text-[10px] font-mono text-ctp-subtext0">
-                                    Час до p &lt; 0.05
-                                  </div>
-                                  <div className="text-sm font-mono font-extrabold text-ctp-mauve">
-                                    {statsA.is_significant
-                                      ? '0 р. (Вже є)'
-                                      : `+${
-                                          statsA.time_to_significance
-                                            ?.additional_years_needed ?? '—'
-                                        } р.`}
-                                  </div>
-                                  <div className="text-[10px] text-ctp-subtext0">
-                                    SNR: {statsA.signal_to_noise_ratio}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Interactive Plotly Chart right next to the map */}
-                            <TrendCharts
-                              mode={mode}
-                              seasonMode={seasonMode}
-                              variableMeta={analysisResult.variable_metadata}
-                              regionA={analysisResult.region_a_analysis}
-                              regionB={analysisResult.region_b_analysis}
-                              onOpenResourcesModal={() =>
-                                setActiveView('resources')
-                              }
-                            />
-                          </div>
-                        )}
-
-                        {/* TAB 2: VERDICT & STATISTICAL PROOF */}
-                        {inspectorTab === 'verdict' && (
-                          <div className="space-y-3">
-                            {mode === 'dipole' &&
-                              analysisResult.dipole_comparison && (
-                                <div className="rounded-xl bg-ctp-crust border border-ctp-mauve/50 p-3 space-y-1">
-                                  <div className="flex items-center justify-between text-xs font-mono">
-                                    <span className="text-ctp-mauve font-bold">
-                                      Dipole Correlation (r ={' '}
-                                      {analysisResult.dipole_comparison.pearson_r.toFixed(
-                                        3
-                                      )}
-                                      )
-                                    </span>
-                                    <span className="text-ctp-subtext0">
-                                      p ={' '}
-                                      {analysisResult.dipole_comparison.correlation_p_value.toFixed(
-                                        4
-                                      )}
-                                    </span>
-                                  </div>
-                                  <p className="text-xs text-ctp-subtext1">
-                                    {analysisResult.dipole_comparison.verdict}
-                                  </p>
-                                </div>
-                              )}
-
-                            <VerdictCard
-                              regionKey="A"
-                              analysis={analysisResult.region_a_analysis}
-                              variableMeta={analysisResult.variable_metadata}
-                            />
-
-                            {mode === 'dipole' &&
-                              analysisResult.region_b_analysis && (
-                                <VerdictCard
-                                  regionKey="B"
-                                  analysis={analysisResult.region_b_analysis}
-                                  variableMeta={
-                                    analysisResult.variable_metadata
-                                  }
-                                />
-                              )}
-                          </div>
-                        )}
-
-                        {/* TAB 3: SCENARIO DETAILS & DETECTIVE GUIDE */}
-                        {inspectorTab === 'guide' && (
-                          <div className="space-y-3">
-                            {activeScenario ? (
-                              <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2.5">
-                                <div className="flex items-center justify-between">
-                                  <span className="px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-mono text-[10px] font-bold">
-                                    {activeScenario.satellite_badge}
-                                  </span>
-                                  <span className="text-[11px] font-mono text-ctp-yellow">
-                                    Recommended: {activeScenario.season_mode}
-                                  </span>
-                                </div>
-                                <h3 className="text-sm font-bold text-ctp-text">
-                                  {activeScenario.title}
-                                </h3>
-                                <p className="text-xs text-ctp-subtext1 leading-relaxed">
-                                  {activeScenario.scientific_summary}
-                                </p>
-                                {activeScenario.student_note && (
-                                  <div className="rounded-lg bg-ctp-mantle p-2.5 border border-ctp-surface0 text-xs text-ctp-subtext0">
-                                    <span className="font-bold text-ctp-mauve">
-                                      Підказка для студента:{' '}
-                                    </span>
-                                    {activeScenario.student_note}
-                                  </div>
-                                )}
-                              </div>
+                            {splitLayout === 'only-globe' ? (
+                              <>
+                                <Minimize2 className="w-3 h-3" />
+                                <span>{t.layoutBalanced}</span>
+                              </>
                             ) : (
-                              <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 text-xs text-ctp-subtext0">
-                                Ви досліджуєте власну точку на карті. Спробуйте
-                                перемикати сезонні зрізи (Raw, JJA, DJF,
-                                Deseasonalized), щоб перевірити, чи ховається
-                                статистично значущий тренд в окремому сезоні.
-                              </div>
+                              <>
+                                <Maximize2 className="w-3 h-3" />
+                                <span>{t.layoutOnlyGlobe}</span>
+                              </>
                             )}
+                          </button>
 
-                            <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2 text-xs text-ctp-subtext0">
-                              <div className="font-bold text-ctp-text flex items-center gap-1.5">
-                                <Info className="w-4 h-4 text-ctp-blue" />
-                                <span>
-                                  Як користуватися Workbench-інтерфейсом:
-                                </span>
-                              </div>
-                              <ul className="space-y-1.5 list-disc list-inside">
-                                <li>
-                                  Клікайте будь-де на мапі зліва — графік та
-                                  статистичний вердикт справа оновлюються
-                                  миттєво без прокрутки сторінки.
-                                </li>
-                                <li>
-                                  Перемикайтеся між вкладками лівого меню
-                                  (клавіші{' '}
-                                  <code className="text-ctp-mauve">1</code>–
-                                  <code className="text-ctp-mauve">6</code>) для
-                                  повноекранної карти, лабораторії таблиць або
-                                  каталогу 13 ресурсів NASA/CSA.
-                                </li>
-                              </ul>
-                            </div>
+                          <button
+                            type="button"
+                            onClick={() => setSplitLayout('only-chart')}
+                            className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-red/20 text-ctp-subtext1 hover:text-ctp-red text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
+                            title={t.maximizeChartTitle}
+                          >
+                            <EyeOff className="w-3 h-3" />
+                            <span>{t.collapseGlobeBtn}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="p-2">
+                        <EarthMap
+                          mode={mode}
+                          variable={variable}
+                          regionA={regionA}
+                          regionB={regionB}
+                          activeTarget={activeTarget}
+                          cameraTrigger={cameraTrigger}
+                          onMapClickRegion={handleMapClickRegion}
+                          onToggleActiveTarget={setActiveTarget}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Compact Scenario Context Strip under Map */}
+                    {activeScenario && (
+                      <div className="rounded-2xl bg-ctp-mantle/90 border border-ctp-mauve/40 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-bold">
+                              {t.activeCaseBadge}
+                            </span>
+                            <span className="text-xs font-bold text-ctp-text">
+                              {activeScenario.title}
+                            </span>
                           </div>
-                        )}
-                      </>
+                          <p className="text-xs text-ctp-subtext0 leading-relaxed">
+                            {activeScenario.scientific_summary}
+                          </p>
+                        </div>
+
+                        {seasonMode === 'raw' &&
+                          activeScenario.season_mode !== 'raw' && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSeasonMode(activeScenario.season_mode)
+                              }
+                              className="px-3 py-1.5 rounded-xl bg-ctp-yellow/20 hover:bg-ctp-yellow/30 text-ctp-yellow border border-ctp-yellow/50 text-xs font-mono font-bold shrink-0 transition"
+                            >
+                              {t.switchToSeasonBtn} {activeScenario.season_mode}
+                            </button>
+                          )}
+                      </div>
                     )}
                   </div>
-                </div>
+                )}
+
+                {/* RIGHT ZONE: Live Detective Inspector Dock (Charts, Verdict, Guide) */}
+                {splitLayout !== 'only-globe' && (
+                  <div
+                    className={`${chartColSpanClass} rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl flex flex-col overflow-hidden`}
+                  >
+                    {/* Inspector Dock Tab Header + Collapse / Maximize Controls */}
+                    <div className="px-3.5 py-2.5 bg-ctp-crust border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setInspectorTab('charts')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            inspectorTab === 'charts'
+                              ? 'bg-ctp-blue text-ctp-crust shadow-sm'
+                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                          }`}
+                        >
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          <span>{t.tabCharts}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setInspectorTab('verdict')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            inspectorTab === 'verdict'
+                              ? 'bg-ctp-mauve text-ctp-crust shadow-sm'
+                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{t.tabVerdict}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setInspectorTab('guide')}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                            inspectorTab === 'guide'
+                              ? 'bg-ctp-sapphire text-ctp-crust shadow-sm'
+                              : 'text-ctp-subtext0 hover:text-ctp-text hover:bg-ctp-surface0/50'
+                          }`}
+                        >
+                          <Compass className="w-3.5 h-3.5" />
+                          <span>{t.tabGuide}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSplitLayout(
+                              splitLayout === 'only-chart'
+                                ? 'balanced'
+                                : 'only-chart'
+                            )
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-green/20 text-ctp-subtext1 hover:text-ctp-green text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
+                          title={
+                            splitLayout === 'only-chart'
+                              ? t.restoreSplitTitle
+                              : t.maximizeChartTitle
+                          }
+                        >
+                          {splitLayout === 'only-chart' ? (
+                            <>
+                              <Minimize2 className="w-3 h-3" />
+                              <span>{t.layoutBalanced}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="w-3 h-3" />
+                              <span>{t.layoutOnlyChart}</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSplitLayout('only-globe')}
+                          className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-red/20 text-ctp-subtext1 hover:text-ctp-red text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
+                          title={t.maximizeGlobeTitle}
+                        >
+                          <EyeOff className="w-3 h-3" />
+                          <span>{t.collapseChartBtn}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inspector Body */}
+                    <div
+                      className={`p-3.5 ${
+                        splitLayout === 'only-chart'
+                          ? ''
+                          : 'max-h-[720px] overflow-y-auto'
+                      } space-y-3`}
+                    >
+                      {!analysisResult ? (
+                        <div className="py-16 flex flex-col items-center justify-center gap-2 text-ctp-subtext0">
+                          <RefreshCw className="w-6 h-6 animate-spin text-ctp-blue" />
+                          <span className="text-xs font-mono">
+                            {t.calculatingMsg}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          {/* TAB 1: CHARTS & TREND */}
+                          {inspectorTab === 'charts' && (
+                            <div className="space-y-3">
+                              {/* Compact Quick Metrics Strip */}
+                              {statsA && (
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
+                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                      p-value (MK)
+                                    </div>
+                                    <div
+                                      className={`text-sm font-mono font-extrabold ${
+                                        statsA.is_significant
+                                          ? 'text-ctp-green'
+                                          : 'text-ctp-yellow'
+                                      }`}
+                                    >
+                                      {statsA.p_value < 0.0001
+                                        ? '< 0.0001'
+                                        : statsA.p_value.toFixed(4)}
+                                    </div>
+                                    <div className="text-[10px] text-ctp-subtext0">
+                                      {statsA.is_significant
+                                        ? t.provenTrend
+                                        : t.noiseVariability}
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
+                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                      Sen&apos;s Slope / Dec
+                                    </div>
+                                    <div className="text-sm font-mono font-extrabold text-ctp-blue">
+                                      {statsA.change_per_decade >= 0 ? '+' : ''}
+                                      {statsA.change_per_decade.toFixed(3)}
+                                    </div>
+                                    <div className="text-[10px] text-ctp-subtext0 truncate">
+                                      {currentVarMeta.unit} ({t.per10Yrs})
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-xl bg-ctp-crust p-2.5 border border-ctp-surface0">
+                                    <div className="text-[10px] font-mono text-ctp-subtext0">
+                                      {t.timeToSigLabel}
+                                    </div>
+                                    <div className="text-sm font-mono font-extrabold text-ctp-mauve">
+                                      {statsA.is_significant
+                                        ? t.alreadyReached
+                                        : `+${
+                                            statsA.time_to_significance
+                                              ?.additional_years_needed ?? '—'
+                                          } ${t.yrsNeeded}`}
+                                    </div>
+                                    <div className="text-[10px] text-ctp-subtext0">
+                                      SNR: {statsA.signal_to_noise_ratio}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Interactive Plotly Chart */}
+                              <TrendCharts
+                                mode={mode}
+                                seasonMode={seasonMode}
+                                variableMeta={analysisResult.variable_metadata}
+                                regionA={analysisResult.region_a_analysis}
+                                regionB={analysisResult.region_b_analysis}
+                                onOpenResourcesModal={() =>
+                                  setActiveView('resources')
+                                }
+                              />
+                            </div>
+                          )}
+
+                          {/* TAB 2: VERDICT & STATISTICAL PROOF */}
+                          {inspectorTab === 'verdict' && (
+                            <div className="space-y-3">
+                              {mode === 'dipole' &&
+                                analysisResult.dipole_comparison && (
+                                  <div className="rounded-xl bg-ctp-crust border border-ctp-mauve/50 p-3 space-y-1">
+                                    <div className="flex items-center justify-between text-xs font-mono">
+                                      <span className="text-ctp-mauve font-bold">
+                                        Dipole Correlation (r ={' '}
+                                        {analysisResult.dipole_comparison.pearson_r.toFixed(
+                                          3
+                                        )}
+                                        )
+                                      </span>
+                                      <span className="text-ctp-subtext0">
+                                        p ={' '}
+                                        {analysisResult.dipole_comparison.correlation_p_value.toFixed(
+                                          4
+                                        )}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-ctp-subtext1">
+                                      {analysisResult.dipole_comparison.verdict}
+                                    </p>
+                                  </div>
+                                )}
+
+                              <VerdictCard
+                                regionKey="A"
+                                analysis={analysisResult.region_a_analysis}
+                                variableMeta={analysisResult.variable_metadata}
+                              />
+
+                              {mode === 'dipole' &&
+                                analysisResult.region_b_analysis && (
+                                  <VerdictCard
+                                    regionKey="B"
+                                    analysis={analysisResult.region_b_analysis}
+                                    variableMeta={
+                                      analysisResult.variable_metadata
+                                    }
+                                  />
+                                )}
+                            </div>
+                          )}
+
+                          {/* TAB 3: SCENARIO DETAILS & DETECTIVE GUIDE */}
+                          {inspectorTab === 'guide' && (
+                            <div className="space-y-3">
+                              {activeScenario ? (
+                                <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="px-2 py-0.5 rounded bg-ctp-mauve/20 text-ctp-mauve font-mono text-[10px] font-bold">
+                                      {activeScenario.satellite_badge}
+                                    </span>
+                                    <span className="text-[11px] font-mono text-ctp-yellow">
+                                      Recommended: {activeScenario.season_mode}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-sm font-bold text-ctp-text">
+                                    {activeScenario.title}
+                                  </h3>
+                                  <p className="text-xs text-ctp-subtext1 leading-relaxed">
+                                    {activeScenario.scientific_summary}
+                                  </p>
+                                  {activeScenario.student_note && (
+                                    <div className="rounded-lg bg-ctp-mantle p-2.5 border border-ctp-surface0 text-xs text-ctp-subtext0">
+                                      <span className="font-bold text-ctp-mauve">
+                                        {t.studentTipLabel}
+                                      </span>
+                                      {activeScenario.student_note}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 text-xs text-ctp-subtext0">
+                                  {t.customPointHint}
+                                </div>
+                              )}
+
+                              <div className="rounded-xl bg-ctp-crust border border-ctp-surface0 p-3.5 space-y-2 text-xs text-ctp-subtext0">
+                                <div className="font-bold text-ctp-text flex items-center gap-1.5">
+                                  <Info className="w-4 h-4 text-ctp-blue" />
+                                  <span>{t.howToUseTitle}</span>
+                                </div>
+                                <ul className="space-y-1.5 list-disc list-inside">
+                                  <li>{t.howToUseTip1}</li>
+                                  <li>{t.howToUseTip2}</li>
+                                  <li>{t.howToUseTip3}</li>
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1710,7 +1947,7 @@ export const App: React.FC = () => {
                   <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-5 lg:right-5 z-[500] lg:w-80 rounded-2xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 p-3.5 shadow-2xl space-y-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] font-mono uppercase tracking-wider text-ctp-mauve font-bold">
-                        Live Map Telemetry HUD
+                        {t.liveMapHudTitle}
                       </span>
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
@@ -1734,7 +1971,8 @@ export const App: React.FC = () => {
                           <span className="text-ctp-blue font-bold">
                             {statsA.change_per_decade >= 0 ? '+' : ''}
                             {statsA.change_per_decade.toFixed(3)}{' '}
-                            {currentVarMeta.unit}/dec
+                            {currentVarMeta.unit}
+                            {t.perDecadeShort}
                           </span>
                         </div>
                         <div className="text-ctp-subtext0">
@@ -1756,14 +1994,14 @@ export const App: React.FC = () => {
                         onClick={() => setActiveView('split')}
                         className="flex-1 py-1.5 px-2.5 rounded-lg bg-ctp-blue text-ctp-crust font-bold text-[11px] transition text-center"
                       >
-                        Split View
+                        {t.splitViewBtn}
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveView('analytics')}
                         className="flex-1 py-1.5 px-2.5 rounded-lg bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text font-semibold text-[11px] transition text-center"
                       >
-                        Full Charts
+                        {t.fullChartsBtn}
                       </button>
                     </div>
                   </div>

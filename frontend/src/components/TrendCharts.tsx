@@ -14,6 +14,7 @@ import {
   VariableMetadata,
 } from '../types/climate';
 import { ContextDeepLinksBar } from './OfficialResourcesHub';
+import { useLanguage } from '../i18n/translations';
 
 interface TrendChartsProps {
   mode: AnalysisMode;
@@ -45,6 +46,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   regionB,
   onOpenResourcesModal,
 }) => {
+  const { t, lang } = useLanguage();
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
   const [dipoleView, setDipoleView] = useState<DipoleViewMode>('anomalies');
   const [decompRegion, setDecompRegion] = useState<'A' | 'B'>('A');
@@ -111,7 +113,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             }`}
           >
             <LineChart className="w-4 h-4" />
-            <span>Часовий ряд + Тренд Сена (95% CI)</span>
+            <span>{t.chartTabTimeSeries}</span>
           </button>
 
           <button
@@ -124,7 +126,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             }`}
           >
             <Flame className="w-4 h-4" />
-            <span>Climate Stripes (Теплова шкала аномалій)</span>
+            <span>{t.chartTabStripes}</span>
           </button>
 
           <button
@@ -137,7 +139,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             }`}
           >
             <Layers className="w-4 h-4" />
-            <span>STL-Декомпозиція (Тренд / Сезонність / Шум)</span>
+            <span>{t.chartTabDecomp}</span>
           </button>
         </div>
 
@@ -154,7 +156,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   : 'text-ctp-subtext0 hover:text-ctp-text'
               }`}
             >
-              Аномалії («Ножиці трендів»)
+              {t.chartAnomaliesToggle}
             </button>
             <button
               type="button"
@@ -165,7 +167,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   : 'text-ctp-subtext0 hover:text-ctp-text'
               }`}
             >
-              Абсолютні ({variableMeta.unit})
+              {t.chartAbsoluteToggle} ({variableMeta.unit})
             </button>
           </div>
         )}
@@ -181,7 +183,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   : 'text-ctp-subtext0 hover:text-ctp-text'
               }`}
             >
-              Регіон А: {regionA.location.name}
+              {t.chartRegionABtn}: {regionA.location.name}
             </button>
             <button
               type="button"
@@ -192,7 +194,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   : 'text-ctp-subtext0 hover:text-ctp-text'
               }`}
             >
-              Регіон Б: {regionB?.location.name}
+              {t.chartRegionBBtn}: {regionB?.location.name}
             </button>
           </div>
         )}
@@ -205,12 +207,20 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <h4 className="text-xs sm:text-sm font-mono font-bold text-ctp-text">
               {useAnomalyAxis
-                ? `Дивергенція аномалій («Ножиці трендів») — ${variableMeta.name_ua || variableMeta.name} (${variableMeta.unit})`
-                : `Динаміка показника та Лінія Тренду Сена — ${variableMeta.name_ua || variableMeta.name} (${variableMeta.unit})`}
+                ? `${t.chartTitleDivergence} — ${
+                    lang === 'en'
+                      ? variableMeta.name
+                      : variableMeta.name_ua || variableMeta.name
+                  } (${variableMeta.unit})`
+                : `${t.chartTitleDynamics} — ${
+                    lang === 'en'
+                      ? variableMeta.name
+                      : variableMeta.name_ua || variableMeta.name
+                  } (${variableMeta.unit})`}
             </h4>
             <div className="flex items-center gap-2 text-[11px] font-mono">
               <span className="px-2 py-0.5 rounded bg-ctp-yellow/15 text-ctp-yellow border border-ctp-yellow/35 font-semibold">
-                Season: {seasonMode}
+                {t.verdictSeasonLabel}: {seasonMode}
               </span>
               <span className="text-ctp-subtext0">
                 95% Student-t Confidence Band
