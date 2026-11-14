@@ -147,7 +147,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
           <div className="text-zinc-400 pr-1">
             {statistics.mk_trend === 'increasing' && (
-              <TrendingUp className="w-4 h-4 text-sky-400" />
+              <TrendingUp className="w-4 h-4 text-[#597B8A]" />
             )}
             {statistics.mk_trend === 'decreasing' && (
               <TrendingDown className="w-4 h-4 text-orange-400" />
@@ -262,7 +262,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                 <span
                   className={`px-1.5 py-0.5 rounded text-xs border ${
                     statistics.regime_shift.is_significant
-                      ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
+                      ? 'bg-[#597B8A]/15 text-[#597B8A] border-[#597B8A]/40'
                       : 'bg-zinc-900 text-zinc-400 border-zinc-800'
                   }`}
                 >

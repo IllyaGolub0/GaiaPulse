@@ -131,7 +131,7 @@ export const DetectiveStepper: React.FC<DetectiveStepperProps> = ({
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all duration-300 ${pillStyle}`}
                 >
                   {loading && (step.num === 4 || step.num === 5) ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-ctp-blue shrink-0" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#597B8A] shrink-0" />
                   ) : step.done ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-ctp-green shrink-0" />
                   ) : (

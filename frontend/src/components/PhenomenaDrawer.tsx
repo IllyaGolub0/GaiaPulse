@@ -59,7 +59,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-medium bg-[#141419] text-zinc-300 border border-[#24242b]">
-              <Satellite className="w-3 h-3 text-sky-400" />
+              <Satellite className="w-3 h-3 text-[#597B8A]" />
               {scenario.satellite_badge}
             </span>
 

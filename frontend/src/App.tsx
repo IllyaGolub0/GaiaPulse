@@ -28,6 +28,7 @@ import {
   Check,
   X,
   Printer,
+  Share2,
 } from 'lucide-react';
 import {
   AnalysisMode,
@@ -822,7 +823,7 @@ export const App: React.FC = () => {
   const toolBtnCls =
     'h-10 px-3.5 rounded-md bg-[#1a1a1a] hover:bg-[#262626] text-zinc-100 text-[15px] transition border border-[#2a2a2a] flex items-center gap-2';
   const fieldCtlCls =
-    'h-11 md:h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-sky-500';
+    'h-11 md:h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-[#597B8A]';
 
   // Compact parameter bar: Where / What / When, everything else under "Advanced"
   const renderMissionControlPanel = () => (
@@ -868,7 +869,7 @@ export const App: React.FC = () => {
             )}
             className={`${fieldCtlCls} flex items-center gap-2 text-left hover:border-zinc-500 transition`}
           >
-            <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
+            <MapPin className="w-4 h-4 text-[#597B8A] shrink-0" />
             <span className="truncate">
               {regionA.name}
               {mode === 'dipole' ? ` ↔ ${regionB.name}` : ''}
@@ -975,6 +976,134 @@ export const App: React.FC = () => {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
+
+        <div
+          className="hidden lg:inline-flex items-center h-9 rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
+          role="group"
+          aria-label={L('Вигляд', 'View')}
+        >
+          {viewModes.map((vm) => (
+            <button
+              key={vm.id}
+              type="button"
+              onClick={() => setActiveView(vm.id)}
+              title={vm.label}
+              aria-label={vm.label}
+              aria-pressed={activeView === vm.id}
+              className={`h-8 px-2.5 rounded text-sm transition flex items-center gap-1.5 ${
+                activeView === vm.id
+                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  : 'text-zinc-300 hover:text-zinc-50'
+              }`}
+            >
+              {vm.icon}
+              <span className="hidden 2xl:inline">{vm.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="relative" data-tour="header-actions">
+          <button
+            type="button"
+            onClick={() => setExportOpen((prev) => !prev)}
+            aria-haspopup="menu"
+            aria-expanded={exportOpen}
+            title={L('Поділитися та експортувати', 'Share and export')}
+            className={`h-11 md:h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
+              exportOpen
+                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                : 'bg-[#121216] text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
+            }`}
+          >
+            <Share2 className="w-4 h-4" />
+            <span className="hidden 2xl:inline">
+              {L('Поділитися та експорт', 'Share and export')}
+            </span>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+          {exportOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-[1100]"
+                onClick={() => setExportOpen(false)}
+              />
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 z-[1200] w-64 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
+              >
+                <div className="px-2.5 pt-1.5 pb-1 text-xs text-zinc-400">
+                  {L('Поділитися', 'Share')}
+                </div>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    handleCopyShareLink();
+                    window.setTimeout(() => setExportOpen(false), 900);
+                  }}
+                  className="w-full h-10 md:h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
+                >
+                  {copiedLink ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Link2 className="w-4 h-4 text-zinc-400" />
+                  )}
+                  <span className={copiedLink ? 'text-emerald-400' : ''}>
+                    {copiedLink
+                      ? L('Посилання скопійовано', 'Link copied')
+                      : L('Скопіювати посилання', 'Copy link')}
+                  </span>
+                </button>
+
+                <div className="mt-1 pt-1 border-t border-[#1f1f24] px-2.5 pb-1 text-xs text-zinc-400">
+                  <div className="pt-1.5">{L('Експорт', 'Export')}</div>
+                </div>
+                {(
+                  [
+                    {
+                      key: 'pdf',
+                      label: L('Звіт у PDF', 'PDF report'),
+                      icon: <Printer className="w-4 h-4 text-zinc-400" />,
+                      run: () => setMissionBriefOpen(true),
+                    },
+                    {
+                      key: 'csv',
+                      label: L('Дані у CSV', 'Data as CSV'),
+                      icon: <Table2 className="w-4 h-4 text-zinc-400" />,
+                      run: () => exportData('csv'),
+                    },
+                    {
+                      key: 'json',
+                      label: L('Дані у JSON', 'Data as JSON'),
+                      icon: <Download className="w-4 h-4 text-zinc-400" />,
+                      run: () => exportData('json'),
+                    },
+                  ] as Array<{
+                    key: string;
+                    label: string;
+                    icon: React.ReactNode;
+                    run: () => void;
+                  }>
+                ).map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    role="menuitem"
+                    disabled={!analysisResult}
+                    onClick={() => {
+                      setExportOpen(false);
+                      item.run();
+                    }}
+                    className="w-full h-10 md:h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {advancedOpen && (!isMobile || mobileParamsOpen) && (
@@ -1017,7 +1146,7 @@ export const App: React.FC = () => {
                   type="checkbox"
                   checked={spatialBoxAveraging}
                   onChange={(e) => setSpatialBoxAveraging(e.target.checked)}
-                  className="w-4 h-4 accent-sky-500"
+                  className="w-4 h-4 accent-[#597B8A]"
                 />
                 <span>{L('Усереднювати по області ±1.5°', 'Average over a ±1.5° area')}</span>
               </label>
@@ -1077,7 +1206,7 @@ export const App: React.FC = () => {
                     const val = Number(e.target.value);
                     setStartYear(Math.min(val, endYear - 5));
                   }}
-                  className="w-full accent-sky-500 cursor-pointer"
+                  className="w-full accent-[#597B8A] cursor-pointer"
                 />
               </label>
               <label className="flex items-center gap-2 text-xs text-zinc-400">
@@ -1091,7 +1220,7 @@ export const App: React.FC = () => {
                     const val = Number(e.target.value);
                     setEndYear(Math.max(val, startYear + 5));
                   }}
-                  className="w-full accent-sky-500 cursor-pointer"
+                  className="w-full accent-[#597B8A] cursor-pointer"
                 />
               </label>
             </div>
@@ -1235,7 +1364,7 @@ export const App: React.FC = () => {
     <div className="space-y-3" aria-busy="true">
       <div className="rounded-md bg-[#09090b] border border-[#24242b] p-4 space-y-3">
         <div className="flex items-center gap-2 text-sm text-zinc-200">
-          <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
+          <RefreshCw className="w-4 h-4 animate-spin text-[#597B8A]" />
           <span>{L('Запитуємо дані NASA', 'Requesting NASA data')}</span>
         </div>
         {slowLoading && (
@@ -1353,7 +1482,7 @@ export const App: React.FC = () => {
                 onClick={() => setInspectorTab(tab.id)}
                 className={`h-11 md:h-9 px-3 -mb-px text-sm border-b-2 transition flex items-center gap-1.5 whitespace-nowrap ${
                   inspectorTab === tab.id
-                    ? 'border-sky-400 text-zinc-50 font-medium'
+                    ? 'border-[#597B8A] text-zinc-50 font-medium'
                     : 'border-transparent text-zinc-400 hover:text-zinc-100'
                 }`}
               >
@@ -1584,8 +1713,8 @@ export const App: React.FC = () => {
     <div className="h-[100dvh] overflow-hidden bg-black text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950">
       <div className="flex-1 min-w-0 min-h-0 flex flex-col">
         {/* Top bar: brand, section tabs, language, guide */}
-        <header className="relative z-30 shrink-0 h-12 md:h-16 bg-[#4b4b4b] px-3 md:px-5 flex items-stretch justify-between gap-3">
-          <div className="flex items-stretch gap-4 xl:gap-10 min-w-0">
+        <header className="relative z-30 shrink-0 h-12 md:h-16 bg-[#597B8A] px-3 md:px-5 flex items-stretch justify-between gap-3">
+          <div className="flex items-stretch gap-2 lg:gap-4 xl:gap-6 2xl:gap-10 min-w-0">
             <button
               type="button"
               onClick={() => setActiveView('split')}
@@ -1603,12 +1732,12 @@ export const App: React.FC = () => {
                   fill="#F2F2F2"
                 />
                 <g stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="31" cy="30" r="10" fill="#4b4b4b" />
+                  <circle cx="31" cy="30" r="10" fill="#597B8A" />
                   <path d="M31 20C28.4322 22.6962 27 26.2767 27 30C27 33.7233 28.4322 37.3038 31 40C33.5678 37.3038 35 33.7233 35 30C35 26.2767 33.5678 22.6962 31 20Z" />
                   <path d="M21 30H41" />
                 </g>
               </svg>
-              <span className="font-display text-2xl lg:text-3xl xl:text-[40px] text-white leading-none whitespace-nowrap hidden min-[480px]:inline md:hidden lg:inline">
+              <span className="font-display text-2xl xl:text-3xl 2xl:text-[40px] text-white leading-none whitespace-nowrap hidden min-[480px]:inline md:hidden xl:inline">
                 GAIA PULSE
               </span>
             </button>
@@ -1629,7 +1758,7 @@ export const App: React.FC = () => {
                     onClick={() => setActiveView(item.id)}
                     title={item.subtitle}
                     aria-current={isSelected ? 'page' : undefined}
-                    className={`h-[calc(100%-8px)] px-3 lg:px-4 xl:px-5 rounded-t-xl font-nav uppercase text-base xl:text-xl whitespace-nowrap transition ${
+                    className={`h-[calc(100%-8px)] px-1.5 lg:px-4 xl:px-5 rounded-t-xl font-nav uppercase text-[15px] lg:text-base xl:text-xl whitespace-nowrap transition ${
                       isSelected
                         ? 'bg-black text-white'
                         : 'text-zinc-100 hover:bg-black/25'
@@ -1642,7 +1771,7 @@ export const App: React.FC = () => {
             </nav>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -1703,129 +1832,10 @@ export const App: React.FC = () => {
               aria-label={L('Гід', 'Guide')}
             >
               <Compass className="w-4 h-4 md:w-5 md:h-5" />
-              <span className="hidden sm:inline">{L('Гід', 'Guide')}</span>
+              <span className="hidden lg:inline">{L('Гід', 'Guide')}</span>
             </button>
           </div>
         </header>
-
-        {/* Action bar under the header */}
-        <div
-          data-tour="header-actions"
-          className={`relative z-20 shrink-0 px-3 pt-3 flex-wrap items-center justify-center gap-2 ${
-            isAnalysisView ? 'flex' : 'hidden'
-          }`}
-        >
-          {isAnalysisView && (
-            <>
-              <button
-                type="button"
-                onClick={handleCopyShareLink}
-                className={toolBtnCls}
-                title={L('Скопіювати посилання на це дослідження', 'Copy a link to this investigation')}
-              >
-                {copiedLink ? (
-                  <>
-                    <Check className="w-4 h-4 text-emerald-400" />
-                    <span className="text-emerald-400">{L('Скопійовано', 'Copied')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="w-4 h-4" />
-                    <span>{L('Поділитися', 'Share')}</span>
-                  </>
-                )}
-              </button>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setExportOpen((prev) => !prev)}
-                disabled={!analysisResult}
-                aria-haspopup="menu"
-                aria-expanded={exportOpen}
-                className={`${toolBtnCls} disabled:opacity-50`}
-              >
-                <Download className="w-4 h-4" />
-                <span>{L('Експорт', 'Export')}</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              {exportOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[1100]"
-                    onClick={() => setExportOpen(false)}
-                  />
-                  <div
-                    role="menu"
-                    className="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-[1200] w-56 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setExportOpen(false);
-                        setMissionBriefOpen(true);
-                      }}
-                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
-                    >
-                      <Printer className="w-4 h-4 text-zinc-400" />
-                      <span>{L('Звіт у PDF', 'PDF report')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setExportOpen(false);
-                        exportData('csv');
-                      }}
-                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
-                    >
-                      <Table2 className="w-4 h-4 text-zinc-400" />
-                      <span>{L('Дані у CSV', 'Data as CSV')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setExportOpen(false);
-                        exportData('json');
-                      }}
-                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
-                    >
-                      <Download className="w-4 h-4 text-zinc-400" />
-                      <span>{L('Дані у JSON', 'Data as JSON')}</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-              <div
-                className="hidden lg:inline-flex items-center rounded-md bg-[#1a1a1a] p-0.5 border border-[#2a2a2a]"
-                role="group"
-                aria-label={L('Вигляд', 'View')}
-              >
-                {viewModes.map((vm) => (
-                  <button
-                    key={vm.id}
-                    type="button"
-                    onClick={() => setActiveView(vm.id)}
-                    title={vm.label}
-                    aria-pressed={activeView === vm.id}
-                    className={`h-9 px-3 rounded text-[15px] transition flex items-center gap-1.5 ${
-                      activeView === vm.id
-                        ? 'bg-zinc-100 text-zinc-950 font-medium'
-                        : 'text-zinc-300 hover:text-zinc-50'
-                    }`}
-                  >
-                    {vm.icon}
-                    <span className="hidden xl:inline 2xl:inline">{vm.label}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
 
         {errorMsg && activeView !== 'split' && (
           <div className="mx-4 mt-3 shrink-0">{renderErrorState()}</div>
@@ -1889,8 +1899,8 @@ export const App: React.FC = () => {
                   <span
                     className={`w-1 h-14 rounded-full transition ${
                       draggingSplit
-                        ? 'bg-sky-400'
-                        : 'bg-[#2a2a32] group-hover:bg-sky-400'
+                        ? 'bg-[#597B8A]'
+                        : 'bg-[#2a2a32] group-hover:bg-[#597B8A]'
                     }`}
                   />
                 </div>
@@ -2172,7 +2182,7 @@ export const App: React.FC = () => {
                 isSelected ? 'text-zinc-50 font-medium' : 'text-zinc-400'
               }`}
             >
-              <span className={isSelected ? 'text-sky-400' : ''}>{item.icon}</span>
+              <span className={isSelected ? 'text-[#597B8A]' : ''}>{item.icon}</span>
               <span className="leading-tight text-center">{item.label}</span>
             </button>
           );
@@ -2183,7 +2193,7 @@ export const App: React.FC = () => {
         <div
           role="dialog"
           aria-label={L('Пропозиція пройти гід', 'Tour offer')}
-          className="fixed z-[2700] left-3 right-3 bottom-[68px] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-lg bg-[#101014] border border-sky-500/40 shadow-2xl p-4 space-y-3"
+          className="fixed z-[2700] left-3 right-3 bottom-[68px] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-lg bg-[#101014] border border-[#597B8A]/40 shadow-2xl p-4 space-y-3"
         >
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-zinc-50">
@@ -2203,7 +2213,7 @@ export const App: React.FC = () => {
                 dismissHint();
                 setTourStep(0);
               }}
-              className="h-10 md:h-9 px-4 rounded-md bg-sky-500 hover:bg-sky-400 text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
+              className="h-10 md:h-9 px-4 rounded-md bg-[#597B8A] hover:bg-[#597B8A] text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
             >
               <Compass className="w-4 h-4" />
               <span>{L('Почати гід', 'Start the tour')}</span>
@@ -2323,7 +2333,7 @@ export const App: React.FC = () => {
                         }`}
                       >
                         <div className="min-w-0 truncate">
-                          <span className="font-mono font-medium text-sky-400 mr-2">
+                          <span className="font-mono font-medium text-[#597B8A] mr-2">
                             {v.code}
                           </span>
                           <span>
@@ -2422,7 +2432,7 @@ export const App: React.FC = () => {
             {/* Header + Print Action */}
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#1f1f24] pb-4">
               <div>
-                <div className="text-xs font-monost text-sky-400">
+                <div className="text-xs font-monost text-[#597B8A]">
                   NASA Space Apps Challenge 2026 · Earth System Trend Detective
                 </div>
                 <h2 className="text-base font-semibold text-zinc-100 mt-1">
@@ -2465,7 +2475,7 @@ export const App: React.FC = () => {
                 <div className="text-xs text-zinc-400">
                   Sen&apos;s Slope / Decade
                 </div>
-                <div className="text-sm font-semibold text-sky-400 mt-1">
+                <div className="text-sm font-semibold text-[#597B8A] mt-1">
                   {statsA.change_per_decade >= 0 ? '+' : ''}
                   {statsA.change_per_decade.toFixed(4)} {currentVarMeta.unit}
                 </div>

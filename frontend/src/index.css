@@ -121,9 +121,13 @@ body {
   font-weight: 400;
 }
 
-/* Koulen has no Cyrillic glyphs: Ukrainian labels fall back to Oswald */
+/* Koulen has no Cyrillic glyphs: Ukrainian labels fall back to Oswald.
+   Oswald capitals are about 16% taller (cap height 0.81 vs 0.70 of the em),
+   so the fallback is scaled to Koulen's cap height to keep both languages
+   the same visual size. */
 .font-nav {
   font-family: 'Koulen', 'Oswald', 'Arial Narrow', sans-serif;
   font-weight: 400;
   letter-spacing: 0.02em;
+  font-size-adjust: cap-height 0.7;
 }

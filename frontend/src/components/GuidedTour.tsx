@@ -209,7 +209,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
 
       {box ? (
         <div
-          className="absolute rounded-lg border-2 border-sky-400 pointer-events-none transition-all duration-200"
+          className="absolute rounded-lg border-2 border-[#597B8A] pointer-events-none transition-all duration-200"
           style={{
             top: box.top - PAD,
             left: box.left - PAD,
@@ -229,7 +229,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-0.5">
-            <div className="text-xs text-sky-300 font-medium">
+            <div className="text-xs text-[#597B8A] font-medium">
               {en ? 'Step' : 'Крок'} {stepIndex + 1} {en ? 'of' : 'з'}{' '}
               {steps.length}
             </div>
@@ -254,7 +254,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             <span
               key={idx}
               className={`h-1 flex-1 rounded-full ${
-                idx <= stepIndex ? 'bg-sky-400' : 'bg-[#2a2a32]'
+                idx <= stepIndex ? 'bg-[#597B8A]' : 'bg-[#2a2a32]'
               }`}
             />
           ))}
@@ -274,7 +274,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             type="button"
             onClick={() => (isLast ? onClose() : onStepChange(stepIndex + 1))}
             autoFocus
-            className="h-10 md:h-9 px-4 rounded-md bg-sky-500 hover:bg-sky-400 text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
+            className="h-10 md:h-9 px-4 rounded-md bg-[#597B8A] hover:bg-[#597B8A] text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
           >
             <span>
               {isLast ? (en ? 'Finish' : 'Завершити') : en ? 'Next' : 'Далі'}
