@@ -1543,52 +1543,11 @@ export const App: React.FC = () => {
                 {splitLayout !== 'only-chart' && (
                   <div className={`${globeColSpanClass} space-y-3`}>
                     <div className="rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl overflow-hidden">
-                      {/* Globe / Map Zone Header with Collapse & Maximize Controls */}
-                      <div className="px-3.5 py-2 bg-ctp-crust border-b border-ctp-surface0 flex items-center justify-between gap-2">
+                      {/* Globe / Map Zone Header */}
+                      <div className="px-3.5 py-2.5 bg-ctp-crust border-b border-ctp-surface0 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 text-xs font-bold text-ctp-text">
                           <Globe2 className="w-4 h-4 text-ctp-blue" />
                           <span>{t.globeZoneTitle}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSplitLayout(
-                                splitLayout === 'only-globe'
-                                  ? 'balanced'
-                                  : 'only-globe'
-                              )
-                            }
-                            className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-blue/20 text-ctp-subtext1 hover:text-ctp-blue text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
-                            title={
-                              splitLayout === 'only-globe'
-                                ? t.restoreSplitTitle
-                                : t.maximizeGlobeTitle
-                            }
-                          >
-                            {splitLayout === 'only-globe' ? (
-                              <>
-                                <Minimize2 className="w-3 h-3" />
-                                <span>{t.layoutBalanced}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Maximize2 className="w-3 h-3" />
-                                <span>{t.layoutOnlyGlobe}</span>
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setSplitLayout('only-chart')}
-                            className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-red/20 text-ctp-subtext1 hover:text-ctp-red text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
-                            title={t.maximizeChartTitle}
-                          >
-                            <EyeOff className="w-3 h-3" />
-                            <span>{t.collapseGlobeBtn}</span>
-                          </button>
                         </div>
                       </div>
 
@@ -1645,8 +1604,8 @@ export const App: React.FC = () => {
                   <div
                     className={`${chartColSpanClass} rounded-2xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-xl flex flex-col overflow-hidden`}
                   >
-                    {/* Inspector Dock Tab Header + Collapse / Maximize Controls */}
-                    <div className="px-3.5 py-2.5 bg-ctp-crust border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2">
+                    {/* Inspector Dock Tab Header */}
+                    <div className="px-3.5 py-2 bg-ctp-crust border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-1">
                         <button
                           type="button"
@@ -1685,47 +1644,6 @@ export const App: React.FC = () => {
                         >
                           <Compass className="w-3.5 h-3.5" />
                           <span>{t.tabGuide}</span>
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSplitLayout(
-                              splitLayout === 'only-chart'
-                                ? 'balanced'
-                                : 'only-chart'
-                            )
-                          }
-                          className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-green/20 text-ctp-subtext1 hover:text-ctp-green text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
-                          title={
-                            splitLayout === 'only-chart'
-                              ? t.restoreSplitTitle
-                              : t.maximizeChartTitle
-                          }
-                        >
-                          {splitLayout === 'only-chart' ? (
-                            <>
-                              <Minimize2 className="w-3 h-3" />
-                              <span>{t.layoutBalanced}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Maximize2 className="w-3 h-3" />
-                              <span>{t.layoutOnlyChart}</span>
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setSplitLayout('only-globe')}
-                          className="px-2.5 py-1 rounded-lg bg-ctp-surface0/70 hover:bg-ctp-red/20 text-ctp-subtext1 hover:text-ctp-red text-[11px] font-mono font-semibold transition flex items-center gap-1 border border-ctp-surface0"
-                          title={t.maximizeGlobeTitle}
-                        >
-                          <EyeOff className="w-3 h-3" />
-                          <span>{t.collapseChartBtn}</span>
                         </button>
                       </div>
                     </div>
