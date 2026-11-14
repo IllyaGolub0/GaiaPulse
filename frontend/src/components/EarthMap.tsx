@@ -449,7 +449,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   }, [mode, regionB, roiShape]);
 
   return (
-    <div className="w-full h-full min-h-[580px] rounded-2xl overflow-hidden border border-ctp-surface0 bg-ctp-mantle shadow-xl flex flex-col">
+    <div className="w-full h-[640px] min-h-[580px] rounded-2xl overflow-hidden border border-ctp-surface0 bg-ctp-mantle shadow-xl flex flex-col">
       {/* Row 1: Primary Map Controls (2D/3D, Click Target, Basemap, GIBS Opacity) */}
       <div className="px-3.5 py-2 bg-ctp-mantle border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2 z-20">
         <div className="flex flex-wrap items-center gap-2">
@@ -677,7 +677,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
       </div>
 
       {/* Center Canvas: 2D Map or 3D WebGL Globe */}
-      <div className="relative flex-1 w-full bg-ctp-crust overflow-hidden">
+      <div className="relative flex-1 w-full min-h-[460px] bg-ctp-crust overflow-hidden">
         {gibsEnabled && gibsConfig.colorbar && (
           <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
             <div className="flex items-center justify-between text-[10px] font-mono text-ctp-text mb-1">
@@ -726,6 +726,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
             maxZoom={9}
             zoomControl={false}
             scrollWheelZoom={true}
+            style={{ width: '100%', height: '100%', minHeight: '460px' }}
             className="w-full h-full"
             worldCopyJump={true}
           >

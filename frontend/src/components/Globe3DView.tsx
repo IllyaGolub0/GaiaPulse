@@ -559,6 +559,7 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
   return (
     <div
       ref={containerRef}
+      style={{ width: '100%', height: '100%', minHeight: '460px' }}
       className="w-full h-full bg-[radial-gradient(ellipse_at_center,_#313244_0%,_#181825_55%,_#11111b_100%)]"
     />
   );
