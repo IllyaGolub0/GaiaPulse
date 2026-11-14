@@ -499,7 +499,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   const floatBtn =
     'h-9 px-2.5 rounded-md text-sm transition flex items-center gap-1.5';
   const floatGroup =
-    'pointer-events-auto flex items-center p-0.5 rounded-md bg-[#0c0c0f]/95 backdrop-blur border border-[#2a2a32] shadow-lg';
+    'pointer-events-auto flex items-center p-0.5 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-lg';
 
   return (
     <div className="relative isolate w-full h-full min-h-[260px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#070709]">
@@ -753,7 +753,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         </div>
 
         {gibsEnabled && gibsConfig.colorbar && (
-          <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
+          <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
             <div className="flex items-center justify-between text-xs font-mono text-ctp-text mb-1">
               <span className="font-semibold truncate max-w-[150px]">
                 {activeLayerDisplayLabel.split(':')[1] || activeLayerDisplayLabel}

@@ -57,10 +57,10 @@ import {
   getVariableDefinitionI18n,
   useLanguage,
 } from './i18n/translations';
-import { EarthMap } from './components/EarthMap';
-import { TrendCharts } from './components/TrendCharts';
-import { VerdictCard } from './components/VerdictCard';
-import { VerdictHero } from './components/VerdictHero';
+import { EarthMap as EarthMapBase } from './components/EarthMap';
+import { VerdictCard as VerdictCardBase } from './components/VerdictCard';
+import { VerdictHero as VerdictHeroBase } from './components/VerdictHero';
+import { GuidedTour, TourStep } from './components/GuidedTour';
 import { formatP } from './utils/format';
 import { useMediaQuery } from './utils/useMediaQuery';
 import { PhenomenaDrawer } from './components/PhenomenaDrawer';
@@ -69,6 +69,23 @@ import {
   CsvImporterModal,
   OfficialResourcesHub,
 } from './components/OfficialResourcesHub';
+
+// Heavy children are memoized so that unrelated state changes in App (menus,
+// tour steps, the split drag) do not re-plot charts or re-render the map.
+const EarthMap = React.memo(EarthMapBase);
+const VerdictCard = React.memo(VerdictCardBase);
+const VerdictHero = React.memo(VerdictHeroBase);
+
+// Plotly is by far the largest dependency: load it only when a chart is shown
+const TrendCharts = React.lazy(() =>
+  import('./components/TrendCharts').then((m) => ({
+    default: React.memo(m.TrendCharts),
+  }))
+);
+
+const chartFallback = (
+  <div className="h-72 rounded-md bg-[#101014] border border-[#1f1f24] animate-pulse" />
+);
 
 export type WorkbenchView =
   | 'split'
@@ -156,6 +173,7 @@ export const App: React.FC = () => {
   const isXl = useMediaQuery('(min-width: 1280px)');
   const isMobile = !useMediaQuery('(min-width: 768px)');
   const [mobileParamsOpen, setMobileParamsOpen] = useState<boolean>(false);
+  const [tourStep, setTourStep] = useState<number | null>(null);
 
   // Workbench Navigation & Split Layout State
   const [activeView, setActiveView] = useState<WorkbenchView>('split');
@@ -455,14 +473,20 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleMapClickRegion = (target: 'A' | 'B', loc: RegionLocation) => {
+  const handleMapClickRegion = useCallback(
+    (target: 'A' | 'B', loc: RegionLocation) => {
     setActiveScenarioId('custom');
     if (target === 'A') {
       setRegionA(loc);
     } else {
       setRegionB(loc);
     }
-  };
+    },
+    []
+  );
+
+  const openResources = useCallback(() => setActiveView('resources'), []);
+  const selectSeason = useCallback((sm: SeasonMode) => setSeasonMode(sm), []);
 
   const filteredVariables = useMemo(() => {
     if (selectedBiome === 'all') return variables;
@@ -613,14 +637,167 @@ export const App: React.FC = () => {
     }
   };
 
+  // Guided tour: each step highlights one area and may demonstrate a feature
+  const tourCase = scenarios[0] || FALLBACK_PHENOMENA_SCENARIOS[0];
+  const tourDipoleCase = scenarios.find((sc) => sc.mode === 'dipole');
+  const tourAltSeason: SeasonMode =
+    tourCase.season_mode === 'DJF' ? 'JJA' : 'DJF';
+  const tourShowAnalysis = () => {
+    setActiveView('split');
+    setAdvancedOpen(false);
+    setExportOpen(false);
+    setCommandPaletteOpen(false);
+  };
+  const tourSteps: TourStep[] = [
+    {
+      title: L('Що вміє GaiaPulse', 'What GaiaPulse does'),
+      body: L(
+        'Сайт показує, чи змінюється кліматичний показник у вибраній точці Землі і чи можна цій зміні довіряти. За хвилину ми пройдемо весь шлях на готовому прикладі: дим лісових пожеж над Вісконсином.',
+        'The site shows whether a climate variable is changing at a chosen point on Earth and whether that change can be trusted. In a minute we will walk the whole path on a ready example: wildfire smoke over Wisconsin.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        applyScenario(tourCase);
+        setInspectorTab('charts');
+        setMobileParamsOpen(false);
+      },
+    },
+    {
+      target: 'map',
+      title: L('Оберіть місце на карті', 'Pick a place on the map'),
+      body: L(
+        'Клацніть будь-де на карті, і аналіз одразу перерахується для цієї точки. Кнопка «Глобус» вмикає тривимірний вигляд, а «Шари» показує супутникові знімки NASA за обрану дату.',
+        'Click anywhere on the map and the analysis is recalculated for that point. The Globe button switches to a 3D view, and Layers shows NASA satellite imagery for a chosen date.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setMobileParamsOpen(false);
+      },
+    },
+    {
+      target: 'params',
+      title: L('Що, де і коли аналізуємо', 'What, where and when'),
+      body: L(
+        'Тут обирають показник (температура, опади, дим та інші), сезон і період років. У «Додатково» є точні координати, порівняння двох точок і усереднення по області.',
+        'Choose the variable (temperature, precipitation, smoke and others), the season and the range of years here. Advanced holds exact coordinates, two-point comparison and area averaging.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setSeasonMode(tourCase.season_mode);
+        setMobileParamsOpen(true);
+      },
+    },
+    {
+      target: 'verdict',
+      title: L('Вердикт простими словами', 'The verdict in plain words'),
+      body: L(
+        'Головний результат: чи зростає показник, на скільки за десятиліття і наскільки це надійно. Три смужки показують надійність: чим більше заповнено, тим менше шансів, що це випадковість.',
+        'The main result: whether the variable is rising, by how much per decade and how reliable that is. The three bars show reliability: the more are filled, the smaller the chance it is random.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setMobileParamsOpen(false);
+        setSeasonMode(tourCase.season_mode);
+      },
+    },
+    {
+      target: 'verdict',
+      title: L('Демонстрація: змінюємо сезон', 'Demo: changing the season'),
+      body: L(
+        'Ми щойно перемкнули сезон за вас. Подивіться, як змінився вердикт: той самий регіон в іншу пору року може не мати тренду взагалі. Тому сезон варто перевіряти завжди.',
+        'We have just switched the season for you. Look how the verdict changed: the same region in another season may show no trend at all. That is why the season is always worth checking.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setSeasonMode(tourAltSeason);
+      },
+    },
+    {
+      target: 'tabs',
+      title: L('Графіки як доказ', 'Charts as evidence'),
+      body: L(
+        'Під вердиктом є графік: точки спостережень, лінія тренду і смуга довіри. Сусідні вкладки показують смуги аномалій за роками та розклад ряду на тренд, сезонність і шум.',
+        'Below the verdict there is a chart: observations, the trend line and the confidence band. The neighbouring tabs show anomaly stripes by year and the series split into trend, seasonality and noise.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setSeasonMode(tourCase.season_mode);
+        setInspectorTab('charts');
+      },
+    },
+    {
+      target: 'tabs',
+      title: L('Повна статистика для експертів', 'Full statistics for experts'),
+      body: L(
+        'Ми відкрили вкладку «Повна статистика». Тут усі числа: тест Манна-Кендалла, нахил Сена, рік зміни режиму, поправка на автокореляцію і порівняння всіх шести сезонів.',
+        'We opened the Full statistics tab. All the numbers live here: the Mann-Kendall test, Sen slope, regime-shift year, autocorrelation correction and a comparison of all six seasons.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        setInspectorTab('verdict');
+      },
+    },
+    ...(tourDipoleCase
+      ? [
+          {
+            target: 'verdict',
+            title: L('Демонстрація: дві точки', 'Demo: two points'),
+            body: L(
+              'Ми завантажили кейс із двома регіонами. Тепер вердикт є для кожної точки окремо, а нижче сказано, чи змінюються вони разом або в протилежні боки.',
+              'We loaded a case with two regions. Each point now has its own verdict, and below it says whether they change together or in opposite directions.'
+            ),
+            onEnter: () => {
+              tourShowAnalysis();
+              setInspectorTab('charts');
+              applyScenario(tourDipoleCase);
+            },
+          } as TourStep,
+        ]
+      : []),
+    {
+      target: 'nav',
+      title: L('Інші розділи', 'Other sections'),
+      body: L(
+        '«Кейси та події» містить готові приклади та живі природні події NASA. У «Власних даних» можна проаналізувати свій CSV-файл. «Джерела» ведуть на офіційні портали даних.',
+        'Cases and events holds ready examples and live NASA natural events. Your data lets you analyze your own CSV file. Sources link to the official data portals.'
+      ),
+      onEnter: () => {
+        tourShowAnalysis();
+        applyScenario(tourCase);
+        setInspectorTab('charts');
+      },
+    },
+    {
+      target: 'header-actions',
+      title: L('Поділитися та зберегти', 'Share and save'),
+      body: L(
+        '«Поділитися» копіює посилання, яке відкриє саме це дослідження. «Експорт» зберігає звіт у PDF або дані у CSV та JSON. Гід можна запустити знову цією ж кнопкою «Гід».',
+        'Share copies a link that opens exactly this investigation. Export saves a PDF report or the data as CSV and JSON. You can restart the tour with the same Tour button.'
+      ),
+      onEnter: tourShowAnalysis,
+    },
+  ];
+  const closeTour = () => {
+    setTourStep(null);
+    setMobileParamsOpen(false);
+    dismissHint();
+  };
+
   const startSplitDrag = (e: React.MouseEvent) => {
     e.preventDefault();
     setDraggingSplit(true);
+    let frame = 0;
+    let lastX = e.clientX;
     const onMove = (ev: MouseEvent) => {
-      const box = splitContainerRef.current?.getBoundingClientRect();
-      if (!box || box.width === 0) return;
-      const pct = ((ev.clientX - box.left) / box.width) * 100;
-      setSplitPct(Math.min(70, Math.max(30, pct)));
+      lastX = ev.clientX;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const box = splitContainerRef.current?.getBoundingClientRect();
+        if (!box || box.width === 0) return;
+        const pct = ((lastX - box.left) / box.width) * 100;
+        setSplitPct(Math.min(70, Math.max(30, pct)));
+      });
     };
     const onUp = () => {
       setDraggingSplit(false);
@@ -647,7 +824,10 @@ export const App: React.FC = () => {
 
   // Compact parameter bar: Where / What / When, everything else under "Advanced"
   const renderMissionControlPanel = () => (
-    <div className="shrink-0 rounded-md bg-[#0c0c0f] border border-[#1f1f24]">
+    <div
+      data-tour="params"
+      className="shrink-0 rounded-md bg-[#0c0c0f] border border-[#1f1f24]"
+    >
       <button
         type="button"
         onClick={() => setMobileParamsOpen((prev) => !prev)}
@@ -1104,7 +1284,10 @@ export const App: React.FC = () => {
     if (!analysisResult) return null;
     const showB = mode === 'dipole' && !!analysisResult.region_b_analysis;
     return (
-      <div className={`space-y-3 transition ${loading ? 'opacity-60' : ''}`}>
+      <div
+        data-tour="verdict"
+        className={`space-y-3 transition ${loading ? 'opacity-60' : ''}`}
+      >
         <VerdictHero
           analysis={analysisResult.region_a_analysis}
           variableMeta={analysisResult.variable_metadata}
@@ -1143,24 +1326,6 @@ export const App: React.FC = () => {
 
   const renderResultsPanel = () => (
     <div className="p-3 space-y-3">
-      {!hintDismissed && (
-        <div className="rounded-md bg-sky-500/10 border border-sky-500/30 px-3 py-2.5 flex items-start justify-between gap-3">
-          <ol className="text-sm text-zinc-100 space-y-0.5 list-decimal list-inside">
-            <li>{L('Клацніть на карті, щоб обрати місце.', 'Click the map to pick a place.')}</li>
-            <li>{L('Оберіть показник, сезон і період угорі.', 'Choose the variable, season and period above.')}</li>
-            <li>{L('Прочитайте вердикт і перевірте його на графіку.', 'Read the verdict and check it on the chart.')}</li>
-          </ol>
-          <button
-            type="button"
-            onClick={dismissHint}
-            aria-label={L('Закрити підказку', 'Dismiss hint')}
-            className="shrink-0 w-8 h-8 rounded-md hover:bg-sky-500/20 text-zinc-200 flex items-center justify-center transition"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {errorMsg ? (
         renderErrorState()
       ) : !analysisResult ? (
@@ -1169,7 +1334,10 @@ export const App: React.FC = () => {
         <>
           {renderVerdictHeroes()}
 
-          <div className="flex items-center gap-1 border-b border-[#1f1f24] overflow-x-auto">
+          <div
+            data-tour="tabs"
+            className="flex items-center gap-1 border-b border-[#1f1f24] overflow-x-auto"
+          >
             {(
               [
                 { id: 'charts', label: L('Графіки', 'Charts'), icon: <BarChart3 className="w-4 h-4" /> },
@@ -1194,14 +1362,16 @@ export const App: React.FC = () => {
           </div>
 
           {inspectorTab === 'charts' && (
+            <React.Suspense fallback={chartFallback}>
             <TrendCharts
               mode={mode}
               seasonMode={seasonMode}
               variableMeta={analysisResult.variable_metadata}
               regionA={analysisResult.region_a_analysis}
               regionB={analysisResult.region_b_analysis}
-              onOpenResourcesModal={() => setActiveView('resources')}
+              onOpenResourcesModal={openResources}
             />
+            </React.Suspense>
           )}
 
           {inspectorTab === 'verdict' && (
@@ -1210,14 +1380,14 @@ export const App: React.FC = () => {
                 regionKey="A"
                 analysis={analysisResult.region_a_analysis}
                 variableMeta={analysisResult.variable_metadata}
-                onSelectSeasonMode={(s) => setSeasonMode(s)}
+                onSelectSeasonMode={selectSeason}
               />
               {mode === 'dipole' && analysisResult.region_b_analysis && (
                 <VerdictCard
                   regionKey="B"
                   analysis={analysisResult.region_b_analysis}
                   variableMeta={analysisResult.variable_metadata}
-                  onSelectSeasonMode={(s) => setSeasonMode(s)}
+                  onSelectSeasonMode={selectSeason}
                 />
               )}
             </div>
@@ -1440,7 +1610,7 @@ export const App: React.FC = () => {
             )}
           </div>
 
-          <nav className="p-2 space-y-1">
+          <nav data-tour="nav" className="p-2 space-y-1">
             {sidebarCollapsed && isXl && (
               <button
                 type="button"
@@ -1508,7 +1678,7 @@ export const App: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div data-tour="header-actions" className="flex items-center gap-2 shrink-0">
             {isAnalysisView && (
               <div
                 className="hidden lg:inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
@@ -1651,6 +1821,19 @@ export const App: React.FC = () => {
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setTourStep(0)}
+              className="h-9 px-2.5 rounded-md bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 text-sm font-medium transition border border-sky-500/40 flex items-center gap-2"
+              title={L(
+                'Покроковий гід по основних можливостях сайту',
+                'Step-by-step tour of the main features'
+              )}
+            >
+              <Compass className="w-4 h-4" />
+              <span className="hidden sm:inline">{L('Гід', 'Tour')}</span>
+            </button>
           </div>
         </header>
 
@@ -1678,6 +1861,7 @@ export const App: React.FC = () => {
                 className={isWide ? 'flex-1 min-h-0 flex' : 'flex flex-col gap-3'}
               >
                 <div
+                  data-tour="map"
                   style={isWide ? { width: `${splitPct}%` } : undefined}
                   className={
                     isWide ? 'min-w-0 h-full' : 'h-[45dvh] min-h-[300px]'
@@ -1847,27 +2031,29 @@ export const App: React.FC = () => {
                       regionKey="A"
                       analysis={analysisResult.region_a_analysis}
                       variableMeta={analysisResult.variable_metadata}
-                      onSelectSeasonMode={(s) => setSeasonMode(s)}
+                      onSelectSeasonMode={selectSeason}
                     />
                     {mode === 'dipole' && analysisResult.region_b_analysis && (
                       <VerdictCard
                         regionKey="B"
                         analysis={analysisResult.region_b_analysis}
                         variableMeta={analysisResult.variable_metadata}
-                        onSelectSeasonMode={(s) => setSeasonMode(s)}
+                        onSelectSeasonMode={selectSeason}
                       />
                     )}
                   </div>
 
                   {/* Full-Width Interactive Plotly Chart */}
+                  <React.Suspense fallback={chartFallback}>
                   <TrendCharts
                     mode={mode}
                     seasonMode={seasonMode}
                     variableMeta={analysisResult.variable_metadata}
                     regionA={analysisResult.region_a_analysis}
                     regionB={analysisResult.region_b_analysis}
-                    onOpenResourcesModal={() => setActiveView('resources')}
+                    onOpenResourcesModal={openResources}
                   />
+                  </React.Suspense>
 
                   {/* Annual Data Table & Extremes Matrix */}
                   {renderAnnualDataTable()}
@@ -1926,13 +2112,15 @@ export const App: React.FC = () => {
                       analysis={analysisResult.region_a_analysis}
                       variableMeta={analysisResult.variable_metadata}
                     />
+                    <React.Suspense fallback={chartFallback}>
                     <TrendCharts
                       mode="single"
                       seasonMode={seasonMode}
                       variableMeta={analysisResult.variable_metadata}
                       regionA={analysisResult.region_a_analysis}
-                      onOpenResourcesModal={() => setActiveView('resources')}
+                      onOpenResourcesModal={openResources}
                     />
+                    </React.Suspense>
                   </>
                 )}
               </div>
@@ -1977,6 +2165,7 @@ export const App: React.FC = () => {
 
       {/* Bottom navigation for phones */}
       <nav
+        data-tour="nav"
         className="md:hidden shrink-0 border-t border-[#1f1f24] bg-[#070709] grid grid-cols-4"
         aria-label={L('Розділи', 'Sections')}
       >
@@ -1999,6 +2188,56 @@ export const App: React.FC = () => {
           );
         })}
       </nav>
+
+      {!hintDismissed && tourStep === null && (
+        <div
+          role="dialog"
+          aria-label={L('Пропозиція пройти гід', 'Tour offer')}
+          className="fixed z-[2700] left-3 right-3 bottom-[68px] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-lg bg-[#101014] border border-sky-500/40 shadow-2xl p-4 space-y-3"
+        >
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-zinc-50">
+              {L('Вперше на GaiaPulse?', 'New to GaiaPulse?')}
+            </h2>
+            <p className="text-sm text-zinc-200 leading-relaxed">
+              {L(
+                'За хвилину покажемо головне на готовому прикладі: як обрати місце, прочитати вердикт і перевірити його на графіку.',
+                'In one minute we will show the essentials on a ready example: how to pick a place, read the verdict and check it on the chart.'
+              )}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                dismissHint();
+                setTourStep(0);
+              }}
+              className="h-10 md:h-9 px-4 rounded-md bg-sky-500 hover:bg-sky-400 text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
+            >
+              <Compass className="w-4 h-4" />
+              <span>{L('Почати гід', 'Start the tour')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={dismissHint}
+              className="h-10 md:h-9 px-3 rounded-md border border-[#2a2a32] text-sm text-zinc-200 hover:text-zinc-50 hover:border-zinc-500 transition"
+            >
+              {L('Не зараз', 'Not now')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {tourStep !== null && (
+        <GuidedTour
+          steps={tourSteps}
+          stepIndex={Math.min(tourStep, tourSteps.length - 1)}
+          lang={lang}
+          onStepChange={setTourStep}
+          onClose={closeTour}
+        />
+      )}
 
       {/* Modal Overlays */}
       <PhenomenaDrawer
