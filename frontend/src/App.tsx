@@ -60,6 +60,8 @@ import {
 import { EarthMap } from './components/EarthMap';
 import { TrendCharts } from './components/TrendCharts';
 import { VerdictCard } from './components/VerdictCard';
+import { VerdictHero } from './components/VerdictHero';
+import { formatP } from './utils/format';
 import { PhenomenaDrawer } from './components/PhenomenaDrawer';
 import {
   ContextDeepLinksBar,
@@ -163,6 +165,19 @@ export const App: React.FC = () => {
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [spatialBoxAveraging, setSpatialBoxAveraging] = useState<boolean>(false);
   const [missionBriefOpen, setMissionBriefOpen] = useState<boolean>(false);
+  const [advancedOpen, setAdvancedOpen] = useState<boolean>(false);
+  const [exportOpen, setExportOpen] = useState<boolean>(false);
+  const [splitPct, setSplitPct] = useState<number>(52);
+  const [draggingSplit, setDraggingSplit] = useState<boolean>(false);
+  const [slowLoading, setSlowLoading] = useState<boolean>(false);
+  const [hintDismissed, setHintDismissed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('gp_hint_dismissed') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const splitContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Catalog & Phenomenon Scenarios State
   const [variables, setVariables] =
@@ -297,7 +312,7 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Keyboard shortcuts for Workbench views (1-6, '[' to toggle sidebar, Ctrl+K / Cmd+K for Command Palette)
+  // Keyboard shortcuts ('[' to toggle sidebar, Ctrl+K / Cmd+K for Command Palette)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -313,13 +328,7 @@ export const App: React.FC = () => {
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      if (e.key === '1') setActiveView('split');
-      else if (e.key === '2') setActiveView('map');
-      else if (e.key === '3') setActiveView('analytics');
-      else if (e.key === '4') setActiveView('phenomena');
-      else if (e.key === '5') setActiveView('csv');
-      else if (e.key === '6') setActiveView('resources');
-      else if (e.key === '[') setSidebarCollapsed((prev) => !prev);
+      if (e.key === '[') setSidebarCollapsed((prev) => !prev);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -523,220 +532,364 @@ export const App: React.FC = () => {
   const statsA = analysisResult?.region_a_analysis.statistics;
   const seriesA = analysisResult?.region_a_analysis.time_series || [];
 
+  const L = (ua: string, en: string) => (lang === 'en' ? en : ua);
+
+  // After 10 seconds of waiting explain that the server may be waking up
+  useEffect(() => {
+    if (!loading) {
+      setSlowLoading(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setSlowLoading(true), 10000);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
+  const isAnalysisView =
+    activeView === 'split' || activeView === 'map' || activeView === 'analytics';
+  const isFixedView = activeView === 'split' || activeView === 'map';
+
   const navItems: Array<{
     id: WorkbenchView;
-    shortcut: string;
     label: string;
     subtitle: string;
     icon: React.ReactNode;
   }> = [
     {
       id: 'split',
-      shortcut: '1',
       label: t.navSplitLabel,
-      subtitle: t.navSplitSub,
-      icon: <Columns className="w-3.5 h-3.5" />,
-    },
-    {
-      id: 'map',
-      shortcut: '2',
-      label: t.navMapLabel,
-      subtitle: t.navMapSub,
-      icon: <Globe2 className="w-3.5 h-3.5" />,
-    },
-    {
-      id: 'analytics',
-      shortcut: '3',
-      label: t.navAnalyticsLabel,
-      subtitle: t.navAnalyticsSub,
-      icon: <BarChart3 className="w-3.5 h-3.5" />,
+      subtitle: L('Карта, вердикт і графіки', 'Map, verdict and charts'),
+      icon: <Columns className="w-4 h-4" />,
     },
     {
       id: 'phenomena',
-      shortcut: '4',
       label: t.navPhenomenaLabel,
-      subtitle: t.navPhenomenaSub,
-      icon: <Satellite className="w-3.5 h-3.5" />,
+      subtitle: L('Готові кейси та живі події NASA', 'Curated cases and live NASA events'),
+      icon: <Satellite className="w-4 h-4" />,
     },
     {
       id: 'csv',
-      shortcut: '5',
       label: t.navCsvLabel,
-      subtitle: t.navCsvSub,
-      icon: <FileSpreadsheet className="w-3.5 h-3.5" />,
+      subtitle: L('Аналіз власного CSV-ряду', 'Analyze your own CSV series'),
+      icon: <FileSpreadsheet className="w-4 h-4" />,
     },
     {
       id: 'resources',
-      shortcut: '6',
       label: t.navResourcesLabel,
-      subtitle: t.navResourcesSub,
-      icon: <Library className="w-3.5 h-3.5" />,
+      subtitle: L('Офіційні портали даних', 'Official data portals'),
+      icon: <Library className="w-4 h-4" />,
     },
   ];
 
-  // Minimalist Swiss-Grid Instrument Panel
+  const viewModes: Array<{ id: WorkbenchView; label: string; icon: React.ReactNode }> = [
+    {
+      id: 'split',
+      label: L('Карта і результат', 'Map and result'),
+      icon: <Columns className="w-4 h-4" />,
+    },
+    {
+      id: 'map',
+      label: L('Лише карта', 'Map only'),
+      icon: <Globe2 className="w-4 h-4" />,
+    },
+    {
+      id: 'analytics',
+      label: L('Уся статистика', 'All statistics'),
+      icon: <BarChart3 className="w-4 h-4" />,
+    },
+  ];
+
+  const dismissHint = () => {
+    setHintDismissed(true);
+    try {
+      window.localStorage.setItem('gp_hint_dismissed', '1');
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  const startSplitDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDraggingSplit(true);
+    const onMove = (ev: MouseEvent) => {
+      const box = splitContainerRef.current?.getBoundingClientRect();
+      if (!box || box.width === 0) return;
+      const pct = ((ev.clientX - box.left) / box.width) * 100;
+      setSplitPct(Math.min(70, Math.max(30, pct)));
+    };
+    const onUp = () => {
+      setDraggingSplit(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      window.dispatchEvent(new Event('resize'));
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const seasonLabelFull =
+    seasonModesList.find((s) => s.id === seasonMode)?.label || seasonMode;
+  const varDisplayName =
+    lang === 'ua'
+      ? currentVarMeta.name_ua || currentVarMeta.name
+      : currentVarMeta.name;
+  const periodPresetValue =
+    QUICK_YEAR_PRESETS.find((p) => p.start === startYear && p.end === endYear)
+      ?.label || 'custom';
+  const fieldLabelCls = 'block text-xs text-zinc-400 mb-1';
+  const fieldCtlCls =
+    'h-9 w-full rounded-md bg-[#09090b] border border-[#2a2a32] px-2.5 text-sm text-zinc-100 focus:outline-none focus:border-sky-500';
+
+  // Compact parameter bar: Where / What / When, everything else under "Advanced"
   const renderMissionControlPanel = () => (
-    <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] overflow-hidden">
-      {/* Slim Header Bar */}
-      <div className="px-3.5 py-2 bg-[#09090b] border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-medium">
-            {t.missionParamsTitle}
-          </span>
-
-          <span className="text-zinc-700">|</span>
-
-          {/* Single vs Dipole Segmented Switch */}
-          <div className="inline-flex rounded bg-[#121216] p-0.5 border border-[#1f1f24]">
-            <button
-              type="button"
-              onClick={() => setMode('single')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
-                mode === 'single'
-                  ? 'bg-zinc-100 text-zinc-950'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              {t.singleRegionBtn}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('dipole')}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition ${
-                mode === 'dipole'
-                  ? 'bg-zinc-100 text-zinc-950'
-                  : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              {t.dipoleModeBtn}
-            </button>
-          </div>
-
-          {/* Coordinate Editor Trigger */}
+    <div className="shrink-0 rounded-md bg-[#0c0c0f] border border-[#1f1f24]">
+      <div className="px-3 py-2.5 flex flex-wrap items-end gap-3">
+        <div className="min-w-[180px] flex-1">
+          <span className={fieldLabelCls}>{L('Де', 'Where')}</span>
           <button
             type="button"
-            onClick={() => setCoordEditorOpen((prev) => !prev)}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono border transition flex items-center gap-1 ${
-              coordEditorOpen
-                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
-                : 'bg-[#121216] text-zinc-400 border-[#1f1f24] hover:text-zinc-200'
-            }`}
-            title={t.manualCoordsTitle}
+            onClick={() => setAdvancedOpen(true)}
+            title={L(
+              'Клацніть на карті, щоб обрати місце, або відкрийте точні координати',
+              'Click the map to pick a place, or open exact coordinates'
+            )}
+            className={`${fieldCtlCls} flex items-center gap-2 text-left hover:border-zinc-500 transition`}
           >
-            <Crosshair className="w-3 h-3" />
-            <span>
-              {regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}°
+            <MapPin className="w-4 h-4 text-sky-400 shrink-0" />
+            <span className="truncate">
+              {regionA.name}
+              {mode === 'dipole' ? ` ↔ ${regionB.name}` : ''}
             </span>
           </button>
-
-          {/* Spatial Bounding-Box ROI 5-Point Grid Averaging Toggle */}
-          <button
-            type="button"
-            onClick={() => setSpatialBoxAveraging((prev) => !prev)}
-            className={`px-2 py-0.5 rounded text-[11px] font-mono border transition flex items-center gap-1.5 ${
-              spatialBoxAveraging
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                : 'bg-[#121216] text-zinc-400 border-[#1f1f24] hover:text-zinc-200'
-            }`}
-            title={
-              lang === 'en'
-                ? 'Toggle 5-point Bounding Box (±1.5°) spatial averaging to suppress sub-grid satellite pixel noise'
-                : 'Полігональне усереднення по 5-точковій сітці ROI (±1.5° lat/lon) для зменшення локального шуму супутника'
-            }
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                spatialBoxAveraging ? 'bg-emerald-400' : 'bg-zinc-600'
-              }`}
-            />
-            <span>
-              {spatialBoxAveraging
-                ? lang === 'en'
-                  ? 'ROI Box ±1.5° (5-pt)'
-                  : 'ROI Бокс ±1.5° (5-точ)'
-                : lang === 'en'
-                ? 'Point (1-pt)'
-                : 'Точка (1-pt)'}
-            </span>
-          </button>
-
-          {/* Biome Filter Pills */}
-          <div className="hidden 2xl:flex items-center gap-1 pl-1 border-l border-[#1f1f24]">
-            {biomeOptionsList.map((biome) => {
-              const isSelected = selectedBiome === biome.id;
-              return (
-                <button
-                  key={biome.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedBiome(biome.id);
-                    if (biome.id !== 'all') {
-                      const firstMatch = variables.find((v) =>
-                        v.biomes?.includes(biome.id as BiomeType)
-                      );
-                      if (firstMatch) {
-                        setVariable(firstMatch.code as ClimateVariableCode);
-                      }
-                    }
-                  }}
-                  title={biome.subtitle}
-                  className={`px-2 py-0.5 rounded text-[11px] transition ${
-                    isSelected
-                      ? 'bg-zinc-800 text-zinc-100 font-medium'
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-                >
-                  {biome.title}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <label className="min-w-[280px] flex-[2]">
+          <span className={fieldLabelCls}>{L('Що вимірюємо', 'What we measure')}</span>
+          <select
+            value={variable}
+            onChange={(e) => {
+              setVariable(e.target.value as ClimateVariableCode);
+              setActiveScenarioId('custom');
+            }}
+            title={
+              currentVarMeta?.student_definition
+                ? getVariableDefinitionI18n(
+                    currentVarMeta.code,
+                    lang,
+                    currentVarMeta.student_definition
+                  )
+                : undefined
+            }
+            className={fieldCtlCls}
+          >
+            {filteredVariables.map((v) => (
+              <option key={v.code} value={v.code}>
+                {lang === 'ua' ? v.name_ua || v.name : v.name} ({v.unit})
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="w-64">
+          <span className={fieldLabelCls}>{L('Сезон', 'Season')}</span>
+          <select
+            value={seasonMode}
+            onChange={(e) => setSeasonMode(e.target.value as SeasonMode)}
+            className={fieldCtlCls}
+          >
+            {seasonModesList.map((sm) => (
+              <option key={sm.id} value={sm.id} title={sm.hint}>
+                {sm.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="w-40">
+          <span className={fieldLabelCls}>{L('Період', 'Period')}</span>
+          <select
+            value={periodPresetValue}
+            onChange={(e) => {
+              const preset = QUICK_YEAR_PRESETS.find(
+                (p) => p.label === e.target.value
+              );
+              if (preset) {
+                setStartYear(preset.start);
+                setEndYear(preset.end);
+              }
+            }}
+            className={fieldCtlCls}
+          >
+            {periodPresetValue === 'custom' && (
+              <option value="custom">
+                {startYear}–{endYear}
+              </option>
+            )}
+            {QUICK_YEAR_PRESETS.map((preset) => (
+              <option key={preset.label} value={preset.label}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setAdvancedOpen((prev) => !prev)}
+            aria-expanded={advancedOpen}
+            className={`h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
+              advancedOpen
+                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                : 'bg-[#121216] text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
+            }`}
+          >
+            <span>{L('Додатково', 'Advanced')}</span>
+            {advancedOpen ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
           <button
             type="button"
             onClick={() => runAnalysis({ forceRefresh: true })}
             disabled={loading}
-            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-200 font-mono text-[11px] transition flex items-center gap-1.5 border border-[#24242b]"
+            title={t.reAnalyzeBtn}
+            aria-label={t.reAnalyzeBtn}
+            className="h-9 w-9 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 border border-[#2a2a32] transition flex items-center justify-center"
           >
-            <RefreshCw
-              className={`w-3 h-3 text-zinc-400 ${
-                loading ? 'animate-spin' : ''
-              }`}
-            />
-            <span>{t.reAnalyzeBtn}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setControlsExpanded((prev) => !prev)}
-            className="px-2 py-1 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono flex items-center gap-1 border border-[#24242b]"
-          >
-            {controlsExpanded ? (
-              <>
-                <ChevronUp className="w-3 h-3" />
-                <span>{t.collapseBtn}</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3 h-3" />
-                <span>{t.expandParamsBtn}</span>
-              </>
-            )}
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Optional Manual Coordinate Editor Drawer */}
-      {coordEditorOpen && (
-        <div className="px-3.5 py-2.5 bg-[#09090b] border-b border-[#1f1f24] grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+      {advancedOpen && (
+        <div className="border-t border-[#1f1f24]">
+          <div className="px-3 py-3 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <span className={fieldLabelCls}>{L('Режим аналізу', 'Analysis mode')}</span>
+              <div className="inline-flex rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]">
+                <button
+                  type="button"
+                  onClick={() => setMode('single')}
+                  className={`h-8 px-3 rounded text-sm transition ${
+                    mode === 'single'
+                      ? 'bg-zinc-100 text-zinc-950 font-medium'
+                      : 'text-zinc-300 hover:text-zinc-100'
+                  }`}
+                >
+                  {L('Одна точка', 'One point')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('dipole')}
+                  className={`h-8 px-3 rounded text-sm transition ${
+                    mode === 'dipole'
+                      ? 'bg-zinc-100 text-zinc-950 font-medium'
+                      : 'text-zinc-300 hover:text-zinc-100'
+                  }`}
+                >
+                  {L('Порівняти дві точки', 'Compare two points')}
+                </button>
+              </div>
+              <label
+                className="flex items-center gap-2 text-sm text-zinc-200 cursor-pointer"
+                title={L(
+                  'Усереднення по 5 точках у межах ±1.5° зменшує випадковий шум окремого пікселя супутника',
+                  'Averaging 5 points within ±1.5° reduces the random noise of a single satellite pixel'
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={spatialBoxAveraging}
+                  onChange={(e) => setSpatialBoxAveraging(e.target.checked)}
+                  className="w-4 h-4 accent-sky-500"
+                />
+                <span>{L('Усереднювати по області ±1.5°', 'Average over a ±1.5° area')}</span>
+              </label>
+            </div>
+
+            <div className="space-y-2">
+              <span className={fieldLabelCls}>
+                {L('Показники за типом середовища', 'Variables by environment')}
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {biomeOptionsList.map((biome) => {
+                  const isSelected = selectedBiome === biome.id;
+                  return (
+                    <button
+                      key={biome.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBiome(biome.id);
+                        if (biome.id !== 'all') {
+                          const firstMatch = variables.find((v) =>
+                            v.biomes?.includes(biome.id as BiomeType)
+                          );
+                          if (firstMatch) {
+                            setVariable(firstMatch.code as ClimateVariableCode);
+                          }
+                        }
+                      }}
+                      title={biome.subtitle}
+                      className={`h-8 px-2.5 rounded-md text-sm border transition ${
+                        isSelected
+                          ? 'bg-zinc-800 text-zinc-100 border-zinc-600 font-medium'
+                          : 'text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
+                      }`}
+                    >
+                      {biome.title}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className={fieldLabelCls}>
+                {L('Довільний період', 'Custom period')}:{' '}
+                <span className="text-zinc-100 font-mono">
+                  {startYear}–{endYear} ({endYear - startYear + 1} {t.yearsShort})
+                </span>
+              </span>
+              <label className="flex items-center gap-2 text-xs text-zinc-400">
+                <span className="w-16">{L('Початок', 'Start')}</span>
+                <input
+                  type="range"
+                  min={1985}
+                  max={2021}
+                  value={startYear}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setStartYear(Math.min(val, endYear - 5));
+                  }}
+                  className="w-full accent-sky-500 cursor-pointer"
+                />
+              </label>
+              <label className="flex items-center gap-2 text-xs text-zinc-400">
+                <span className="w-16">{L('Кінець', 'End')}</span>
+                <input
+                  type="range"
+                  min={1990}
+                  max={2026}
+                  value={endYear}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setEndYear(Math.max(val, startYear + 5));
+                  }}
+                  className="w-full accent-sky-500 cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+
+
+        <div className="px-3.5 py-2.5 bg-[#09090b] border-b border-[#1f1f24] grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
           <div className="p-2.5 rounded bg-[#0c0c0f] border border-[#1f1f24] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-mono font-medium text-sky-400 text-[11px]">
+              <span className="font-mono font-medium text-sky-400 text-[13px]">
                 {t.regionACoordsTitle}
               </span>
-              <span className="text-[10px] font-mono text-zinc-500">
+              <span className="text-xs font-mono text-zinc-400">
                 {t.regionACoordsHint}
               </span>
             </div>
@@ -748,10 +901,10 @@ export const App: React.FC = () => {
                   setRegionA({ ...regionA, name: e.target.value })
                 }
                 placeholder={t.regionANamePlaceholder}
-                className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[11px]"
+                className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[13px]"
               />
               <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-xs font-mono text-zinc-400">
                   Lat:
                 </span>
                 <input
@@ -767,11 +920,11 @@ export const App: React.FC = () => {
                       setCameraTrigger((c) => c + 1);
                     }
                   }}
-                  className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                  className="w-full bg-transparent text-zinc-100 font-mono text-[13px] focus:outline-none"
                 />
               </label>
               <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-xs font-mono text-zinc-400">
                   Lon:
                 </span>
                 <input
@@ -787,7 +940,7 @@ export const App: React.FC = () => {
                       setCameraTrigger((c) => c + 1);
                     }
                   }}
-                  className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                  className="w-full bg-transparent text-zinc-100 font-mono text-[13px] focus:outline-none"
                 />
               </label>
             </div>
@@ -796,10 +949,10 @@ export const App: React.FC = () => {
           {mode === 'dipole' && (
             <div className="p-2.5 rounded bg-[#0c0c0f] border border-[#1f1f24] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-medium text-orange-400 text-[11px]">
+                <span className="font-mono font-medium text-orange-400 text-[13px]">
                   {t.regionBCoordsTitle}
                 </span>
-                <span className="text-[10px] font-mono text-zinc-500">
+                <span className="text-xs font-mono text-zinc-400">
                   {t.regionBCoordsHint}
                 </span>
               </div>
@@ -811,10 +964,10 @@ export const App: React.FC = () => {
                     setRegionB({ ...regionB, name: e.target.value })
                   }
                   placeholder={t.regionBNamePlaceholder}
-                  className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[11px]"
+                  className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[13px]"
                 />
                 <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
-                  <span className="text-[10px] font-mono text-zinc-500">
+                  <span className="text-xs font-mono text-zinc-400">
                     Lat:
                   </span>
                   <input
@@ -830,11 +983,11 @@ export const App: React.FC = () => {
                         setCameraTrigger((c) => c + 1);
                       }
                     }}
-                    className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                    className="w-full bg-transparent text-zinc-100 font-mono text-[13px] focus:outline-none"
                   />
                 </label>
                 <label className="flex items-center gap-1 bg-[#09090b] px-2 py-1 rounded border border-[#24242b]">
-                  <span className="text-[10px] font-mono text-zinc-500">
+                  <span className="text-xs font-mono text-zinc-400">
                     Lon:
                   </span>
                   <input
@@ -850,140 +1003,240 @@ export const App: React.FC = () => {
                         setCameraTrigger((c) => c + 1);
                       }
                     }}
-                    className="w-full bg-transparent text-zinc-100 font-mono text-[11px] focus:outline-none"
+                    className="w-full bg-transparent text-zinc-100 font-mono text-[13px] focus:outline-none"
                   />
                 </label>
               </div>
             </div>
           )}
         </div>
+
+        </div>
+      )}
+    </div>
+  );
+
+  const renderLoadingState = () => (
+    <div className="space-y-3" aria-busy="true">
+      <div className="rounded-md bg-[#09090b] border border-[#24242b] p-4 space-y-3">
+        <div className="flex items-center gap-2 text-sm text-zinc-200">
+          <RefreshCw className="w-4 h-4 animate-spin text-sky-400" />
+          <span>{L('Запитуємо дані NASA', 'Requesting NASA data')}</span>
+        </div>
+        {slowLoading && (
+          <p className="text-sm text-zinc-400">
+            {L(
+              'Сервер прокидається після простою. Перший запит може тривати до хвилини.',
+              'The server is waking up after idle time. The first request can take up to a minute.'
+            )}
+          </p>
+        )}
+        <div className="h-6 w-3/4 rounded bg-[#16161b] animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-16 rounded bg-[#16161b] animate-pulse" />
+          <div className="h-16 rounded bg-[#16161b] animate-pulse" />
+        </div>
+      </div>
+      <div className="h-64 rounded-md bg-[#101014] border border-[#1f1f24] animate-pulse" />
+    </div>
+  );
+
+  const renderErrorState = () => (
+    <div
+      role="alert"
+      className="rounded-md bg-rose-500/10 border border-rose-500/30 p-4 space-y-2"
+    >
+      <div className="text-base font-semibold text-rose-300">
+        {L('Не вдалося отримати дані', 'Could not load the data')}
+      </div>
+      <p className="text-sm text-zinc-200">{errorMsg}</p>
+      <p className="text-sm text-zinc-400">
+        {L(
+          'Перевірте з’єднання або спробуйте іншу точку чи період.',
+          'Check your connection or try another point or period.'
+        )}
+      </p>
+      <button
+        type="button"
+        onClick={() => runAnalysis({ forceRefresh: true })}
+        className="h-9 px-3 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 text-sm font-medium transition inline-flex items-center gap-1.5"
+      >
+        <RefreshCw className="w-4 h-4" />
+        <span>{L('Повторити', 'Try again')}</span>
+      </button>
+    </div>
+  );
+
+  const renderVerdictHeroes = (compact = false) => {
+    if (!analysisResult) return null;
+    const showB = mode === 'dipole' && !!analysisResult.region_b_analysis;
+    return (
+      <div className={`space-y-3 transition ${loading ? 'opacity-60' : ''}`}>
+        <VerdictHero
+          analysis={analysisResult.region_a_analysis}
+          variableMeta={analysisResult.variable_metadata}
+          lang={lang}
+          seasonLabel={seasonLabelFull}
+          regionKey="A"
+          showRegionBadge={showB}
+          compact={compact || showB}
+        />
+        {showB && analysisResult.region_b_analysis && (
+          <VerdictHero
+            analysis={analysisResult.region_b_analysis}
+            variableMeta={analysisResult.variable_metadata}
+            lang={lang}
+            seasonLabel={seasonLabelFull}
+            regionKey="B"
+            showRegionBadge
+            compact
+          />
+        )}
+        {showB && analysisResult.dipole_comparison && (
+          <p className="text-sm text-zinc-200 rounded-md bg-[#09090b] border border-[#24242b] px-3 py-2.5">
+            {
+              formatDipoleVerdictI18n(
+                analysisResult.dipole_comparison,
+                regionA.name,
+                regionB?.name || 'Region B',
+                lang
+              ).verdict
+            }
+          </p>
+        )}
+      </div>
+    );
+  };
+
+  const renderResultsPanel = () => (
+    <div className="p-3 space-y-3">
+      {!hintDismissed && (
+        <div className="rounded-md bg-sky-500/10 border border-sky-500/30 px-3 py-2.5 flex items-start justify-between gap-3">
+          <ol className="text-sm text-zinc-100 space-y-0.5 list-decimal list-inside">
+            <li>{L('Клацніть на карті, щоб обрати місце.', 'Click the map to pick a place.')}</li>
+            <li>{L('Оберіть показник, сезон і період угорі.', 'Choose the variable, season and period above.')}</li>
+            <li>{L('Прочитайте вердикт і перевірте його на графіку.', 'Read the verdict and check it on the chart.')}</li>
+          </ol>
+          <button
+            type="button"
+            onClick={dismissHint}
+            aria-label={L('Закрити підказку', 'Dismiss hint')}
+            className="shrink-0 w-8 h-8 rounded-md hover:bg-sky-500/20 text-zinc-200 flex items-center justify-center transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
-      {/* Flush 3-Column Swiss Instrument Grid */}
-      {controlsExpanded && (
-        <div className="grid grid-cols-1 xl:grid-cols-12 divide-y xl:divide-y-0 xl:divide-x divide-[#1f1f24]">
-          {/* Col 1: Variable Selector + Compact Definition (5 cols) */}
-          <div className="xl:col-span-5 p-3 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-              <span>
-                {t.satelliteVarLabel} ({filteredVariables.length} {t.of13Label})
-              </span>
-              <span className="text-zinc-400">
-                {currentVarMeta.satellite_badge || currentVarMeta.source}
-              </span>
-            </div>
-            <select
-              value={variable}
-              onChange={(e) => {
-                setVariable(e.target.value as ClimateVariableCode);
-                setActiveScenarioId('custom');
-              }}
-              className="w-full rounded bg-[#09090b] border border-[#24242b] px-2.5 py-1.5 text-xs text-zinc-100 font-medium focus:outline-none focus:border-zinc-500"
-            >
-              {filteredVariables.map((v) => (
-                <option key={v.code} value={v.code}>
-                  {v.code} — {lang === 'ua' ? v.name_ua || v.name : v.name} (
-                  {v.unit})
-                </option>
-              ))}
-            </select>
-            {currentVarMeta?.student_definition && (
-              <p className="text-[11px] text-zinc-500 leading-snug line-clamp-2">
-                {getVariableDefinitionI18n(
-                  currentVarMeta.code,
-                  lang,
-                  currentVarMeta.student_definition
-                )}
-              </p>
-            )}
+      {errorMsg ? (
+        renderErrorState()
+      ) : !analysisResult ? (
+        renderLoadingState()
+      ) : (
+        <>
+          {renderVerdictHeroes()}
+
+          <div className="flex items-center gap-1 border-b border-[#1f1f24]">
+            {(
+              [
+                { id: 'charts', label: L('Графіки', 'Charts'), icon: <BarChart3 className="w-4 h-4" /> },
+                { id: 'verdict', label: L('Повна статистика', 'Full statistics'), icon: <CheckCircle2 className="w-4 h-4" /> },
+                { id: 'guide', label: L('Про кейс', 'About the case'), icon: <Compass className="w-4 h-4" /> },
+              ] as Array<{ id: InspectorTab; label: string; icon: React.ReactNode }>
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setInspectorTab(tab.id)}
+                className={`h-9 px-3 -mb-px text-sm border-b-2 transition flex items-center gap-1.5 ${
+                  inspectorTab === tab.id
+                    ? 'border-sky-400 text-zinc-50 font-medium'
+                    : 'border-transparent text-zinc-400 hover:text-zinc-100'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
 
-          {/* Col 2: Seasonal Filter Segmented Grid (4 cols) */}
-          <div className="xl:col-span-4 p-3 space-y-1.5">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-              {t.seasonalFilterLabel}
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              {seasonModesList.map((sm) => {
-                const selected = seasonMode === sm.id;
-                return (
-                  <button
-                    key={sm.id}
-                    type="button"
-                    onClick={() => setSeasonMode(sm.id)}
-                    title={sm.hint}
-                    className={`px-2 py-1.5 rounded text-[11px] font-mono transition border text-center truncate ${
-                      selected
-                        ? 'bg-zinc-100 text-zinc-950 border-zinc-100 font-semibold'
-                        : 'bg-[#09090b] text-zinc-400 border-[#1f1f24] hover:text-zinc-200 hover:border-zinc-700'
-                    }`}
-                  >
-                    {sm.shortLabel}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {inspectorTab === 'charts' && (
+            <TrendCharts
+              mode={mode}
+              seasonMode={seasonMode}
+              variableMeta={analysisResult.variable_metadata}
+              regionA={analysisResult.region_a_analysis}
+              regionB={analysisResult.region_b_analysis}
+              onOpenResourcesModal={() => setActiveView('resources')}
+            />
+          )}
 
-          {/* Col 3: Time Window Presets + Sliders (3 cols) */}
-          <div className="xl:col-span-3 p-3 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-              <span className="uppercase">{t.periodLabel}</span>
-              <span className="text-zinc-200 font-medium">
-                {startYear}–{endYear} ({endYear - startYear + 1} {t.yearsShort})
-              </span>
-            </div>
-
-            <div className="grid grid-cols-4 gap-1">
-              {QUICK_YEAR_PRESETS.map((preset) => {
-                const isCurrent =
-                  startYear === preset.start && endYear === preset.end;
-                return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => {
-                      setStartYear(preset.start);
-                      setEndYear(preset.end);
-                    }}
-                    className={`py-0.5 rounded text-[10px] font-mono border transition text-center ${
-                      isCurrent
-                        ? 'bg-zinc-800 text-zinc-100 border-zinc-600 font-medium'
-                        : 'bg-[#09090b] text-zinc-500 border-[#1f1f24] hover:text-zinc-300'
-                    }`}
-                  >
-                    {preset.start}–{String(preset.end).slice(2)}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="space-y-1 pt-0.5">
-              <input
-                type="range"
-                min={1985}
-                max={2021}
-                value={startYear}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setStartYear(Math.min(val, endYear - 5));
-                }}
-                className="w-full accent-zinc-200 cursor-pointer h-1"
+          {inspectorTab === 'verdict' && (
+            <div className="space-y-3">
+              <VerdictCard
+                regionKey="A"
+                analysis={analysisResult.region_a_analysis}
+                variableMeta={analysisResult.variable_metadata}
+                onSelectSeasonMode={(s) => setSeasonMode(s)}
               />
-              <input
-                type="range"
-                min={1990}
-                max={2026}
-                value={endYear}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setEndYear(Math.max(val, startYear + 5));
-                }}
-                className="w-full accent-zinc-400 cursor-pointer h-1"
-              />
+              {mode === 'dipole' && analysisResult.region_b_analysis && (
+                <VerdictCard
+                  regionKey="B"
+                  analysis={analysisResult.region_b_analysis}
+                  variableMeta={analysisResult.variable_metadata}
+                  onSelectSeasonMode={(s) => setSeasonMode(s)}
+                />
+              )}
             </div>
-          </div>
-        </div>
+          )}
+
+          {inspectorTab === 'guide' && (
+            <div className="space-y-3">
+              {activeScenario ? (
+                <div className="rounded-md bg-[#09090b] border border-[#1f1f24] p-4 space-y-2.5">
+                  <div className="text-xs text-zinc-400">
+                    {activeScenario.satellite_badge}
+                  </div>
+                  <h3 className="text-base font-semibold text-zinc-50">
+                    {activeScenario.title}
+                  </h3>
+                  <p className="text-sm text-zinc-200 leading-relaxed">
+                    {getScenarioTextI18n(activeScenario, lang).summary}
+                  </p>
+                  {getScenarioTextI18n(activeScenario, lang).note && (
+                    <div className="border-l-2 border-zinc-600 pl-3 py-0.5 text-sm text-zinc-300">
+                      <span className="font-medium text-zinc-100">
+                        {t.studentTipLabel}
+                      </span>
+                      {getScenarioTextI18n(activeScenario, lang).note}
+                    </div>
+                  )}
+                  {seasonMode !== activeScenario.season_mode && (
+                    <button
+                      type="button"
+                      onClick={() => setSeasonMode(activeScenario.season_mode)}
+                      className="h-9 px-3 rounded-md bg-[#16161b] hover:bg-zinc-800 border border-[#2a2a32] text-sm text-zinc-100 transition"
+                    >
+                      {L('Повернути сезон кейсу', 'Restore the case season')}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-md bg-[#09090b] border border-[#1f1f24] p-4 text-sm text-zinc-300">
+                  {t.customPointHint}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setActiveView('phenomena')}
+                className="h-9 px-3 rounded-md bg-[#16161b] hover:bg-zinc-800 border border-[#2a2a32] text-sm text-zinc-100 transition inline-flex items-center gap-1.5"
+              >
+                <Satellite className="w-4 h-4" />
+                <span>{L('Усі кейси та події', 'All cases and events')}</span>
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -1001,12 +1254,12 @@ export const App: React.FC = () => {
         <div className="px-4 py-2.5 bg-[#09090b] border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Table2 className="w-3.5 h-3.5 text-zinc-400" />
-            <h3 className="text-xs font-mono uppercase tracking-wider font-medium text-zinc-300">
+            <h3 className="text-sm font-mono font-medium text-zinc-300">
               {t.annualTableTitle} ({seriesA.length} {t.yearsCountLabel})
             </h3>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+          <div className="flex flex-wrap items-center gap-2 text-[13px] font-mono">
             {maxPoint && (
               <span className="px-2 py-0.5 rounded bg-[#141419] text-zinc-300 border border-[#24242b]">
                 {t.peakLabel}:{' '}
@@ -1025,8 +1278,8 @@ export const App: React.FC = () => {
         </div>
 
         <div className="max-h-72 overflow-y-auto">
-          <table className="w-full text-left border-collapse text-xs font-mono">
-            <thead className="sticky top-0 bg-[#09090b] text-zinc-500 border-b border-[#1f1f24] text-[11px]">
+          <table className="w-full text-left border-collapse text-sm font-mono">
+            <thead className="sticky top-0 bg-[#09090b] text-zinc-400 border-b border-[#1f1f24] text-[13px]">
               <tr>
                 <th className="py-2 px-4 font-medium">{t.colYear}</th>
                 <th className="py-2 px-4 font-medium">
@@ -1072,7 +1325,7 @@ export const App: React.FC = () => {
                     <td className="py-1.5 px-4 text-zinc-300">
                       {row.trend_line.toFixed(3)}
                     </td>
-                    <td className="py-1.5 px-4 text-zinc-500">
+                    <td className="py-1.5 px-4 text-zinc-400">
                       {row.ci_lower !== undefined && row.ci_upper !== undefined
                         ? `[${row.ci_lower.toFixed(2)}, ${row.ci_upper.toFixed(
                             2
@@ -1123,857 +1376,330 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex selection:bg-zinc-200 selection:text-zinc-950">
-      {/* =====================================================================
-          MINIMALIST LEFT NAVIGATION RAIL (LINEAR / VERCEL GEIST STYLE)
-         ===================================================================== */}
+    <div className="h-screen overflow-hidden bg-[#09090b] text-zinc-100 flex selection:bg-zinc-200 selection:text-zinc-950">
       <aside
         className={`${
-          sidebarCollapsed ? 'w-13' : 'w-56'
-        } shrink-0 bg-[#070709] border-r border-[#1f1f24] flex flex-col justify-between sticky top-0 h-screen z-40 transition-all duration-150 select-none`}
+          sidebarCollapsed ? 'w-14' : 'w-52'
+        } shrink-0 bg-[#070709] border-r border-[#1f1f24] flex flex-col justify-between h-screen z-40 transition-all duration-150 select-none`}
       >
         <div>
-          {/* Top Brand Header (h-11 to align with top command bar) */}
-          <div className="h-11 px-3 border-b border-[#1f1f24] flex items-center justify-between gap-2">
+          <div className="h-12 px-3 border-b border-[#1f1f24] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-6 h-6 rounded bg-zinc-100 text-zinc-950 flex items-center justify-center font-mono font-bold text-[11px] shrink-0">
+              <div className="w-7 h-7 rounded-md bg-zinc-100 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0">
                 GP
               </div>
               {!sidebarCollapsed && (
-                <div className="flex items-baseline gap-1.5 min-w-0">
-                  <span className="text-xs font-semibold tracking-tight text-zinc-100 truncate">
-                    GaiaPulse
-                  </span>
-                  <span className="text-[10px] font-mono text-zinc-500">
-                    NASA
-                  </span>
-                </div>
+                <span className="text-base font-semibold tracking-tight text-zinc-50 truncate">
+                  GaiaPulse
+                </span>
               )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed((prev) => !prev)}
-              className="p-1 rounded hover:bg-[#16161b] text-zinc-500 hover:text-zinc-200 transition shrink-0"
-              title={t.toggleSidebarTitle}
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="w-3.5 h-3.5" />
-              ) : (
-                <PanelLeftClose className="w-3.5 h-3.5" />
-              )}
-            </button>
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                className="w-8 h-8 rounded-md hover:bg-[#16161b] text-zinc-400 hover:text-zinc-100 transition shrink-0 flex items-center justify-center"
+                title={t.toggleSidebarTitle}
+                aria-label={t.toggleSidebarTitle}
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          {/* Primary Workspace Views */}
-          <div className="p-2 space-y-0.5">
-            {!sidebarCollapsed && (
-              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                <span>{t.workspacesHeader}</span>
-                <span>1–6</span>
-              </div>
+          <nav className="p-2 space-y-1">
+            {sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(false)}
+                className="w-full h-9 rounded-md hover:bg-[#16161b] text-zinc-400 hover:text-zinc-100 transition flex items-center justify-center"
+                title={t.toggleSidebarTitle}
+                aria-label={t.toggleSidebarTitle}
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
             )}
-
             {navItems.map((item) => {
-              const isSelected = activeView === item.id;
+              const isSelected =
+                activeView === item.id || (item.id === 'split' && isAnalysisView);
               return (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setActiveView(item.id)}
-                  title={`${item.label} — ${item.subtitle} (${item.shortcut})`}
-                  className={`w-full rounded px-2.5 py-1.5 transition flex items-center justify-between gap-2 text-xs ${
+                  title={`${item.label}: ${item.subtitle}`}
+                  aria-current={isSelected ? 'page' : undefined}
+                  className={`w-full h-10 rounded-md px-2.5 transition flex items-center gap-2.5 text-sm ${
+                    sidebarCollapsed ? 'justify-center' : ''
+                  } ${
                     isSelected
-                      ? 'bg-[#16161b] text-zinc-100 font-medium border-l-2 border-zinc-100'
-                      : 'text-zinc-400 hover:bg-[#111115] hover:text-zinc-200'
+                      ? 'bg-[#1a1a20] text-zinc-50 font-medium'
+                      : 'text-zinc-300 hover:bg-[#111115] hover:text-zinc-50'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className={`shrink-0 ${
-                        isSelected ? 'text-zinc-100' : 'text-zinc-500'
-                      }`}
-                    >
-                      {item.icon}
-                    </span>
-                    {!sidebarCollapsed && (
-                      <span className="truncate">{item.label}</span>
-                    )}
-                  </div>
-
-                  {!sidebarCollapsed && (
-                    <span className="text-[10px] font-mono text-zinc-600">
-                      {item.shortcut}
-                    </span>
-                  )}
+                  <span className={isSelected ? 'text-sky-400' : 'text-zinc-400'}>
+                    {item.icon}
+                  </span>
+                  {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
                 </button>
               );
             })}
-          </div>
-
-          {/* Quick 1-Click Curated Scenarios in Sidebar */}
-          {!sidebarCollapsed && (
-            <div className="px-2 pt-2 mt-1 border-t border-[#1f1f24]">
-              <div className="px-2 py-1 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                <span>{t.quickCasesHeader}</span>
-              </div>
-              <div className="space-y-0.5 max-h-60 overflow-y-auto pr-0.5">
-                {scenarios.slice(0, 7).map((sc) => {
-                  const isCurrent = activeScenarioId === sc.id;
-                  return (
-                    <button
-                      key={sc.id}
-                      type="button"
-                      onClick={() => applyScenario(sc)}
-                      className={`w-full text-left px-2 py-1.5 rounded text-[11px] transition flex items-center justify-between gap-1.5 ${
-                        isCurrent
-                          ? 'bg-[#16161b] text-zinc-100 font-medium'
-                          : 'text-zinc-500 hover:bg-[#111115] hover:text-zinc-300'
-                      }`}
-                    >
-                      <span className="truncate">{sc.title}</span>
-                      <span className="text-[9px] font-mono text-zinc-500 shrink-0">
-                        {sc.variable}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          </nav>
         </div>
 
-        {/* Bottom Telemetry Sparkline */}
-        <div className="p-2.5 border-t border-[#1f1f24] bg-[#09090b]">
-          {!sidebarCollapsed ? (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
-                    }`}
-                  />
-                  <span>{eonetIsLive ? t.eonetLive : t.eonetCache}</span>
-                </span>
-                {statsA && (
-                  <span className="text-zinc-300">
-                    p={statsA.p_value.toFixed(4)}
-                  </span>
-                )}
-              </div>
-
-              {statsA && (
-                <div className="pt-0.5">
-                  <MiniSparkline
-                    values={seriesA.map((d) => d.value)}
-                    trendValues={seriesA.map((d) => d.trend_line)}
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
-                }`}
-              />
-            </div>
+        <div className="p-3 border-t border-[#1f1f24] flex items-center gap-2 text-xs text-zinc-400">
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              eonetIsLive ? 'bg-emerald-400' : 'bg-amber-400'
+            }`}
+          />
+          {!sidebarCollapsed && (
+            <span>{eonetIsLive ? t.eonetLive : t.eonetCache}</span>
           )}
         </div>
       </aside>
 
-      {/* =====================================================================
-          MAIN WORKBENCH STAGE
-         ===================================================================== */}
-      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        {/* SLIM 44px TOP COMMAND BAR */}
-        <header className="sticky top-0 z-30 h-11 border-b border-[#1f1f24] bg-[#09090b]/90 backdrop-blur-md px-4 flex items-center justify-between gap-3">
-          {/* Left: Breadcrumb Telemetry Readout */}
-          <div className="flex items-center gap-2 min-w-0 text-xs font-mono">
-            <span className="text-zinc-200 font-medium truncate max-w-[200px]">
+      <div className="flex-1 min-w-0 flex flex-col h-screen">
+        <header className="relative z-30 h-12 shrink-0 border-b border-[#1f1f24] bg-[#09090b] px-4 flex items-center justify-between gap-4">
+          <div className="flex items-baseline gap-3 min-w-0">
+            <h1 className="text-base font-semibold text-zinc-50 whitespace-nowrap">
               {regionA.name}
-            </span>
-
-            {mode === 'dipole' && (
-              <>
-                <span className="text-zinc-600">↔</span>
-                <span className="text-orange-400 font-medium truncate max-w-[180px]">
-                  {regionB.name}
-                </span>
-              </>
-            )}
-
-            <span className="text-zinc-700">/</span>
-
-            <span className="text-zinc-400 hidden md:inline">
-              {variable} · {seasonMode} · {startYear}–{endYear}
-            </span>
-
-            {/* Minimalist Statistical Verdict Indicator */}
-            {statsA && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (activeView === 'split') setInspectorTab('verdict');
-                  else setActiveView('analytics');
-                }}
-                className="ml-1 px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-[11px] font-mono transition flex items-center gap-1.5"
-                title={t.verdictTooltip}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    statsA.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
-                  }`}
-                />
-                <span className="text-zinc-200">
-                  p = {statsA.p_value.toFixed(4)}
-                </span>
-                <span className="text-zinc-600">·</span>
-                <span
-                  className={
-                    statsA.change_per_decade >= 0
-                      ? 'text-sky-400'
-                      : 'text-orange-400'
-                  }
-                >
-                  {statsA.change_per_decade >= 0 ? '+' : ''}
-                  {statsA.change_per_decade.toFixed(3)}
-                  {t.perDecadeShort}
-                </span>
-              </button>
+              {mode === 'dipole' && (
+                <span className="text-orange-400"> ↔ {regionB.name}</span>
+              )}
+            </h1>
+            {!isAnalysisView && (
+              <span className="text-[13px] text-zinc-400 truncate hidden lg:inline">
+                {varDisplayName} · {seasonLabelFull} · {startYear}–{endYear}
+              </span>
             )}
           </div>
 
-          {/* Right: Language Switcher (UA / EN) + Clean Monochrome Actions */}
-          <div className="flex items-center gap-1.5">
-            {/* Command Palette Trigger (Ctrl+K) */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isAnalysisView && (
+              <div
+                className="inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
+                role="group"
+                aria-label={L('Вигляд', 'View')}
+              >
+                {viewModes.map((vm) => (
+                  <button
+                    key={vm.id}
+                    type="button"
+                    onClick={() => setActiveView(vm.id)}
+                    title={vm.label}
+                    aria-pressed={activeView === vm.id}
+                    className={`h-8 px-2.5 rounded text-sm transition flex items-center gap-1.5 ${
+                      activeView === vm.id
+                        ? 'bg-zinc-100 text-zinc-950 font-medium'
+                        : 'text-zinc-300 hover:text-zinc-50'
+                    }`}
+                  >
+                    {vm.icon}
+                    <span className="hidden xl:inline">{vm.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => {
                 setCommandQuery('');
                 setCommandPaletteOpen(true);
               }}
-              className="hidden md:flex items-center gap-2 px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition border border-[#1f1f24]"
-              title={
-                lang === 'en'
-                  ? 'Quick Command Palette (Ctrl+K)'
-                  : 'Швидкий пошук та команди (Ctrl+K)'
-              }
+              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2"
+              title={L('Пошук показників, кейсів і розділів (Ctrl+K)', 'Search variables, cases and sections (Ctrl+K)')}
             >
-              <Search className="w-3 h-3 text-zinc-500" />
-              <span>{lang === 'en' ? 'Search' : 'Пошук'}</span>
-              <span className="px-1 py-0.2 rounded bg-[#09090b] border border-[#24242b] text-[9px] text-zinc-500">
-                Ctrl K
-              </span>
+              <Search className="w-4 h-4" />
+              <span className="hidden 2xl:inline">{L('Пошук', 'Search')}</span>
             </button>
 
-            {/* Share Reproducible Investigation Link */}
             <button
               type="button"
               onClick={handleCopyShareLink}
-              className="hidden sm:flex items-center gap-1 px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition border border-[#1f1f24]"
-              title={
-                lang === 'en'
-                  ? 'Copy shareable URL with current coordinates & parameters'
-                  : 'Скопіювати посилання на поточне дослідження (URL)'
-              }
+              className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2"
+              title={L('Скопіювати посилання на це дослідження', 'Copy a link to this investigation')}
             >
               {copiedLink ? (
                 <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400">
-                    {lang === 'en' ? 'Copied' : 'Скопійовано'}
-                  </span>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-400">{L('Скопійовано', 'Copied')}</span>
                 </>
               ) : (
                 <>
-                  <Link2 className="w-3 h-3 text-zinc-500" />
-                  <span>{lang === 'en' ? 'Share' : 'Лінк'}</span>
+                  <Link2 className="w-4 h-4" />
+                  <span>{L('Поділитися', 'Share')}</span>
                 </>
               )}
             </button>
 
-            {/* UA / EN Switcher */}
-            <div
-              className="inline-flex items-center rounded bg-[#121216] p-0.5 border border-[#1f1f24]"
-              title={t.languageToggleTitle}
-            >
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => setLang('ua')}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
-                  lang === 'ua'
-                    ? 'bg-zinc-100 text-zinc-950'
-                    : 'text-zinc-500 hover:text-zinc-200'
-                }`}
+                onClick={() => setExportOpen((prev) => !prev)}
+                disabled={!analysisResult}
+                aria-haspopup="menu"
+                aria-expanded={exportOpen}
+                className="h-9 px-2.5 rounded-md bg-[#121216] hover:bg-zinc-800 text-zinc-300 hover:text-zinc-50 text-sm transition border border-[#2a2a32] flex items-center gap-2 disabled:opacity-50"
               >
-                UA
+                <Download className="w-4 h-4" />
+                <span>{L('Експорт', 'Export')}</span>
+                <ChevronDown className="w-4 h-4" />
               </button>
-              <button
-                type="button"
-                onClick={() => setLang('en')}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-medium transition ${
-                  lang === 'en'
-                    ? 'bg-zinc-100 text-zinc-950'
-                    : 'text-zinc-500 hover:text-zinc-200'
-                }`}
-              >
-                EN
-              </button>
+              {exportOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[1100]"
+                    onClick={() => setExportOpen(false)}
+                  />
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-1 z-[1200] w-56 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setExportOpen(false);
+                        setMissionBriefOpen(true);
+                      }}
+                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
+                    >
+                      <Printer className="w-4 h-4 text-zinc-400" />
+                      <span>{L('Звіт у PDF', 'PDF report')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setExportOpen(false);
+                        exportData('csv');
+                      }}
+                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
+                    >
+                      <Table2 className="w-4 h-4 text-zinc-400" />
+                      <span>{L('Дані у CSV', 'Data as CSV')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setExportOpen(false);
+                        exportData('json');
+                      }}
+                      className="w-full h-9 px-2.5 rounded text-sm text-left text-zinc-100 hover:bg-[#1a1a20] flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4 text-zinc-400" />
+                      <span>{L('Дані у JSON', 'Data as JSON')}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={handleOpenPhenomenaDrawer}
-              className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs transition flex items-center gap-1.5"
+            <div
+              className="inline-flex items-center rounded-md bg-[#121216] p-0.5 border border-[#2a2a32]"
+              title={t.languageToggleTitle}
             >
-              <span>{t.fetchScenariosBtn}</span>
-              <span className="px-1 py-0.2 rounded bg-zinc-950/15 text-zinc-950 font-mono text-[10px]">
-                {scenarios.length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setCsvModalOpen(true)}
-              className="px-2.5 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-200 font-mono text-xs transition flex items-center gap-1.5 border border-[#24242b]"
-            >
-              <FileSpreadsheet className="w-3 h-3 text-zinc-400" />
-              <span>{t.importCsvBtn}</span>
-            </button>
-
-            <div className="hidden sm:flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setMissionBriefOpen(true)}
-                disabled={!analysisResult}
-                className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 border border-[#24242b]"
-                title={
-                  lang === 'en'
-                    ? 'Open Printable NASA Scientific Mission Brief (PDF)'
-                    : 'Відкрити односторінковий науковий звіт (PDF Brief)'
-                }
-              >
-                <Printer className="w-3 h-3 text-sky-400" />
-                <span>{lang === 'en' ? 'PDF Brief' : 'PDF Звіт'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => exportData('csv')}
-                disabled={!analysisResult}
-                className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 border border-[#1f1f24]"
-              >
-                <Download className="w-3 h-3" />
-                <span>CSV</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => exportData('json')}
-                disabled={!analysisResult}
-                className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 text-[11px] font-mono transition flex items-center gap-1 border border-[#1f1f24]"
-              >
-                <Download className="w-3 h-3" />
-                <span>JSON</span>
-              </button>
+              {(['ua', 'en'] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  aria-pressed={lang === code}
+                  className={`h-8 px-2 rounded text-xs font-medium transition ${
+                    lang === code
+                      ? 'bg-zinc-100 text-zinc-950'
+                      : 'text-zinc-300 hover:text-zinc-50'
+                  }`}
+                >
+                  {code.toUpperCase()}
+                </button>
+              ))}
             </div>
           </div>
         </header>
 
-        {/* Slim Contextual Reference Bar */}
-        <div className="px-4 bg-[#09090b]">
-          <ContextDeepLinksBar
-            variable={variable}
-            regionA={regionA}
-            startYear={startYear}
-            endYear={endYear}
-            onOpenResourcesModal={() => setActiveView('resources')}
-          />
-        </div>
-
-        {/* Error Alert */}
-        {errorMsg && (
-          <div className="mx-4 mt-3 rounded bg-rose-500/10 border border-rose-500/30 p-2.5 text-xs text-rose-400 font-mono">
-            {errorMsg}
-          </div>
+        {errorMsg && activeView !== 'split' && (
+          <div className="mx-4 mt-3 shrink-0">{renderErrorState()}</div>
         )}
 
         {/* =================================================================
             ACTIVE WORKSPACE VIEWPORT
            ================================================================= */}
-        <main className="flex-1 p-4 space-y-3">
-          {/* ---------------------------------------------------------------
-              VIEW 1: SPLIT STUDIO
-             --------------------------------------------------------------- */}
+        <main
+          className={
+            isFixedView
+              ? 'flex-1 min-h-0 p-3 flex flex-col gap-3 overflow-hidden'
+              : 'flex-1 min-h-0 p-4 space-y-3 overflow-y-auto'
+          }
+        >
+          {/* VIEW: MAP + RESULT (default) */}
           {activeView === 'split' && (
-            <div className="space-y-3">
+            <>
               {renderMissionControlPanel()}
 
-              {/* Minimalist Split Proportion & Zone Collapse Strip */}
-              <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3 py-1.5 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-1">
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mr-1.5">
-                    {t.layoutToolbarLabel}
-                  </span>
-
-                  <div className="inline-flex rounded bg-[#09090b] p-0.5 border border-[#1f1f24]">
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('balanced')}
-                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
-                        splitLayout === 'balanced'
-                          ? 'bg-zinc-100 text-zinc-950 font-medium'
-                          : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      {t.layoutBalanced}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('wide-globe')}
-                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
-                        splitLayout === 'wide-globe'
-                          ? 'bg-zinc-100 text-zinc-950 font-medium'
-                          : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      {t.layoutWideGlobe}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('wide-chart')}
-                      className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
-                        splitLayout === 'wide-chart'
-                          ? 'bg-zinc-100 text-zinc-950 font-medium'
-                          : 'text-zinc-400 hover:text-zinc-200'
-                      }`}
-                    >
-                      {t.layoutWideChart}
-                    </button>
-                  </div>
+              <div ref={splitContainerRef} className="flex-1 min-h-0 flex">
+                <div
+                  style={{ width: `${splitPct}%` }}
+                  className="min-w-0 h-full"
+                >
+                  <EarthMap
+                    mode={mode}
+                    variable={variable}
+                    regionA={regionA}
+                    regionB={regionB}
+                    activeTarget={activeTarget}
+                    cameraTrigger={cameraTrigger}
+                    onMapClickRegion={handleMapClickRegion}
+                    onToggleActiveTarget={setActiveTarget}
+                  />
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {splitLayout === 'only-chart' ? (
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('balanced')}
-                      className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 text-[11px] font-mono font-medium transition flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>{t.expandGlobeBtn}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('only-chart')}
-                      className="px-2.5 py-1 rounded bg-[#09090b] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-[#1f1f24] text-[11px] font-mono transition flex items-center gap-1.5"
-                      title={t.maximizeChartTitle}
-                    >
-                      <EyeOff className="w-3 h-3" />
-                      <span>{t.collapseGlobeBtn}</span>
-                    </button>
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  onMouseDown={startSplitDrag}
+                  onDoubleClick={() => {
+                    setSplitPct(52);
+                    window.setTimeout(
+                      () => window.dispatchEvent(new Event('resize')),
+                      60
+                    );
+                  }}
+                  title={L(
+                    'Перетягніть, щоб змінити ширину карти',
+                    'Drag to resize the map'
                   )}
+                  className="w-3 shrink-0 cursor-col-resize flex items-center justify-center group"
+                >
+                  <span
+                    className={`w-1 h-14 rounded-full transition ${
+                      draggingSplit
+                        ? 'bg-sky-400'
+                        : 'bg-[#2a2a32] group-hover:bg-sky-400'
+                    }`}
+                  />
+                </div>
 
-                  {splitLayout === 'only-globe' ? (
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('balanced')}
-                      className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 text-[11px] font-mono font-medium transition flex items-center gap-1.5"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span>{t.expandChartBtn}</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setSplitLayout('only-globe')}
-                      className="px-2.5 py-1 rounded bg-[#09090b] hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-[#1f1f24] text-[11px] font-mono transition flex items-center gap-1.5"
-                      title={t.maximizeGlobeTitle}
-                    >
-                      <EyeOff className="w-3 h-3" />
-                      <span>{t.collapseChartBtn}</span>
-                    </button>
-                  )}
+                <div className="flex-1 min-w-0 h-full overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#1f1f24]">
+                  {renderResultsPanel()}
                 </div>
               </div>
 
-              {/* Collapsed Globe Restore Strip */}
-              {splitLayout === 'only-chart' && (
-                <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-zinc-400">
-                    <Globe2 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                    <span>{t.globeCollapsedBanner}</span>
-                    <span className="text-zinc-200">
-                      [{regionA.name}: {regionA.lat.toFixed(2)}°,{' '}
-                      {regionA.lon.toFixed(2)}°]
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSplitLayout('balanced')}
-                    className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 font-mono font-medium text-[11px] transition flex items-center gap-1"
-                  >
-                    <Maximize2 className="w-3 h-3" />
-                    <span>{t.expandGlobeBtn}</span>
-                  </button>
-                </div>
+              {draggingSplit && (
+                <div className="fixed inset-0 z-[2500] cursor-col-resize" />
               )}
-
-              {/* Collapsed Chart Restore Strip */}
-              {splitLayout === 'only-globe' && (
-                <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] px-3.5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-2 text-zinc-400">
-                    <BarChart3 className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
-                    <span>{t.chartCollapsedBanner}</span>
-                    {statsA && (
-                      <span className="text-zinc-200">
-                        [p = {statsA.p_value.toFixed(4)} ·{' '}
-                        {statsA.change_per_decade >= 0 ? '+' : ''}
-                        {statsA.change_per_decade.toFixed(3)}{' '}
-                        {currentVarMeta.unit}
-                        {t.perDecadeShort}]
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSplitLayout('balanced')}
-                    className="px-2.5 py-1 rounded bg-zinc-100 text-zinc-950 font-mono font-medium text-[11px] transition flex items-center gap-1"
-                  >
-                    <Maximize2 className="w-3 h-3" />
-                    <span>{t.expandChartBtn}</span>
-                  </button>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
-                {/* LEFT ZONE: Interactive 2D/3D Map + Active Scenario Note */}
-                {splitLayout !== 'only-chart' && (
-                  <div className={`${globeColSpanClass} space-y-3`}>
-                    <EarthMap
-                      mode={mode}
-                      variable={variable}
-                      regionA={regionA}
-                      regionB={regionB}
-                      activeTarget={activeTarget}
-                      cameraTrigger={cameraTrigger}
-                      onMapClickRegion={handleMapClickRegion}
-                      onToggleActiveTarget={setActiveTarget}
-                    />
-
-                    {/* Minimalist Active Case Footnote under Map */}
-                    {activeScenario && (
-                      <div className="rounded-md bg-[#0c0c0f] border border-[#1f1f24] p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#16161b] text-zinc-300 border border-[#24242b]">
-                              {t.activeCaseBadge}
-                            </span>
-                            <span className="text-xs font-semibold text-zinc-100">
-                              {activeScenario.title}
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-400 leading-relaxed">
-                            {getScenarioTextI18n(activeScenario, lang).summary}
-                          </p>
-                        </div>
-
-                        {seasonMode === 'raw' &&
-                          activeScenario.season_mode !== 'raw' && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSeasonMode(activeScenario.season_mode)
-                              }
-                              className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-medium shrink-0 transition"
-                            >
-                              {t.switchToSeasonBtn} {activeScenario.season_mode}
-                            </button>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* RIGHT ZONE: Live Detective Inspector Dock */}
-                {splitLayout !== 'only-globe' && (
-                  <div
-                    className={`${chartColSpanClass} rounded-md bg-[#0c0c0f] border border-[#1f1f24] flex flex-col overflow-hidden`}
-                  >
-                    {/* Minimalist Segmented Inspector Header */}
-                    <div className="px-3.5 py-2 bg-[#09090b] border-b border-[#1f1f24] flex items-center justify-between gap-2">
-                      <div className="inline-flex items-center p-0.5 rounded bg-[#121216] border border-[#1f1f24]">
-                        <button
-                          type="button"
-                          onClick={() => setInspectorTab('charts')}
-                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
-                            inspectorTab === 'charts'
-                              ? 'bg-zinc-100 text-zinc-950'
-                              : 'text-zinc-400 hover:text-zinc-200'
-                          }`}
-                        >
-                          <BarChart3 className="w-3.5 h-3.5" />
-                          <span>{t.tabCharts}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setInspectorTab('verdict')}
-                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
-                            inspectorTab === 'verdict'
-                              ? 'bg-zinc-100 text-zinc-950'
-                              : 'text-zinc-400 hover:text-zinc-200'
-                          }`}
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{t.tabVerdict}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setInspectorTab('guide')}
-                          className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 ${
-                            inspectorTab === 'guide'
-                              ? 'bg-zinc-100 text-zinc-950'
-                              : 'text-zinc-400 hover:text-zinc-200'
-                          }`}
-                        >
-                          <Compass className="w-3.5 h-3.5" />
-                          <span>{t.tabGuide}</span>
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveView('analytics')}
-                        className="px-2 py-1 rounded bg-[#121216] hover:bg-zinc-800 border border-[#1f1f24] text-[10px] font-mono text-zinc-400 hover:text-zinc-200 transition"
-                        title={t.fullLabTitle}
-                      >
-                        {t.fullLabBtn} ↗
-                      </button>
-                    </div>
-
-                    {/* Inspector Body */}
-                    <div
-                      className={`p-3.5 ${
-                        splitLayout === 'only-chart'
-                          ? ''
-                          : 'max-h-[720px] overflow-y-auto'
-                      } space-y-3`}
-                    >
-                      {!analysisResult ? (
-                        <div className="py-16 flex flex-col items-center justify-center gap-2 text-zinc-500">
-                          <RefreshCw className="w-5 h-5 animate-spin text-zinc-400" />
-                          <span className="text-xs font-mono">
-                            {t.calculatingMsg}
-                          </span>
-                        </div>
-                      ) : (
-                        <>
-                          {/* TAB 1: CHARTS & TREND */}
-                          {inspectorTab === 'charts' && (
-                            <div className="space-y-3">
-                              {/* Swiss 3-Cell Telemetry Strip */}
-                              {statsA && (
-                                <div className="grid grid-cols-3 divide-x divide-[#1f1f24] rounded bg-[#09090b] border border-[#1f1f24]">
-                                  <div className="p-2.5">
-                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
-                                      p-value (MK)
-                                    </div>
-                                    <div
-                                      className={`text-sm font-mono font-semibold mt-0.5 ${
-                                        statsA.is_significant
-                                          ? 'text-emerald-400'
-                                          : 'text-amber-400'
-                                      }`}
-                                    >
-                                      {statsA.p_value < 0.0001
-                                        ? '< 0.0001'
-                                        : statsA.p_value.toFixed(4)}
-                                    </div>
-                                    <div className="text-[10px] text-zinc-500">
-                                      {statsA.is_significant
-                                        ? t.provenTrend
-                                        : t.noiseVariability}
-                                    </div>
-                                  </div>
-
-                                  <div className="p-2.5">
-                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
-                                      Sen&apos;s Slope / Dec
-                                    </div>
-                                    <div className="text-sm font-mono font-semibold text-zinc-100 mt-0.5">
-                                      {statsA.change_per_decade >= 0 ? '+' : ''}
-                                      {statsA.change_per_decade.toFixed(3)}
-                                    </div>
-                                    <div className="text-[10px] text-zinc-500 truncate">
-                                      {currentVarMeta.unit} ({t.per10Yrs})
-                                    </div>
-                                  </div>
-
-                                  <div className="p-2.5">
-                                    <div className="text-[10px] font-mono uppercase text-zinc-500">
-                                      {t.timeToSigLabel}
-                                    </div>
-                                    <div className="text-sm font-mono font-semibold text-zinc-200 mt-0.5">
-                                      {statsA.is_significant
-                                        ? t.alreadyReached
-                                        : `+${
-                                            statsA.time_to_significance
-                                              ?.additional_years_needed ?? '—'
-                                          } ${t.yrsNeeded}`}
-                                    </div>
-                                    <div className="text-[10px] text-zinc-500">
-                                      SNR: {statsA.signal_to_noise_ratio}
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              <TrendCharts
-                                mode={mode}
-                                seasonMode={seasonMode}
-                                variableMeta={analysisResult.variable_metadata}
-                                regionA={analysisResult.region_a_analysis}
-                                regionB={analysisResult.region_b_analysis}
-                                onOpenResourcesModal={() =>
-                                  setActiveView('resources')
-                                }
-                              />
-                            </div>
-                          )}
-
-                          {/* TAB 2: VERDICT & STATISTICAL PROOF */}
-                          {inspectorTab === 'verdict' && (
-                            <div className="space-y-3">
-                              {mode === 'dipole' &&
-                                analysisResult.dipole_comparison && (
-                                  <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-1">
-                                    <div className="flex items-center justify-between text-xs font-mono">
-                                      <span className="text-zinc-200 font-medium">
-                                        Dipole Correlation (r ={' '}
-                                        {analysisResult.dipole_comparison.pearson_r.toFixed(
-                                          3
-                                        )}
-                                        )
-                                      </span>
-                                      <span className="text-zinc-500">
-                                        p ={' '}
-                                        {analysisResult.dipole_comparison.correlation_p_value.toFixed(
-                                          4
-                                        )}
-                                      </span>
-                                    </div>
-                                    <p className="text-xs text-zinc-400">
-                                      {
-                                        formatDipoleVerdictI18n(
-                                          analysisResult.dipole_comparison,
-                                          regionA.name,
-                                          regionB?.name || 'Region B',
-                                          lang
-                                        ).verdict
-                                      }
-                                    </p>
-                                  </div>
-                                )}
-
-                              <VerdictCard
-                                regionKey="A"
-                                analysis={analysisResult.region_a_analysis}
-                                variableMeta={analysisResult.variable_metadata}
-                                onSelectSeasonMode={(s) => setSeasonMode(s)}
-                              />
-
-                              {mode === 'dipole' &&
-                                analysisResult.region_b_analysis && (
-                                  <VerdictCard
-                                    regionKey="B"
-                                    analysis={analysisResult.region_b_analysis}
-                                    variableMeta={
-                                      analysisResult.variable_metadata
-                                    }
-                                    onSelectSeasonMode={(s) => setSeasonMode(s)}
-                                  />
-                                )}
-                            </div>
-                          )}
-
-                          {/* TAB 3: SCENARIO DETAILS & DETECTIVE GUIDE */}
-                          {inspectorTab === 'guide' && (
-                            <div className="space-y-3">
-                              {activeScenario ? (
-                                <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 space-y-2.5">
-                                  <div className="flex items-center justify-between text-[11px] font-mono">
-                                    <span className="text-zinc-300">
-                                      {activeScenario.satellite_badge}
-                                    </span>
-                                    <span className="text-amber-400">
-                                      Season: {activeScenario.season_mode}
-                                    </span>
-                                  </div>
-                                  <h3 className="text-sm font-semibold text-zinc-100">
-                                    {activeScenario.title}
-                                  </h3>
-                                  <p className="text-xs text-zinc-400 leading-relaxed">
-                                    {
-                                      getScenarioTextI18n(activeScenario, lang)
-                                        .summary
-                                    }
-                                  </p>
-                                  {getScenarioTextI18n(activeScenario, lang)
-                                    .note && (
-                                    <div className="border-l-2 border-zinc-700 pl-3 py-0.5 text-xs text-zinc-400">
-                                      <span className="font-medium text-zinc-200">
-                                        {t.studentTipLabel}
-                                      </span>
-                                      {
-                                        getScenarioTextI18n(
-                                          activeScenario,
-                                          lang
-                                        ).note
-                                      }
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 text-xs text-zinc-400">
-                                  {t.customPointHint}
-                                </div>
-                              )}
-
-                              <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3.5 space-y-2 text-xs text-zinc-400">
-                                <div className="font-medium text-zinc-200">
-                                  {t.howToUseTitle}
-                                </div>
-                                <ul className="space-y-1.5 list-disc list-inside">
-                                  <li>{t.howToUseTip1}</li>
-                                  <li>{t.howToUseTip2}</li>
-                                  <li>{t.howToUseTip3}</li>
-                                </ul>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            </>
           )}
 
-          {/* ---------------------------------------------------------------
-              VIEW 2: FULL GEO-STAGE (FULL-WIDTH MAP/3D GLOBE + FLOATING HUD)
-             --------------------------------------------------------------- */}
+          {/* VIEW: MAP ONLY */}
           {activeView === 'map' && (
-            <div className="space-y-3">
+            <>
               {renderMissionControlPanel()}
 
-              <div className="relative">
+              <div className="relative flex-1 min-h-0">
                 <EarthMap
                   mode={mode}
                   variable={variable}
@@ -1985,79 +1711,13 @@ export const App: React.FC = () => {
                   onToggleActiveTarget={setActiveTarget}
                 />
 
-                {/* Minimalist Floating Telemetry HUD on the Map */}
-                {statsA && (
-                  <div className="mt-3 lg:mt-0 lg:absolute lg:bottom-4 lg:right-4 z-[500] lg:w-72 rounded-md bg-[#09090b]/92 backdrop-blur-md border border-[#24242b] p-3 shadow-2xl space-y-2">
-                    <div className="flex items-center justify-between gap-2 text-[10px] font-mono">
-                      <span className="uppercase tracking-wider text-zinc-500">
-                        {t.liveMapHudTitle}
-                      </span>
-                      <span
-                        className={`inline-flex items-center gap-1 ${
-                          statsA.is_significant
-                            ? 'text-emerald-400'
-                            : 'text-amber-400'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            statsA.is_significant
-                              ? 'bg-emerald-400'
-                              : 'bg-amber-400'
-                          }`}
-                        />
-                        {statsA.is_significant ? 'p < 0.05 SIG' : 'NOISE'}
-                      </span>
-                    </div>
-
-                    <div className="text-xs font-medium text-zinc-100 truncate">
-                      {regionA.name}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[11px] font-mono space-y-0.5 text-zinc-400">
-                        <div>
-                          Slope:{' '}
-                          <span className="text-zinc-100 font-medium">
-                            {statsA.change_per_decade >= 0 ? '+' : ''}
-                            {statsA.change_per_decade.toFixed(3)}{' '}
-                            {currentVarMeta.unit}
-                            {t.perDecadeShort}
-                          </span>
-                        </div>
-                        <div>
-                          p-value:{' '}
-                          <span className="text-zinc-100 font-medium">
-                            {statsA.p_value.toFixed(4)}
-                          </span>
-                        </div>
-                      </div>
-                      <MiniSparkline
-                        values={seriesA.map((d) => d.value)}
-                        trendValues={seriesA.map((d) => d.trend_line)}
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-1.5 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setActiveView('split')}
-                        className="flex-1 py-1 px-2 rounded bg-zinc-100 text-zinc-950 font-medium text-[11px] transition text-center"
-                      >
-                        {t.splitViewBtn}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveView('analytics')}
-                        className="flex-1 py-1 px-2 rounded bg-[#141419] hover:bg-zinc-800 text-zinc-200 border border-[#24242b] text-[11px] transition text-center"
-                      >
-                        {t.fullChartsBtn}
-                      </button>
-                    </div>
+                {analysisResult && !errorMsg && (
+                  <div className="absolute bottom-4 right-16 z-[500] w-[380px] max-w-[calc(100%-5rem)] shadow-2xl">
+                    {renderVerdictHeroes(true)}
                   </div>
                 )}
               </div>
-            </div>
+            </>
           )}
 
           {/* ---------------------------------------------------------------
@@ -2075,10 +1735,10 @@ export const App: React.FC = () => {
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <GitCompareArrows className="w-4 h-4 text-zinc-400" />
-                          <span className="text-xs font-mono uppercase tracking-wider text-zinc-300 font-medium">
+                          <span className="text-sm font-mono text-zinc-300 font-medium">
                             Dipole Teleconnection Verdict
                           </span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#141419] text-zinc-300 border border-[#24242b]">
+                          <span className="px-2 py-0.5 rounded text-xs font-mono bg-[#141419] text-zinc-300 border border-[#24242b]">
                             {
                               formatDipoleVerdictI18n(
                                 analysisResult.dipole_comparison,
@@ -2089,7 +1749,7 @@ export const App: React.FC = () => {
                             }
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-300">
+                        <p className="text-sm text-zinc-300">
                           {
                             formatDipoleVerdictI18n(
                               analysisResult.dipole_comparison,
@@ -2101,9 +1761,9 @@ export const App: React.FC = () => {
                         </p>
                       </div>
 
-                      <div className="flex items-center divide-x divide-[#1f1f24] rounded bg-[#09090b] border border-[#1f1f24] shrink-0 font-mono text-xs">
+                      <div className="flex items-center divide-x divide-[#1f1f24] rounded bg-[#09090b] border border-[#1f1f24] shrink-0 font-mono text-sm">
                         <div className="px-3 py-1.5">
-                          <span className="text-zinc-500 block text-[10px]">
+                          <span className="text-zinc-400 block text-xs">
                             Pearson r
                           </span>
                           <span className="text-sm font-semibold text-zinc-100">
@@ -2111,7 +1771,7 @@ export const App: React.FC = () => {
                           </span>
                         </div>
                         <div className="px-3 py-1.5">
-                          <span className="text-zinc-500 block text-[10px]">
+                          <span className="text-zinc-400 block text-xs">
                             Corr p-value
                           </span>
                           <span className="text-sm font-semibold text-zinc-100">
@@ -2245,9 +1905,10 @@ export const App: React.FC = () => {
         </main>
 
         {/* Minimalist Footer */}
-        <footer className="mt-auto border-t border-[#1f1f24] bg-[#070709] px-4 py-2.5 text-[11px] text-zinc-500">
+        {!isFixedView && (
+        <footer className="mt-auto border-t border-[#1f1f24] bg-[#070709] px-4 py-2.5 text-[13px] text-zinc-400">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2 font-mono text-[10px]">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
               <span className="text-zinc-300 font-medium">
                 GaiaPulse // Earth System Trend Detective
               </span>
@@ -2256,11 +1917,12 @@ export const App: React.FC = () => {
                 Mann-Kendall · Sen&apos;s Slope · Student&apos;s t-test · STL
               </span>
             </div>
-            <p className="text-[10px] text-zinc-600 max-w-2xl leading-relaxed">
+            <p className="text-xs text-zinc-400 max-w-2xl leading-relaxed">
               {NASA_OFFICIAL_DISCLAIMER}
             </p>
           </div>
         </footer>
+        )}
       </div>
 
       {/* Modal Overlays */}
@@ -2297,7 +1959,7 @@ export const App: React.FC = () => {
           >
             {/* Search Input Header */}
             <div className="px-3.5 py-2.5 border-b border-[#1f1f24] flex items-center gap-2.5 bg-[#09090b]">
-              <Search className="w-4 h-4 text-zinc-500 shrink-0" />
+              <Search className="w-4 h-4 text-zinc-400 shrink-0" />
               <input
                 type="text"
                 autoFocus
@@ -2308,22 +1970,22 @@ export const App: React.FC = () => {
                     ? 'Jump to variable (AOD, SWOT_WSE...), phenomenon, season, or view...'
                     : 'Швидкий перехід: змінна (AOD, SWOT_WSE...), феномен, сезон або вкладка...'
                 }
-                className="flex-1 bg-transparent text-xs text-zinc-100 placeholder-zinc-500 font-mono focus:outline-none"
+                className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 font-mono focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setCommandPaletteOpen(false)}
-                className="px-1.5 py-0.5 rounded bg-[#141419] border border-[#24242b] text-[10px] font-mono text-zinc-400 hover:text-zinc-200"
+                className="px-1.5 py-0.5 rounded bg-[#141419] border border-[#24242b] text-xs font-mono text-zinc-400 hover:text-zinc-200"
               >
                 ESC
               </button>
             </div>
 
             {/* Filtered Results */}
-            <div className="max-h-[380px] overflow-y-auto p-2 space-y-3 text-xs">
+            <div className="max-h-[380px] overflow-y-auto p-2 space-y-3 text-sm">
               {/* 1. Variables */}
               <div>
-                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                <div className="px-2 py-1 text-xs font-mono text-zinc-400">
                   {lang === 'en'
                     ? 'Satellite & Reanalysis Variables (13)'
                     : 'Супутникові змінні NASA та CSA (13)'}
@@ -2364,7 +2026,7 @@ export const App: React.FC = () => {
                             {lang === 'en' ? v.name : v.name_ua || v.name}
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                        <span className="text-xs font-mono text-zinc-400 shrink-0">
                           {v.unit}
                         </span>
                       </button>
@@ -2374,7 +2036,7 @@ export const App: React.FC = () => {
 
               {/* 2. Curated & Live EONET Scenarios */}
               <div>
-                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                <div className="px-2 py-1 text-xs font-mono text-zinc-400">
                   {lang === 'en'
                     ? 'Curated Phenomena & Live EONET Cases'
                     : 'Наукові сценарії та події NASA EONET'}
@@ -2406,7 +2068,7 @@ export const App: React.FC = () => {
                         }`}
                       >
                         <span className="truncate">{s.title}</span>
-                        <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                        <span className="text-xs font-mono text-zinc-400 shrink-0">
                           {s.variable} · {s.season_mode}
                         </span>
                       </button>
@@ -2416,8 +2078,8 @@ export const App: React.FC = () => {
 
               {/* 3. Workspace Views */}
               <div>
-                <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
-                  {lang === 'en' ? 'Workbench Views' : 'Робочі простори (1–6)'}
+                <div className="px-2 py-1 text-xs font-mono text-zinc-400">
+                  {lang === 'en' ? 'Sections' : 'Розділи'}
                 </div>
                 <div className="grid grid-cols-2 gap-1">
                   {navItems.map((item) => (
@@ -2431,8 +2093,8 @@ export const App: React.FC = () => {
                       className="px-2.5 py-1.5 rounded hover:bg-[#141419] text-zinc-300 flex items-center justify-between text-left"
                     >
                       <span>{item.label}</span>
-                      <span className="text-[10px] font-mono text-zinc-500">
-                        [{item.shortcut}]
+                      <span className="text-xs font-mono text-zinc-400">
+                        {item.subtitle}
                       </span>
                     </button>
                   ))}
@@ -2450,13 +2112,13 @@ export const App: React.FC = () => {
           onClick={() => setMissionBriefOpen(false)}
         >
           <div
-            className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#24242b] shadow-2xl p-6 space-y-5 text-xs"
+            className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#24242b] shadow-2xl p-6 space-y-5 text-sm"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header + Print Action */}
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#1f1f24] pb-4">
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-sky-400">
+                <div className="text-xs font-monost text-sky-400">
                   NASA Space Apps Challenge 2026 · Earth System Trend Detective
                 </div>
                 <h2 className="text-base font-semibold text-zinc-100 mt-1">
@@ -2464,7 +2126,7 @@ export const App: React.FC = () => {
                     ? 'Scientific Trend & Significance Mission Brief'
                     : 'Науковий звіт аналізу кліматичного тренду та статистичної значущості'}
                 </h2>
-                <p className="text-[11px] font-mono text-zinc-500 mt-0.5">
+                <p className="text-[13px] font-mono text-zinc-400 mt-0.5">
                   {regionA.name} ({regionA.lat.toFixed(2)}°N,{' '}
                   {regionA.lon.toFixed(2)}°E) · {currentVarMeta.code} (
                   {currentVarMeta.unit}) · {seasonMode} · {startYear}–{endYear}
@@ -2476,7 +2138,7 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-medium text-xs transition flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-medium text-sm transition flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>
@@ -2496,29 +2158,29 @@ export const App: React.FC = () => {
             {/* 1. Primary Statistical Verdict Matrix */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono">
               <div className="p-3 rounded bg-[#09090b] border border-[#1f1f24]">
-                <div className="text-[10px] uppercase text-zinc-500">
+                <div className="text-xs text-zinc-400">
                   Sen&apos;s Slope / Decade
                 </div>
                 <div className="text-sm font-semibold text-sky-400 mt-1">
                   {statsA.change_per_decade >= 0 ? '+' : ''}
                   {statsA.change_per_decade.toFixed(4)} {currentVarMeta.unit}
                 </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5">
+                <div className="text-xs text-zinc-400 mt-0.5">
                   95% CI: [{statsA.slope_ci_lower_decade?.toFixed(3)},{' '}
                   {statsA.slope_ci_upper_decade?.toFixed(3)}]
                 </div>
               </div>
 
               <div className="p-3 rounded bg-[#09090b] border border-[#1f1f24]">
-                <div className="text-[10px] uppercase text-zinc-500">
+                <div className="text-xs text-zinc-400">
                   Mann-Kendall &amp; Student t
                 </div>
                 <div className="text-sm font-semibold text-zinc-100 mt-1">
-                  p = {statsA.p_value.toFixed(4)} · Z ={' '}
+                  p {formatP(statsA.p_value)} · Z ={' '}
                   {statsA.z_score >= 0 ? '+' : ''}
                   {statsA.z_score.toFixed(2)}
                 </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5">
+                <div className="text-xs text-zinc-400 mt-0.5">
                   Student t ={' '}
                   {statsA.student_t_test?.t_stat.toFixed(2) ?? '—'} (df=
                   {statsA.student_t_test?.degrees_of_freedom ?? '—'})
@@ -2526,7 +2188,7 @@ export const App: React.FC = () => {
               </div>
 
               <div className="p-3 rounded bg-[#09090b] border border-[#1f1f24]">
-                <div className="text-[10px] uppercase text-zinc-500">
+                <div className="text-xs text-zinc-400">
                   Pettitt Regime Shift
                 </div>
                 <div className="text-sm font-semibold text-amber-400 mt-1">
@@ -2534,21 +2196,21 @@ export const App: React.FC = () => {
                   {(statsA.regime_shift?.step_delta ?? 0) >= 0 ? '+' : ''}
                   {statsA.regime_shift?.step_delta.toFixed(3)})
                 </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5">
+                <div className="text-xs text-zinc-400 mt-0.5">
                   Pettitt p ={' '}
                   {statsA.regime_shift?.p_value.toFixed(4) ?? '—'}
                 </div>
               </div>
 
               <div className="p-3 rounded bg-[#09090b] border border-[#1f1f24]">
-                <div className="text-[10px] uppercase text-zinc-500">
+                <div className="text-xs text-zinc-400">
                   AR(1) &amp; Hamed-Rao MK
                 </div>
                 <div className="text-sm font-semibold text-emerald-400 mt-1">
                   r₁ = {statsA.autocorrelation?.lag1_r.toFixed(2) ?? '0.00'} ·
                   N_eff = {statsA.autocorrelation?.effective_sample_size ?? '—'}
                 </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5">
+                <div className="text-xs text-zinc-400 mt-0.5">
                   Adjusted p* ={' '}
                   {statsA.autocorrelation?.hamed_rao_p_value.toFixed(4) ?? '—'}
                 </div>
@@ -2557,12 +2219,12 @@ export const App: React.FC = () => {
 
             {/* 2. Executive Detective Summary */}
             <div className="p-3.5 rounded bg-[#09090b] border border-[#1f1f24] space-y-1.5">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              <div className="text-xs font-mono text-zinc-400">
                 {lang === 'en'
                   ? 'Executive Statistical Conclusion'
                   : 'Науковий висновок детективу'}
               </div>
-              <p className="text-xs text-zinc-200 leading-relaxed">
+              <p className="text-sm text-zinc-200 leading-relaxed">
                 {lang === 'en'
                   ? `In "${regionA.name}" over ${startYear}–${endYear} (mode: ${seasonMode}), ${currentVarMeta.name} exhibits ${
                       statsA.is_significant
@@ -2580,7 +2242,7 @@ export const App: React.FC = () => {
                   : analysisResult.region_a_analysis.human_summary}
               </p>
               {statsA.time_to_significance && (
-                <p className="text-[11px] font-mono text-zinc-400">
+                <p className="text-[13px] font-mono text-zinc-400">
                   Time-to-Significance (Weatherhead et al., 1998):{' '}
                   {lang === 'en'
                     ? statsA.time_to_significance.is_already_significant
@@ -2598,13 +2260,13 @@ export const App: React.FC = () => {
             {/* 3. Multi-Season Fingerprint Table */}
             {statsA.seasonal_matrix && statsA.seasonal_matrix.length > 0 && (
               <div className="rounded bg-[#09090b] border border-[#1f1f24] overflow-hidden">
-                <div className="px-3.5 py-2 border-b border-[#1f1f24] text-[10px] font-mono uppercase tracking-wider text-zinc-400">
+                <div className="px-3.5 py-2 border-b border-[#1f1f24] text-xs font-mono text-zinc-400">
                   {lang === 'en'
                     ? '6-Mode Seasonal Fingerprint Comparison'
                     : 'Порівняльна таблиця всіх 6 сезонних режимів (DJF, MAM, JJA, SON, Deseasonalized, Raw)'}
                 </div>
-                <table className="w-full text-left font-mono text-[11px]">
-                  <thead className="bg-[#0c0c0f] text-zinc-500 border-b border-[#1f1f24]">
+                <table className="w-full text-left font-mono text-[13px]">
+                  <thead className="bg-[#0c0c0f] text-zinc-400 border-b border-[#1f1f24]">
                     <tr>
                       <th className="py-2 px-3">Season Mode</th>
                       <th className="py-2 px-3">Sen&apos;s Slope / Dec</th>
@@ -2654,7 +2316,7 @@ export const App: React.FC = () => {
             )}
 
             {/* 4. Data Provenance & Disclaimer */}
-            <div className="pt-2 border-t border-[#1f1f24] text-[10px] font-mono text-zinc-500 space-y-1">
+            <div className="pt-2 border-t border-[#1f1f24] text-xs font-mono text-zinc-400 space-y-1">
               <div>
                 Primary Source: {analysisResult.region_a_analysis.data_source} ·
                 Reference Methodology: NASA NTRS 20090042747 (Dr. James Acker)

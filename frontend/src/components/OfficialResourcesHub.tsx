@@ -176,11 +176,11 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
                 Official NASA, NOAA, KNMI &amp; CSA Space Agency Resources Hub
               </h2>
-              <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-ctp-green/15 text-ctp-green border border-ctp-green/40">
+              <span className="px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-ctp-green/15 text-ctp-green border border-ctp-green/40">
                 13 VERIFIED AGENCY PORTALS
               </span>
             </div>
-            <p className="text-xs text-ctp-subtext0 mt-0.5">
+            <p className="text-sm text-ctp-subtext0 mt-0.5">
               {lang === 'en'
                 ? 'Integrated catalog of official satellite archives, hydrological time series, SAR radar missions, and challenge statistical methodology'
                 : 'Інтегрований каталог офіційних джерел супутникових даних, гідрологічних часових рядів, радарів SAR та статистичної методології челенджу'}
@@ -201,7 +201,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                   ? 'Search resource or variable...'
                   : 'Пошук ресурсу або змінної...'
               }
-              className="pl-8 pr-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs text-ctp-text placeholder:text-ctp-subtext0 focus:outline-none focus:border-ctp-blue w-56"
+              className="pl-8 pr-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm text-ctp-text placeholder:text-ctp-subtext0 focus:outline-none focus:border-ctp-blue w-56"
             />
           </div>
 
@@ -227,7 +227,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               key={tab.id}
               type="button"
               onClick={() => setActiveCategory(tab.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 border ${
+              className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 border ${
                 active
                   ? 'bg-ctp-blue/20 text-ctp-blue border-ctp-blue/60 shadow-[0_0_14px_rgba(137,180,250,0.18)]'
                   : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text hover:border-ctp-surface1'
@@ -236,7 +236,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
               <Layers className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${
+                className={`px-1.5 py-0.5 rounded text-xs font-mono ${
                   active
                     ? 'bg-ctp-blue/25 text-ctp-text'
                     : 'bg-ctp-surface0 text-ctp-subtext0'
@@ -254,10 +254,10 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
         {groupedByCategory.map((group) => (
           <div key={group.key} className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 px-1">
-              <h3 className="text-xs sm:text-sm font-mono font-bold uppercase tracking-wider text-ctp-lavender">
+              <h3 className="text-sm sm:text-sm font-mono font-bold text-ctp-lavender">
                 {group.title}
               </h3>
-              <span className="text-[11px] text-ctp-subtext0">
+              <span className="text-[13px] text-ctp-subtext0">
                 {group.subtitle}
               </span>
             </div>
@@ -280,17 +280,17 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                       {/* Top Row: Number + Agency Badge + Gov Tag */}
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
-                          <span className="px-2 py-0.5 rounded-md bg-ctp-surface0 text-[10px] font-mono font-bold text-ctp-subtext1">
+                          <span className="px-2 py-0.5 rounded-md bg-ctp-surface0 text-xs font-mono font-bold text-ctp-subtext1">
                             #{String(res.number).padStart(2, '0')}
                           </span>
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${badgeColor}`}
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border ${badgeColor}`}
                           >
                             {res.agency_badge}
                           </span>
                         </div>
 
-                        <span className="text-[10px] font-mono text-ctp-subtext0">
+                        <span className="text-xs font-mono text-ctp-subtext0">
                           {res.is_us_gov ? 'U.S. Gov' : 'Partner / Int’l'}
                         </span>
                       </div>
@@ -301,7 +301,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                       </h4>
 
                       {/* Role in Application */}
-                      <p className="text-xs text-ctp-subtext1 leading-relaxed">
+                      <p className="text-sm text-ctp-subtext1 leading-relaxed">
                         <span className="font-semibold text-ctp-lavender">
                           {lang === 'en' ? 'Role in App: ' : 'Роль у додатку: '}
                         </span>
@@ -312,7 +312,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                       {res.supported_variables &&
                         res.supported_variables.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1 pt-1">
-                            <span className="text-[10px] font-mono text-ctp-subtext0 mr-1">
+                            <span className="text-xs font-mono text-ctp-subtext0 mr-1">
                               {lang === 'en' ? 'Variables:' : 'Змінні:'}
                             </span>
                             {res.supported_variables.map((vCode) => {
@@ -328,7 +328,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                                       );
                                     }
                                   }}
-                                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold transition border ${
+                                  className={`px-2 py-0.5 rounded text-xs font-mono font-semibold transition border ${
                                     isCurrent
                                       ? 'bg-ctp-green/20 text-ctp-green border-ctp-green/50'
                                       : 'bg-ctp-mantle text-ctp-subtext1 border-ctp-surface0 hover:border-ctp-blue hover:text-ctp-blue'
@@ -352,7 +352,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
                       href={res.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-1 w-full py-2 px-3 rounded-lg bg-ctp-mantle hover:bg-ctp-blue/20 border border-ctp-surface0 hover:border-ctp-blue/50 text-xs font-mono font-semibold text-ctp-blue transition flex items-center justify-between gap-2"
+                      className="mt-1 w-full py-2 px-3 rounded-lg bg-ctp-mantle hover:bg-ctp-blue/20 border border-ctp-surface0 hover:border-ctp-blue/50 text-sm font-mono font-semibold text-ctp-blue transition flex items-center justify-between gap-2"
                     >
                       <span className="truncate">{res.url}</span>
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
@@ -368,7 +368,7 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
       {/* Mandatory Official NASA Disclaimer */}
       <div className="rounded-xl bg-ctp-crust border border-ctp-yellow/35 p-3.5 flex items-start gap-3">
         <ShieldAlert className="w-4 h-4 text-ctp-yellow shrink-0 mt-0.5" />
-        <p className="text-xs font-mono text-ctp-subtext1 leading-relaxed">
+        <p className="text-sm font-mono text-ctp-subtext1 leading-relaxed">
           {NASA_OFFICIAL_DISCLAIMER}
         </p>
       </div>
@@ -422,8 +422,8 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
       : 'https://www.asc-csa.gc.ca/eng/satellites/swot/';
 
   return (
-    <div className="py-2 border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-      <div className="flex items-center gap-2 text-zinc-500">
+    <div className="py-2 border-b border-[#1f1f24] flex flex-wrap items-center justify-between gap-2 text-[13px] font-mono">
+      <div className="flex items-center gap-2 text-zinc-400">
         <span>{t.externalVerifyLabel}</span>
         <span className="text-zinc-200 font-medium">{variable}</span>
         <span>
@@ -440,7 +440,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>NASA Giovanni</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <a
@@ -450,7 +450,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>AppEEARS</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <a
@@ -460,7 +460,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-300 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>KNMI Explorer</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <a
@@ -470,7 +470,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>GES DISC</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <a
@@ -480,7 +480,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>NOAA CDO</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <a
@@ -490,7 +490,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
           className="px-2 py-0.5 rounded bg-[#121216] hover:bg-zinc-800 border border-[#24242b] text-zinc-400 hover:text-white transition inline-flex items-center gap-1"
         >
           <span>CSA SWOT/RCM</span>
-          <ExternalLink className="w-2.5 h-2.5 text-zinc-500" />
+          <ExternalLink className="w-2.5 h-2.5 text-zinc-400" />
         </a>
 
         <button
@@ -630,7 +630,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
               Import CSV from NASA Giovanni / AppEEARS / GES DISC / NOAA CDO
             </h2>
-            <p className="text-xs text-ctp-subtext0">
+            <p className="text-sm text-ctp-subtext0">
               {lang === 'en'
                 ? 'Upload any CSV file with date (Date / Year / time) and value (Value / data) columns for automatic deseasonalization, Student’s t-test, Mann-Kendall, 95% CI, and Time-to-Significance'
                 : 'Завантажте будь-який CSV-файл із колонками дати (Date / Year / time) та значення (Value / data) для автоматичної десезоналізації, t-тесту, Манна-Кендалла, 95% CI та Time-to-Significance'}
@@ -656,7 +656,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
       >
         {/* Quick Sample Templates from Official Portals */}
         <div className="space-y-1.5">
-          <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0">
+          <label className="block text-[13px] font-mono text-ctp-subtext0">
             {lang === 'en'
               ? 'Quick reference CSV templates from official portals (1-click test):'
               : 'Швидкі еталонні CSV-шаблони з офіційних порталів (1-клік тест):'}
@@ -679,11 +679,11 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
                 }}
                 className="p-2.5 rounded-xl bg-ctp-crust hover:bg-ctp-surface0 border border-ctp-surface0 hover:border-ctp-blue/50 text-left transition space-y-1"
               >
-                <div className="flex items-center justify-between text-[10px] font-mono text-ctp-blue font-bold">
+                <div className="flex items-center justify-between text-xs font-mono text-ctp-blue font-bold">
                   <span>{tpl.sourcePortal}</span>
                   <span>{tpl.variableCode}</span>
                 </div>
-                <div className="text-xs font-semibold text-ctp-text truncate">
+                <div className="text-sm font-semibold text-ctp-text truncate">
                   {tpl.label}
                 </div>
               </button>
@@ -709,18 +709,18 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             }}
           />
           <Upload className="w-6 h-6 text-ctp-green" />
-          <div className="text-xs sm:text-sm font-bold text-ctp-text">
+          <div className="text-sm sm:text-sm font-bold text-ctp-text">
             {lang === 'en'
               ? 'Drag & drop a CSV file from Giovanni / AppEEARS / NOAA CDO here, or click to browse'
               : 'Перетягніть сюди CSV-файл із Giovanni / AppEEARS / NOAA CDO або натисніть для вибору'}
           </div>
-          <div className="text-[11px] font-mono text-ctp-subtext0">
+          <div className="text-[13px] font-mono text-ctp-subtext0">
             {lang === 'en'
               ? 'Supported columns: Date, Year, time, timestamp + Value, data, mean (# comments are ignored automatically)'
               : 'Підтримуються колонки: Date, Year, time, timestamp + Value, data, mean (коментарі # ігноруються автоматично)'}
           </div>
           {uploadedFileName && (
-            <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 text-ctp-green border border-ctp-green/40 text-xs font-mono font-semibold">
+            <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 text-ctp-green border border-ctp-green/40 text-sm font-mono font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>
                 {lang === 'en'
@@ -734,19 +734,19 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
         {/* Metadata Configuration Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
-            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+            <label className="block text-xs font-mono text-ctp-subtext0 mb-1">
               {lang === 'en' ? 'Dataset / Series Name' : 'Назва датасету / ряду'}
             </label>
             <input
               type="text"
               value={datasetName}
               onChange={(e) => setDatasetName(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs text-ctp-text focus:outline-none focus:border-ctp-blue"
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm text-ctp-text focus:outline-none focus:border-ctp-blue"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+            <label className="block text-xs font-mono text-ctp-subtext0 mb-1">
               {lang === 'en'
                 ? 'Variable Code (NASA / CSA)'
                 : 'Код змінної (NASA / CSA)'}
@@ -755,24 +755,24 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
               type="text"
               value={variableCode}
               onChange={(e) => setVariableCode(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+            <label className="block text-xs font-mono text-ctp-subtext0 mb-1">
               {lang === 'en' ? 'Measurement Unit' : 'Одиниця вимірювання'}
             </label>
             <input
               type="text"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+            <label className="block text-xs font-mono text-ctp-subtext0 mb-1">
               {lang === 'en'
                 ? 'Seasonal Filter (Season Mode)'
                 : 'Сезонний фільтр (Season Mode)'}
@@ -780,7 +780,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             <select
               value={seasonMode}
               onChange={(e) => setSeasonMode(e.target.value as SeasonMode)}
-              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
             >
               {seasonOptions.map((opt) => (
                 <option key={opt.id} value={opt.id}>
@@ -794,12 +794,12 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
         {/* Raw CSV Preview / Editor */}
         <div>
           <div className="flex items-center justify-between mb-1">
-            <label className="text-[10px] font-mono uppercase text-ctp-subtext0">
+            <label className="text-xs font-mono text-ctp-subtext0">
               {lang === 'en'
                 ? 'CSV Content (Date / Year / time, Value / data):'
                 : 'Вміст CSV (Date / Year / time, Value / data):'}
             </label>
-            <span className="text-[10px] font-mono text-ctp-subtext0">
+            <span className="text-xs font-mono text-ctp-subtext0">
               {csvText.split(/\r?\n/).filter((l) => l.trim()).length}{' '}
               {lang === 'en' ? 'rows' : 'рядків'}
             </span>
@@ -808,13 +808,13 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             rows={7}
             value={csvText}
             onChange={(e) => setCsvText(e.target.value)}
-            className="w-full p-3 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+            className="w-full p-3 rounded-xl bg-ctp-crust border border-ctp-surface0 text-sm font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
             placeholder="Date,Value&#10;2002-07,0.24&#10;2003-07,0.28..."
           />
         </div>
 
         {localError && (
-          <div className="p-3 rounded-xl bg-ctp-red/15 border border-ctp-red/50 text-xs font-mono text-ctp-red">
+          <div className="p-3 rounded-xl bg-ctp-red/15 border border-ctp-red/50 text-sm font-mono text-ctp-red">
             {localError}
           </div>
         )}
@@ -824,7 +824,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-xs font-semibold text-ctp-subtext1 transition"
+              className="px-4 py-2 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-sm font-semibold text-ctp-subtext1 transition"
             >
               {lang === 'en' ? 'Cancel' : 'Скасувати'}
             </button>
@@ -832,7 +832,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-ctp-green to-ctp-teal hover:brightness-110 text-ctp-crust font-extrabold text-xs tracking-wide transition flex items-center gap-2 shadow-[0_0_20px_rgba(166,227,161,0.3)]"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-ctp-green to-ctp-teal hover:brightness-110 text-ctp-crust font-extrabold text-sm tracking-wide transition flex items-center gap-2 shadow-[0_0_20px_rgba(166,227,161,0.3)]"
           >
             <Sparkles className="w-4 h-4" />
             <span>

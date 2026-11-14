@@ -113,7 +113,7 @@ export const DetectiveStepper: React.FC<DetectiveStepperProps> = ({
   return (
     <div className="rounded-2xl bg-ctp-mantle border border-ctp-surface0 px-4 py-3 shadow-lg">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-ctp-subtext0 font-bold mr-1">
+        <div className="text-xs font-monost text-ctp-subtext0 font-bold mr-1">
           NASA Detective Protocol:
         </div>
 
@@ -139,10 +139,10 @@ export const DetectiveStepper: React.FC<DetectiveStepperProps> = ({
                   )}
 
                   <div className="leading-tight">
-                    <div className="text-[11px] font-mono font-bold">
+                    <div className="text-[13px] font-mono font-bold">
                       {step.title}
                     </div>
-                    <div className="text-[10px] font-mono opacity-85 truncate max-w-[165px]">
+                    <div className="text-xs font-mono opacity-85 truncate max-w-[165px]">
                       {step.detail}
                     </div>
                   </div>

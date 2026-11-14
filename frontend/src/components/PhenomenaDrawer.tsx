@@ -58,18 +58,18 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         {/* Top Row: Satellite Badge + Mode Badge + Live/Curated Tag */}
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#141419] text-zinc-300 border border-[#24242b]">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-medium bg-[#141419] text-zinc-300 border border-[#24242b]">
               <Satellite className="w-3 h-3 text-sky-400" />
               {scenario.satellite_badge}
             </span>
 
             {isDipole ? (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-orange-500/10 text-orange-400 border border-orange-500/25">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-medium bg-orange-500/10 text-orange-400 border border-orange-500/25">
                 <GitCompareArrows className="w-3 h-3" />
                 Dipole
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono text-zinc-400 bg-[#141419] border border-[#24242b]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono text-zinc-400 bg-[#141419] border border-[#24242b]">
                 <MapPin className="w-3 h-3" />
                 Single
               </span>
@@ -77,12 +77,12 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
           </div>
 
           {isLiveEonet ? (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25">
               <Radio className="w-2.5 h-2.5" />
               EONET {scenario.event_date ? `· ${scenario.event_date}` : 'LIVE'}
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/25">
               Curated Case
             </span>
           )}
@@ -94,7 +94,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         </h3>
 
         {/* Telemetry Metadata Strip */}
-        <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-zinc-400">
+        <div className="flex flex-wrap items-center gap-1.5 text-[13px] font-mono text-zinc-400">
           <span className="px-1.5 py-0.5 rounded bg-[#141419] text-zinc-200 border border-[#24242b]">
             {scenario.variable}
             {scenario.secondary_variable
@@ -102,7 +102,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
               : ''}
           </span>
           <span className="px-1.5 py-0.5 rounded bg-[#141419] border border-[#24242b] flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-zinc-500" />
+            <Calendar className="w-3 h-3 text-zinc-400" />
             {scenario.start_year}–{scenario.end_year}
           </span>
           <span className="px-1.5 py-0.5 rounded bg-[#141419] text-amber-400 border border-[#24242b]">
@@ -111,7 +111,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         </div>
 
         {/* Coordinates Preview */}
-        <div className="text-[11px] font-mono text-zinc-400 space-y-0.5 bg-[#0c0c0f] px-2.5 py-1.5 rounded border border-[#1f1f24]">
+        <div className="text-[13px] font-mono text-zinc-400 space-y-0.5 bg-[#0c0c0f] px-2.5 py-1.5 rounded border border-[#1f1f24]">
           <div className="truncate">
             <span className="text-sky-400 font-medium">A:</span>{' '}
             {scenario.region_a.name} ({scenario.region_a.lat.toFixed(2)}°,{' '}
@@ -127,12 +127,12 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         </div>
 
         {/* Scientific Explanation */}
-        <p className="text-xs text-zinc-400 leading-relaxed">
+        <p className="text-sm text-zinc-400 leading-relaxed">
           {i18nText.summary}
         </p>
 
         {i18nText.note && (
-          <div className="text-[11px] text-zinc-400 border-l-2 border-zinc-700 pl-2.5 py-0.5">
+          <div className="text-[13px] text-zinc-400 border-l-2 border-zinc-700 pl-2.5 py-0.5">
             {i18nText.note}
           </div>
         )}
@@ -142,7 +142,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
             href={scenario.source_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-300 hover:text-white underline decoration-zinc-600 transition"
+            className="inline-flex items-center gap-1 text-[13px] font-mono text-zinc-300 hover:text-white underline decoration-zinc-600 transition"
           >
             <ExternalLink className="w-3 h-3 shrink-0" />
             <span className="truncate">
@@ -156,7 +156,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
       <button
         type="button"
         onClick={() => onLoadAndRun(scenario)}
-        className={`w-full py-2 px-3 rounded text-xs font-mono font-medium transition flex items-center justify-between ${
+        className={`w-full py-2 px-3 rounded text-sm font-mono font-medium transition flex items-center justify-between ${
           isActive
             ? 'bg-zinc-100 text-zinc-950'
             : 'bg-[#141419] hover:bg-zinc-100 text-zinc-200 hover:text-zinc-950 border border-[#24242b]'
@@ -265,7 +265,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
             Historical Earth Phenomena &amp; Live NASA EONET Events
           </h2>
           <span
-            className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+            className={`px-2 py-0.5 rounded text-xs font-mono border ${
               eonetIsLive
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                 : 'bg-zinc-800 text-zinc-400 border-zinc-700'
@@ -280,7 +280,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-[#1c1c22] text-zinc-200 text-xs font-mono transition flex items-center gap-1.5 border border-[#24242b]"
+            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-[#1c1c22] text-zinc-200 text-sm font-mono transition flex items-center gap-1.5 border border-[#24242b]"
           >
             <RefreshCw
               className={`w-3 h-3 text-zinc-400 ${
@@ -311,7 +311,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
               key={tab.id}
               type="button"
               onClick={() => setActiveFilter(tab.id)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1.5 border ${
+              className={`px-2.5 py-1 rounded text-sm font-medium transition flex items-center gap-1.5 border ${
                 selected
                   ? 'bg-zinc-100 text-zinc-950 border-zinc-100'
                   : 'bg-[#09090b] text-zinc-400 border-[#1f1f24] hover:text-zinc-200'
@@ -320,10 +320,10 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
               {tab.icon}
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+                className={`px-1.5 py-0.2 rounded text-xs font-mono ${
                   selected
                     ? 'bg-zinc-900/15 text-zinc-950'
-                    : 'bg-[#141419] text-zinc-500'
+                    : 'bg-[#141419] text-zinc-400'
                 }`}
               >
                 {tab.count}
@@ -336,9 +336,9 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
       {/* Phenomenon Cards Grid */}
       <div className={isModal ? 'flex-1 overflow-y-auto p-4' : 'p-4'}>
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2 text-zinc-500">
+          <div className="py-16 flex flex-col items-center justify-center gap-2 text-zinc-400">
             <RefreshCw className="w-5 h-5 animate-spin text-zinc-400" />
-            <p className="text-xs font-mono">
+            <p className="text-sm font-mono">
               Fetching NASA EONET v3 &amp; curated scenarios...
             </p>
           </div>

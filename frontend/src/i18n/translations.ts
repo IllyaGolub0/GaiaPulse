@@ -174,17 +174,17 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     toggleSidebarTitle: 'Згорнути / Розгорнути бічну панель (клавіша [ )',
     openPhenomenaTitle: 'Відкрити каталог феноменів NASA',
 
-    navSplitLabel: 'Split Studio',
+    navSplitLabel: 'Аналіз',
     navSplitSub: 'Глобус + Графіки поруч',
     navMapLabel: 'Full Geo-Stage',
     navMapSub: '2D Карта / 3D Глобус + HUD',
     navAnalyticsLabel: 'Statistical Lab',
     navAnalyticsSub: 'Вердикти, STL та таблиця',
-    navPhenomenaLabel: 'Phenomena & EONET',
+    navPhenomenaLabel: 'Кейси та події',
     navPhenomenaSub: 'Кейси Екера, CSA та події',
-    navCsvLabel: 'CSV Time-Series Lab',
+    navCsvLabel: 'Власні дані',
     navCsvSub: 'Імпорт Giovanni / AppEEARS',
-    navResourcesLabel: 'Official Resources',
+    navResourcesLabel: 'Джерела',
     navResourcesSub: '13 порталів NASA / CSA / NOAA',
 
     significantBadge: 'ЗНАЧУЩИЙ ТРЕНД',
@@ -244,7 +244,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     noiseVariability: 'Шум / Мінливість',
     per10Yrs: 'за 10 р.',
     timeToSigLabel: 'Час до p < 0.05',
-    alreadyReached: '0 р. (Вже є)',
+    alreadyReached: 'Уже досягнуто',
     activeCaseBadge: 'Активний кейс',
     switchToSeasonBtn: 'Увімкнути сезон',
     studentTipLabel: 'Підказка для студента: ',
@@ -293,9 +293,9 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     contrastOpposite: 'ПРОТИЛЕЖНІ',
     contrastSync: 'СИНХРОННІ',
 
-    chartTabTimeSeries: 'Часовий ряд + Тренд Сена (95% CI)',
-    chartTabStripes: 'Climate Stripes (Теплова шкала аномалій)',
-    chartTabDecomp: 'STL-Декомпозиція (Тренд / Сезонність / Шум)',
+    chartTabTimeSeries: 'Ряд і тренд',
+    chartTabStripes: 'Смуги аномалій',
+    chartTabDecomp: 'Розклад ряду (STL)',
     chartAnomaliesToggle: 'Аномалії («Ножиці трендів»)',
     chartAbsoluteToggle: 'Абсолютні',
     chartRegionABtn: 'Регіон А',
@@ -324,17 +324,17 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     toggleSidebarTitle: 'Collapse / Expand Sidebar (Key [ )',
     openPhenomenaTitle: 'Open NASA Phenomena Catalog',
 
-    navSplitLabel: 'Split Studio',
+    navSplitLabel: 'Analysis',
     navSplitSub: 'Globe + Charts Side-by-Side',
     navMapLabel: 'Full Geo-Stage',
     navMapSub: '2D Map / 3D Globe + HUD',
     navAnalyticsLabel: 'Statistical Lab',
     navAnalyticsSub: 'Verdicts, STL & Data Matrix',
-    navPhenomenaLabel: 'Phenomena & EONET',
+    navPhenomenaLabel: 'Cases and events',
     navPhenomenaSub: 'Acker Cases, CSA & Live Events',
-    navCsvLabel: 'CSV Time-Series Lab',
+    navCsvLabel: 'Your data',
     navCsvSub: 'Import Giovanni / AppEEARS',
-    navResourcesLabel: 'Official Resources',
+    navResourcesLabel: 'Sources',
     navResourcesSub: '13 NASA / CSA / NOAA Portals',
 
     significantBadge: 'SIGNIFICANT',
@@ -394,7 +394,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     noiseVariability: 'Noise / Variability',
     per10Yrs: 'per 10 yrs',
     timeToSigLabel: 'Time to p < 0.05',
-    alreadyReached: '0 yrs (Reached)',
+    alreadyReached: 'Already reached',
     activeCaseBadge: 'Active Case',
     switchToSeasonBtn: 'Switch to',
     studentTipLabel: 'Student Note: ',
@@ -443,9 +443,9 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     contrastOpposite: 'OPPOSITE',
     contrastSync: 'SYNCHRONOUS',
 
-    chartTabTimeSeries: "Time Series + Sen's Trend (95% CI)",
-    chartTabStripes: 'Climate Stripes (Anomaly Heatmap)',
-    chartTabDecomp: 'STL Decomposition (Trend / Seasonal / Noise)',
+    chartTabTimeSeries: 'Series and trend',
+    chartTabStripes: 'Anomaly stripes',
+    chartTabDecomp: 'Decomposition (STL)',
     chartAnomaliesToggle: 'Anomalies ("Trend Scissors")',
     chartAbsoluteToggle: 'Absolute',
     chartRegionABtn: 'Region A',
@@ -473,43 +473,43 @@ export function getSeasonModesI18n(lang: Language): Array<{
     return [
       {
         id: 'raw',
-        label: 'All Months (Raw)',
-        shortLabel: 'Raw',
+        label: 'All year',
+        shortLabel: 'All year',
         badge: 'ANN',
         hint: 'Annual averages across all months without seasonal filtering',
       },
       {
         id: 'deseasonalized',
-        label: 'Deseasonalized',
-        shortLabel: 'Deseason',
+        label: 'Seasonal cycle removed',
+        shortLabel: 'No seasonality',
         badge: 'STL',
         hint: 'Annual seasonal cycle removed via STL decomposition',
       },
       {
         id: 'JJA',
-        label: 'Summer (JJA)',
-        shortLabel: 'Summer JJA',
+        label: 'Summer (June–August)',
+        shortLabel: 'Summer',
         badge: 'JJA',
         hint: 'June–August (wildfire smoke transport & summer droughts)',
       },
       {
         id: 'DJF',
-        label: 'Winter (DJF)',
-        shortLabel: 'Winter DJF',
+        label: 'Winter (December–February)',
+        shortLabel: 'Winter',
         badge: 'DJF',
         hint: 'December–February (winter anomalies & ENSO peak)',
       },
       {
         id: 'MAM',
-        label: 'Spring (MAM)',
-        shortLabel: 'Spring MAM',
+        label: 'Spring (March–May)',
+        shortLabel: 'Spring',
         badge: 'MAM',
         hint: 'March–May (spring snowmelt & river runoff)',
       },
       {
         id: 'SON',
-        label: 'Autumn (SON)',
-        shortLabel: 'Autumn SON',
+        label: 'Autumn (September–November)',
+        shortLabel: 'Autumn',
         badge: 'SON',
         hint: 'September–November (autumn transition season)',
       },
@@ -518,43 +518,43 @@ export function getSeasonModesI18n(lang: Language): Array<{
   return [
     {
       id: 'raw',
-      label: 'Усі місяці (Raw)',
-      shortLabel: 'Raw (Усі)',
+      label: 'Увесь рік',
+      shortLabel: 'Увесь рік',
       badge: 'ANN',
       hint: 'Річні середні без фільтрації сезонів',
     },
     {
       id: 'deseasonalized',
-      label: 'Десезоналізований',
-      shortLabel: 'Десезон.',
+      label: 'Без сезонних коливань',
+      shortLabel: 'Без сезонності',
       badge: 'STL',
       hint: 'Видалено річний сезонний цикл (STL)',
     },
     {
       id: 'JJA',
-      label: 'Літо (JJA)',
-      shortLabel: 'Літо JJA',
+      label: 'Літо (червень–серпень)',
+      shortLabel: 'Літо',
       badge: 'JJA',
       hint: 'Червень–Серпень (лісові пожежі та посухи)',
     },
     {
       id: 'DJF',
-      label: 'Зима (DJF)',
-      shortLabel: 'Зима DJF',
+      label: 'Зима (грудень–лютий)',
+      shortLabel: 'Зима',
       badge: 'DJF',
       hint: 'Грудень–Лютий (зимові аномалії та ENSO)',
     },
     {
       id: 'MAM',
-      label: 'Весна (MAM)',
-      shortLabel: 'Весна MAM',
+      label: 'Весна (березень–травень)',
+      shortLabel: 'Весна',
       badge: 'MAM',
       hint: 'Березень–Травень (весняне танення та паводки)',
     },
     {
       id: 'SON',
-      label: 'Осінь (SON)',
-      shortLabel: 'Осінь SON',
+      label: 'Осінь (вересень–листопад)',
+      shortLabel: 'Осінь',
       badge: 'SON',
       hint: 'Вересень–Листопад (осінній сезон)',
     },
@@ -829,28 +829,31 @@ export function formatDipoleVerdictI18n(
     };
   }
   const rStr = `${dipole.pearson_r >= 0 ? '+' : ''}${dipole.pearson_r.toFixed(2)}`;
-  const pStr = dipole.correlation_p_value.toFixed(4);
+  const pStr =
+    dipole.correlation_p_value < 0.0001
+      ? '< 0.0001'
+      : `= ${dipole.correlation_p_value.toFixed(4)}`;
   if (dipole.is_opposite_trend && dipole.pearson_r < -0.3) {
     return {
       badge: 'STRONG REGIONAL DIPOLE',
-      verdict: `Strong regional dipole contrast detected: "${nameA}" and "${nameB}" exhibit opposite trends with negative correlation (r = ${rStr}, p = ${pStr}).`,
+      verdict: `Strong regional dipole contrast detected: "${nameA}" and "${nameB}" exhibit opposite trends with negative correlation (r = ${rStr}, p ${pStr}).`,
     };
   }
   if (dipole.is_opposite_trend) {
     return {
       badge: 'OPPOSITE TRENDS',
-      verdict: `Opposite trend directions detected between "${nameA}" and "${nameB}" (r = ${rStr}, p = ${pStr}).`,
+      verdict: `Opposite trend directions detected between "${nameA}" and "${nameB}" (r = ${rStr}, p ${pStr}).`,
     };
   }
   if (dipole.pearson_r > 0.4) {
     return {
       badge: 'SYNCHRONOUS VARIABILITY',
-      verdict: `Both regions ("${nameA}" and "${nameB}") co-vary synchronously in the same direction (r = ${rStr}, p = ${pStr}).`,
+      verdict: `Both regions ("${nameA}" and "${nameB}") co-vary synchronously in the same direction (r = ${rStr}, p ${pStr}).`,
     };
   }
   return {
     badge: 'INDEPENDENT DYNAMICS',
-    verdict: `Weak or independent regional correlation between "${nameA}" and "${nameB}" (r = ${rStr}, p = ${pStr}).`,
+    verdict: `Weak or independent regional correlation between "${nameA}" and "${nameB}" (r = ${rStr}, p ${pStr}).`,
   };
 }
 

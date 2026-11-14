@@ -491,256 +491,270 @@ export const EarthMap: React.FC<EarthMapProps> = ({
     );
   }, [mode, regionB, roiShape]);
 
+  const [layersOpen, setLayersOpen] = useState<boolean>(false);
   const activeLayerDisplayLabel =
     lang === 'en' ? gibsConfig.labelEn : gibsConfig.label;
 
+  const en = lang === 'en';
+  const floatBtn =
+    'h-9 px-2.5 rounded-md text-sm transition flex items-center gap-1.5';
+  const floatGroup =
+    'flex items-center p-0.5 rounded-md bg-[#0c0c0f]/95 backdrop-blur border border-[#2a2a32] shadow-lg';
+
   return (
-    <div className="w-full h-[640px] min-h-[580px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#0c0c0f] flex flex-col">
-      {/* Row 1: Primary Map Controls (2D/3D, Click Target, Basemap, GIBS Opacity) */}
-      <div className="px-3.5 py-2 bg-ctp-mantle border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2 z-20">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center p-0.5 rounded-lg bg-ctp-crust border border-ctp-surface0 text-xs">
+    <div className="relative isolate w-full h-full min-h-[360px] rounded-md overflow-hidden border border-[#1f1f24] bg-[#070709]">
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Floating controls: projection + active point (top-left) */}
+        <div className="absolute top-3 left-3 z-[1000] flex flex-wrap items-center gap-2">
+          <div className={floatGroup}>
             <button
               type="button"
               onClick={() => {
                 setViewMode('2d');
                 setAutoRotate(false);
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-semibold transition ${
+              aria-pressed={viewMode === '2d'}
+              className={`${floatBtn} ${
                 viewMode === '2d'
-                  ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/55'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  : 'text-zinc-200 hover:text-white'
               }`}
             >
-              <MapIcon className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? '2D Map' : '2D Мапа'}</span>
+              <MapIcon className="w-4 h-4" />
+              <span>{en ? 'Map' : 'Карта'}</span>
             </button>
-
             <button
               type="button"
               onClick={() => setViewMode('3d')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md font-mono font-semibold transition ${
+              aria-pressed={viewMode === '3d'}
+              className={`${floatBtn} ${
                 viewMode === '3d'
-                  ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/55'
-                  : 'text-ctp-subtext0 hover:text-ctp-text'
+                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  : 'text-zinc-200 hover:text-white'
               }`}
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? '3D Globe' : '3D Глобус'}</span>
+              <Globe className="w-4 h-4" />
+              <span>{en ? 'Globe' : 'Глобус'}</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-xs">
-            <Crosshair
-              className="w-3.5 h-3.5 text-ctp-blue shrink-0 animate-spin"
-              style={{ animationDuration: '8s' }}
-            />
-            {mode === 'single' ? (
-              <span className="font-mono font-semibold text-ctp-blue">
-                {lang === 'en' ? 'Click → Point A' : 'Клік → Точка А'}
+          {mode === 'dipole' && (
+            <div className={floatGroup}>
+              <span className="px-2 text-xs text-zinc-300">
+                {en ? 'Click sets' : 'Клік ставить'}
               </span>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => onToggleActiveTarget('A')}
-                  className={`px-2 py-0.5 rounded font-mono font-semibold transition ${
-                    activeTarget === 'A'
-                      ? 'bg-ctp-blue/20 text-ctp-blue border border-ctp-blue/55'
-                      : 'text-ctp-subtext0 hover:text-ctp-text'
-                  }`}
-                >
-                  {lang === 'en' ? 'Point A' : 'Точка А'}
-                </button>
-                <span className="text-ctp-surface2">/</span>
-                <button
-                  type="button"
-                  onClick={() => onToggleActiveTarget('B')}
-                  className={`px-2 py-0.5 rounded font-mono font-semibold transition ${
-                    activeTarget === 'B'
-                      ? 'bg-ctp-peach/20 text-ctp-peach border border-ctp-peach/55'
-                      : 'text-ctp-subtext0 hover:text-ctp-text'
-                  }`}
-                >
-                  {lang === 'en' ? 'Point B' : 'Точка Б'}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center p-0.5 rounded-lg bg-ctp-crust border border-ctp-surface0 text-xs">
-            {(['dark', 'night', 'satellite'] as BasemapTheme[]).map(
-              (themeKey) => (
-                <button
-                  key={themeKey}
-                  type="button"
-                  onClick={() => setBasemapTheme(themeKey)}
-                  className={`px-2 py-1 rounded-md text-[11px] font-mono transition ${
-                    basemapTheme === themeKey
-                      ? 'bg-ctp-surface0 text-ctp-blue border border-ctp-blue/40 font-semibold'
-                      : 'text-ctp-subtext0 hover:text-ctp-text'
-                  }`}
-                >
-                  {lang === 'en'
-                    ? BASEMAP_THEMES[themeKey].labelEn
-                    : BASEMAP_THEMES[themeKey].label}
-                </button>
-              )
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-ctp-crust border border-ctp-surface0 text-xs">
-            <button
-              type="button"
-              onClick={() => setGibsEnabled((prev) => !prev)}
-              className={`flex items-center gap-1.5 font-medium transition ${
-                gibsEnabled ? 'text-ctp-teal' : 'text-ctp-subtext0'
-              }`}
-            >
-              {gibsEnabled ? (
-                <Eye className="w-3.5 h-3.5 text-ctp-teal" />
-              ) : (
-                <EyeOff className="w-3.5 h-3.5 text-ctp-surface2" />
-              )}
-              <span>GIBS</span>
-            </button>
-
-            {gibsEnabled && (
-              <div className="flex items-center gap-1.5 pl-2 border-l border-ctp-surface0">
-                <span className="text-[11px] text-ctp-subtext0 font-mono w-7 text-right">
-                  {Math.round(gibsOpacity * 100)}%
-                </span>
-                <input
-                  type="range"
-                  min={0.15}
-                  max={0.9}
-                  step={0.05}
-                  value={gibsOpacity}
-                  onChange={(e) => setGibsOpacity(parseFloat(e.target.value))}
-                  className="w-14 accent-ctp-blue cursor-pointer h-1 bg-ctp-surface0 rounded-lg"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: NASA Terra/Aqua/OMI Instrument Layer Bar + Date + ROI + Globe Controls */}
-      <div className="px-3.5 py-1.5 bg-ctp-crust/90 border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono z-20">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-ctp-blue shrink-0" />
-            <select
-              value={customLayerKey}
-              onChange={(e) => setCustomLayerKey(e.target.value)}
-              className="bg-ctp-mantle text-ctp-text border border-ctp-surface0 rounded-md px-2 py-1 text-[11px] font-mono focus:outline-none focus:border-ctp-blue"
-            >
-              <option value="AUTO">
-                {lang === 'en'
-                  ? `Auto GIBS Layer (var: ${variable})`
-                  : `Авто-шар GIBS (змінна: ${variable})`}
-              </option>
-              {Object.values(TERRA_GIBS_CATALOG).map((layer) => (
-                <option key={layer.id} value={layer.id}>
-                  {lang === 'en' ? layer.labelEn : layer.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {!gibsConfig.isStaticDate && (
-            <div className="flex items-center gap-1.5 bg-ctp-mantle px-2 py-0.5 rounded-md border border-ctp-surface0">
-              <Calendar className="w-3 h-3 text-ctp-sapphire" />
-              <span className="text-ctp-subtext0">
-                {lang === 'en' ? 'GIBS Date:' : 'Дата GIBS:'}
-              </span>
-              <input
-                type="date"
-                min="2001-01-01"
-                max="2025-02-01"
-                value={gibsDate}
-                onChange={(e) => {
-                  if (e.target.value) setGibsDate(e.target.value);
-                }}
-                className="bg-transparent text-ctp-blue font-mono text-[11px] focus:outline-none cursor-pointer"
-              />
+              <button
+                type="button"
+                onClick={() => onToggleActiveTarget('A')}
+                aria-pressed={activeTarget === 'A'}
+                className={`${floatBtn} ${
+                  activeTarget === 'A'
+                    ? 'bg-sky-500/25 text-sky-300 font-medium'
+                    : 'text-zinc-200 hover:text-white'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                {en ? 'Point A' : 'Точку A'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleActiveTarget('B')}
+                aria-pressed={activeTarget === 'B'}
+                className={`${floatBtn} ${
+                  activeTarget === 'B'
+                    ? 'bg-orange-500/25 text-orange-300 font-medium'
+                    : 'text-zinc-200 hover:text-white'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-orange-400" />
+                {en ? 'Point B' : 'Точку B'}
+              </button>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex items-center gap-1 bg-ctp-mantle px-2 py-0.5 rounded-md border border-ctp-surface0">
-            <Scan className="w-3 h-3 text-ctp-mauve" />
-            <span className="text-ctp-subtext0">
-              {lang === 'en' ? 'ROI Zone:' : 'Зона ROI:'}
-            </span>
-            {(['circle', 'box', 'off'] as ROIShapeMode[]).map((shape) => (
-              <button
-                key={shape}
-                type="button"
-                onClick={() => setRoiShape(shape)}
-                className={`px-1.5 py-0.5 rounded text-[10px] transition ${
-                  roiShape === shape
-                    ? 'bg-ctp-mauve/20 text-ctp-mauve border border-ctp-mauve/45 font-bold'
-                    : 'text-ctp-subtext0 hover:text-ctp-text'
-                }`}
-              >
-                {shape === 'circle'
-                  ? lang === 'en'
-                    ? 'Circle'
-                    : 'Коло'
-                  : shape === 'box'
-                  ? lang === 'en'
-                    ? 'Box'
-                    : 'Квадрат'
-                  : lang === 'en'
-                  ? 'Off'
-                  : 'Вимк'}
-              </button>
-            ))}
+        {/* Floating controls: layers popover (top-right) */}
+        <div className="absolute top-3 right-3 z-[1001] flex flex-col items-end gap-2">
+          <div className={floatGroup}>
+            <button
+              type="button"
+              onClick={() => setLayersOpen((prev) => !prev)}
+              aria-expanded={layersOpen}
+              className={`${floatBtn} ${
+                layersOpen
+                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  : 'text-zinc-200 hover:text-white'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>{en ? 'Layers' : 'Шари'}</span>
+            </button>
           </div>
 
-          {viewMode === '3d' && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowGraticule((prev) => !prev)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md border transition ${
-                  showGraticule
-                    ? 'bg-ctp-blue/15 text-ctp-blue border-ctp-blue/45'
-                    : 'bg-ctp-mantle text-ctp-subtext0 border-ctp-surface0'
-                }`}
-              >
-                <Grid className="w-3 h-3" />
-                <span>{lang === 'en' ? 'Grid' : 'Сітка'}</span>
-              </button>
+          {layersOpen && (
+            <div className="w-80 max-w-[calc(100vw-2rem)] rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-3 space-y-3 text-sm text-zinc-100">
+              <div className="space-y-1.5">
+                <div className="text-xs text-zinc-400">
+                  {en ? 'Base map' : 'Підкладка'}
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['dark', 'night', 'satellite'] as BasemapTheme[]).map(
+                    (themeKey) => (
+                      <button
+                        key={themeKey}
+                        type="button"
+                        onClick={() => setBasemapTheme(themeKey)}
+                        className={`h-8 rounded-md text-sm border transition ${
+                          basemapTheme === themeKey
+                            ? 'bg-zinc-800 text-zinc-50 border-zinc-500 font-medium'
+                            : 'text-zinc-300 border-[#2a2a32] hover:text-white'
+                        }`}
+                      >
+                        {en
+                          ? BASEMAP_THEMES[themeKey].labelEn
+                          : BASEMAP_THEMES[themeKey].label}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => setAutoRotate((prev) => !prev)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md border transition ${
-                  autoRotate
-                    ? 'bg-ctp-green/20 text-ctp-green border-ctp-green/50'
-                    : 'bg-ctp-mantle text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text'
-                }`}
-              >
-                <RotateCw
-                  className={`w-3 h-3 ${autoRotate ? 'animate-spin' : ''}`}
-                />
-                <span>{lang === 'en' ? 'Rotate [A]' : 'Обертання [A]'}</span>
-              </button>
-            </>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gibsEnabled}
+                    onChange={(e) => setGibsEnabled(e.target.checked)}
+                    className="w-4 h-4 accent-sky-500"
+                  />
+                  <span>
+                    {en
+                      ? 'Show NASA satellite layer'
+                      : 'Показувати супутниковий шар NASA'}
+                  </span>
+                </label>
+
+                {gibsEnabled && (
+                  <>
+                    <select
+                      value={customLayerKey}
+                      onChange={(e) => setCustomLayerKey(e.target.value)}
+                      className="h-9 w-full bg-[#09090b] text-zinc-100 border border-[#2a2a32] rounded-md px-2 text-sm focus:outline-none focus:border-sky-500"
+                    >
+                      <option value="AUTO">
+                        {en
+                          ? 'Automatic (matches the variable)'
+                          : 'Автоматично (за показником)'}
+                      </option>
+                      {Object.values(TERRA_GIBS_CATALOG).map((layer) => (
+                        <option key={layer.id} value={layer.id}>
+                          {en ? layer.labelEn : layer.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <label className="flex items-center gap-2 text-xs text-zinc-400">
+                      <span className="w-28">
+                        {en ? 'Opacity' : 'Прозорість'}{' '}
+                        {Math.round(gibsOpacity * 100)}%
+                      </span>
+                      <input
+                        type="range"
+                        min={0.15}
+                        max={0.9}
+                        step={0.05}
+                        value={gibsOpacity}
+                        onChange={(e) =>
+                          setGibsOpacity(parseFloat(e.target.value))
+                        }
+                        className="flex-1 accent-sky-500 cursor-pointer"
+                      />
+                    </label>
+
+                    {!gibsConfig.isStaticDate && (
+                      <label className="flex items-center gap-2 text-xs text-zinc-400">
+                        <span className="w-28">
+                          {en ? 'Image date' : 'Дата знімка'}
+                        </span>
+                        <input
+                          type="date"
+                          min="2001-01-01"
+                          max="2025-02-01"
+                          value={gibsDate}
+                          onChange={(e) => {
+                            if (e.target.value) setGibsDate(e.target.value);
+                          }}
+                          className="flex-1 h-8 bg-[#09090b] border border-[#2a2a32] rounded-md px-2 text-sm text-zinc-100 focus:outline-none"
+                        />
+                      </label>
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="text-xs text-zinc-400">
+                  {en
+                    ? 'Area outline around the point'
+                    : 'Контур області навколо точки'}
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['circle', 'box', 'off'] as ROIShapeMode[]).map((shape) => (
+                    <button
+                      key={shape}
+                      type="button"
+                      onClick={() => setRoiShape(shape)}
+                      className={`h-8 rounded-md text-sm border transition ${
+                        roiShape === shape
+                          ? 'bg-zinc-800 text-zinc-50 border-zinc-500 font-medium'
+                          : 'text-zinc-300 border-[#2a2a32] hover:text-white'
+                      }`}
+                    >
+                      {shape === 'circle'
+                        ? en
+                          ? 'Circle'
+                          : 'Коло'
+                        : shape === 'box'
+                        ? en
+                          ? 'Square'
+                          : 'Квадрат'
+                        : en
+                        ? 'Hidden'
+                        : 'Сховати'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {viewMode === '3d' && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showGraticule}
+                      onChange={(e) => setShowGraticule(e.target.checked)}
+                      className="w-4 h-4 accent-sky-500"
+                    />
+                    <span>{en ? 'Coordinate grid' : 'Сітка координат'}</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoRotate}
+                      onChange={(e) => setAutoRotate(e.target.checked)}
+                      className="w-4 h-4 accent-sky-500"
+                    />
+                    <span>{en ? 'Rotate the globe' : 'Обертати глобус'}</span>
+                  </label>
+                </div>
+              )}
+            </div>
           )}
         </div>
-      </div>
 
-      {/* Center Canvas: 2D Map or 3D WebGL Globe */}
-      <div className="relative isolate z-0 flex-1 w-full min-h-[460px] bg-[#070709] overflow-hidden">
         {gibsEnabled && gibsConfig.colorbar && (
           <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust/90 backdrop-blur-md border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
-            <div className="flex items-center justify-between text-[10px] font-mono text-ctp-text mb-1">
+            <div className="flex items-center justify-between text-xs font-mono text-ctp-text mb-1">
               <span className="font-semibold truncate max-w-[150px]">
                 {activeLayerDisplayLabel.split(':')[1] || activeLayerDisplayLabel}
               </span>
@@ -754,7 +768,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               className="w-full h-2 rounded-full border border-ctp-surface0"
               style={{ background: gibsConfig.colorbar.gradientCss }}
             />
-            <div className="flex items-center justify-between text-[9px] font-mono text-ctp-subtext0 mt-1">
+            <div className="flex items-center justify-between text-xs font-mono text-ctp-subtext0 mt-1">
               <span>
                 {lang === 'en' && gibsConfig.colorbar.minLabelEn
                   ? gibsConfig.colorbar.minLabelEn
@@ -800,7 +814,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
             maxZoom={9}
             zoomControl={false}
             scrollWheelZoom={true}
-            style={{ width: '100%', height: '100%', minHeight: '460px' }}
+            style={{ width: '100%', height: '100%' }}
             className="w-full h-full"
             worldCopyJump={true}
           >
@@ -858,7 +872,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
 
             <Marker position={[regionA.lat, regionA.lon]} icon={iconA}>
               <Popup>
-                <div className="text-xs space-y-1 font-sans">
+                <div className="text-sm space-y-1 font-sans">
                   <div className="font-bold text-ctp-blue">
                     REGION A (Primary Target)
                   </div>
@@ -888,7 +902,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
 
                 <Marker position={[regionB.lat, regionB.lon]} icon={iconB}>
                   <Popup>
-                    <div className="text-xs space-y-1 font-sans">
+                    <div className="text-sm space-y-1 font-sans">
                       <div className="font-bold text-ctp-peach">
                         REGION B (Dipole Counterpart)
                       </div>
@@ -921,45 +935,6 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         )}
       </div>
 
-      {/* Bottom Status Bar */}
-      <div className="px-3.5 py-2 bg-ctp-mantle border-t border-ctp-surface0 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono z-20">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-ctp-blue">
-            <Radio className="w-3.5 h-3.5 text-ctp-blue shrink-0" />
-            <span className="font-bold">A:</span>
-            <span className="text-ctp-text truncate max-w-[175px]">
-              {regionA.name}
-            </span>
-            <span className="text-ctp-blue/90">
-              [{regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}°]
-            </span>
-          </div>
-
-          {mode === 'dipole' && regionB && (
-            <div className="flex items-center gap-1.5 text-ctp-peach">
-              <Navigation className="w-3.5 h-3.5 text-ctp-peach shrink-0" />
-              <span className="font-bold">B:</span>
-              <span className="text-ctp-text truncate max-w-[175px]">
-                {regionB.name}
-              </span>
-              <span className="text-ctp-peach/90">
-                [{regionB.lat.toFixed(2)}°, {regionB.lon.toFixed(2)}°]
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="text-ctp-subtext0 truncate">
-          NASA GIBS:{' '}
-          <span className="text-ctp-teal">
-            {gibsEnabled
-              ? gibsConfig.layerName
-              : lang === 'en'
-              ? 'Disabled'
-              : 'Вимкнено'}
-          </span>
-        </div>
-      </div>
     </div>
   );
 };

@@ -105,7 +105,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('timeseries')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'timeseries'
                 ? 'bg-zinc-100 text-zinc-950'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -118,7 +118,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('stripes')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'stripes'
                 ? 'bg-zinc-100 text-zinc-950'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -131,7 +131,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('decomposition')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'decomposition'
                 ? 'bg-zinc-100 text-zinc-950'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -144,15 +144,15 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
 
         {/* Contextual Switcher for Dipole Comparison or Decomposition Region */}
         {activeTab === 'timeseries' && hasRegionB && (
-          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-xs">
-            <SlidersHorizontal className="w-3 h-3 text-zinc-500 ml-2 mr-1" />
+          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-sm">
+            <SlidersHorizontal className="w-3 h-3 text-zinc-400 ml-2 mr-1" />
             <button
               type="button"
               onClick={() => setDipoleView('anomalies')}
-              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 dipoleView === 'anomalies'
                   ? 'bg-zinc-800 text-zinc-100 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
               {t.chartAnomaliesToggle}
@@ -160,10 +160,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             <button
               type="button"
               onClick={() => setDipoleView('absolute')}
-              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 dipoleView === 'absolute'
                   ? 'bg-zinc-800 text-zinc-100 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
               {t.chartAbsoluteToggle} ({variableMeta.unit})
@@ -172,14 +172,14 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         )}
 
         {activeTab === 'decomposition' && hasRegionB && (
-          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-xs">
+          <div className="inline-flex items-center gap-1 bg-[#121216] p-0.5 rounded border border-[#1f1f24] text-sm">
             <button
               type="button"
               onClick={() => setDecompRegion('A')}
-              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 decompRegion === 'A'
                   ? 'bg-sky-500/15 text-sky-400 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
               {t.chartRegionABtn}: {regionA.location.name}
@@ -187,10 +187,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             <button
               type="button"
               onClick={() => setDecompRegion('B')}
-              className={`px-2 py-1 rounded font-mono text-[11px] transition ${
+              className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 decompRegion === 'B'
                   ? 'bg-orange-500/15 text-orange-400 font-medium'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
               {t.chartRegionBBtn}: {regionB?.location.name}
@@ -204,7 +204,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         {activeTab === 'timeseries' && (
           <div className="w-full space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-              <h4 className="text-xs font-mono font-medium text-zinc-200">
+              <h4 className="text-sm font-mono font-medium text-zinc-200">
                 {useAnomalyAxis
                   ? `${t.chartTitleDivergence} — ${
                       lang === 'en'
@@ -217,15 +217,15 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                         : variableMeta.name_ua || variableMeta.name
                     } (${variableMeta.unit})`}
               </h4>
-              <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-zinc-500">
+              <div className="flex flex-wrap items-center gap-2 text-[13px] font-mono text-zinc-400">
                 {regimeShiftA && (
                   <button
                     type="button"
                     onClick={() => setShowRegimeShift((prev) => !prev)}
-                    className={`px-2 py-0.5 rounded border text-[10px] transition ${
+                    className={`px-2 py-0.5 rounded border text-xs transition ${
                       showRegimeShift
                         ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                        : 'bg-[#09090b] text-zinc-500 border-[#1f1f24] hover:text-zinc-300'
+                        : 'bg-[#09090b] text-zinc-400 border-[#1f1f24] hover:text-zinc-300'
                     }`}
                   >
                     {lang === 'en' ? 'Pettitt Shift' : 'Злам режиму'}:{' '}
@@ -347,17 +347,17 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               ]}
               layout={{
                 autosize: true,
-                height: 410,
+                height: 360,
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: '#09090b',
                 font: {
-                  family: 'JetBrains Mono, Inter, sans-serif',
+                  family: 'Inter, sans-serif',
                   color: '#a1a1aa',
-                  size: 11,
+                  size: 13,
                 },
                 margin: { l: 58, r: 20, t: 48, b: 44 },
                 xaxis: {
-                  title: { text: `Year (${seasonMode})` },
+                  title: { text: lang === 'en' ? 'Year' : 'Рік' },
                   gridcolor: '#18181c',
                   zerolinecolor: '#27272a',
                 },
@@ -412,7 +412,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                           xanchor: 'left',
                           xshift: 5,
                           font: {
-                            size: 10,
+                            size: 12,
                             color: regimeShiftA.is_significant
                               ? '#fbbf24'
                               : '#a1a1aa',
@@ -439,10 +439,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
           <div className="space-y-5">
             <div>
               <div className="flex items-center justify-between mb-1.5 px-1">
-                <span className="text-xs font-mono font-medium text-sky-400">
+                <span className="text-sm font-mono font-medium text-sky-400">
                   CLIMATE STRIPES — REGION A: {regionA.location.name}
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="text-[13px] font-mono text-zinc-400">
                   Baseline: {regionA.statistics.baseline_mean?.toFixed(3)}{' '}
                   {variableMeta.unit}
                 </span>
@@ -476,7 +476,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   font: {
                     family: 'JetBrains Mono, monospace',
                     color: '#a1a1aa',
-                    size: 11,
+                    size: 13,
                   },
                   margin: { l: 90, r: 60, t: 8, b: 30 },
                   xaxis: { gridcolor: 'transparent' },
@@ -490,10 +490,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             {hasRegionB && regionB && (
               <div>
                 <div className="flex items-center justify-between mb-1.5 px-1">
-                  <span className="text-xs font-mono font-medium text-orange-400">
+                  <span className="text-sm font-mono font-medium text-orange-400">
                     CLIMATE STRIPES — REGION B: {regionB.location.name}
                   </span>
-                  <span className="text-[11px] font-mono text-zinc-500">
+                  <span className="text-[13px] font-mono text-zinc-400">
                     Baseline: {regionB.statistics.baseline_mean?.toFixed(3)}{' '}
                     {variableMeta.unit}
                   </span>
@@ -527,7 +527,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     font: {
                       family: 'JetBrains Mono, monospace',
                       color: '#a1a1aa',
-                      size: 11,
+                      size: 13,
                     },
                     margin: { l: 90, r: 60, t: 8, b: 30 },
                     xaxis: { gridcolor: 'transparent' },
@@ -540,7 +540,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             )}
 
             <div className="space-y-1.5">
-              <div className="px-1 text-xs font-mono font-medium text-zinc-300">
+              <div className="px-1 text-sm font-mono font-medium text-zinc-300">
                 Annual Anomalies vs. Baseline ({variableMeta.unit})
               </div>
               <Plot
@@ -583,7 +583,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   font: {
                     family: 'JetBrains Mono, monospace',
                     color: '#a1a1aa',
-                    size: 11,
+                    size: 13,
                   },
                   margin: { l: 54, r: 20, t: 36, b: 36 },
                   xaxis: { gridcolor: '#18181c' },
@@ -612,7 +612,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
         {activeTab === 'decomposition' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-2">
-              <div className="text-xs font-mono font-medium text-zinc-300 px-1">
+              <div className="text-sm font-mono font-medium text-zinc-300 px-1">
                 STL Trend &amp; Residuals — {targetDecompAnalysis.location.name}
               </div>
               <Plot
@@ -654,7 +654,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   font: {
                     family: 'JetBrains Mono, monospace',
                     color: '#a1a1aa',
-                    size: 11,
+                    size: 13,
                   },
                   margin: { l: 50, r: 50, t: 38, b: 38 },
                   xaxis: {
@@ -688,7 +688,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             </div>
 
             <div className="rounded bg-[#09090b] border border-[#1f1f24] p-3 space-y-2">
-              <div className="text-xs font-mono font-medium text-zinc-300 px-1">
+              <div className="text-sm font-mono font-medium text-zinc-300 px-1">
                 12-Month Seasonal Harmonic Profile —{' '}
                 {targetDecompAnalysis.location.name}
               </div>
@@ -761,7 +761,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   font: {
                     family: 'JetBrains Mono, monospace',
                     color: '#a1a1aa',
-                    size: 11,
+                    size: 13,
                   },
                   margin: { l: 50, r: 20, t: 38, b: 38 },
                   xaxis: {

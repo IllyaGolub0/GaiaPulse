@@ -62,7 +62,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
       <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#1f1f24]">
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium border ${
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[13px] font-mono font-medium border ${
               isRegionA
                 ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
                 : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
@@ -79,7 +79,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             <h3 className="text-sm font-semibold text-zinc-100 truncate">
               {location.name}
             </h3>
-            <p className="text-[11px] font-mono text-zinc-500 truncate">
+            <p className="text-[13px] font-mono text-zinc-400 truncate">
               {location.lat.toFixed(2)}°N, {location.lon.toFixed(2)}°E
               {statistics.season_mode ? ` · ${statistics.season_mode}` : ''}
               {data_source ? ` · ${data_source}` : ''}
@@ -89,7 +89,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
         {/* Minimalist Status Indicator */}
         <div
-          className={`inline-flex items-center gap-2 px-2.5 py-1 rounded text-[11px] font-mono border ${
+          className={`inline-flex items-center gap-2 px-2.5 py-1 rounded text-[13px] font-mono border ${
             statistics.is_significant
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
               : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
@@ -113,7 +113,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         {/* Col 1: Sen's Slope (Hero Metric) */}
         <div className="col-span-2 sm:col-span-2 p-3.5 flex items-center justify-between gap-2">
           <div>
-            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+            <div className="text-xs font-mono text-zinc-400">
               Sen&apos;s Slope / {t.verdictPerDecade}
             </div>
             <div className="flex items-baseline gap-1.5 mt-1">
@@ -131,21 +131,21 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                 {slopeSign}
                 {slopeDecade.toFixed(3)}
               </span>
-              <span className="text-[11px] font-mono text-zinc-500">
+              <span className="text-[13px] font-mono text-zinc-400">
                 {variableMeta.unit} ({yearSign}
                 {slopeYear.toFixed(4)}/{t.verdictPerYear})
               </span>
             </div>
             {statistics.slope_ci_lower_decade !== undefined &&
               statistics.slope_ci_upper_decade !== undefined && (
-                <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+                <div className="text-xs font-mono text-zinc-400 mt-0.5">
                   95% CI: [{statistics.slope_ci_lower_decade.toFixed(3)},{' '}
                   {statistics.slope_ci_upper_decade.toFixed(3)}]
                 </div>
               )}
           </div>
 
-          <div className="text-zinc-500 pr-1">
+          <div className="text-zinc-400 pr-1">
             {statistics.mk_trend === 'increasing' && (
               <TrendingUp className="w-4 h-4 text-sky-400" />
             )}
@@ -154,14 +154,14 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             )}
             {statistics.mk_trend !== 'increasing' &&
               statistics.mk_trend !== 'decreasing' && (
-                <Minus className="w-4 h-4 text-zinc-600" />
+                <Minus className="w-4 h-4 text-zinc-400" />
               )}
           </div>
         </div>
 
         {/* Col 2: Mann-Kendall Z & Student t */}
         <div className="p-3.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          <div className="text-xs font-mono text-zinc-400">
             MK Z / t-stat
           </div>
           <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
@@ -170,14 +170,14 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
               : statistics.z_score.toFixed(2)}
             σ · t={tStat > 0 ? `+${tStat.toFixed(2)}` : tStat.toFixed(2)}
           </div>
-          <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+          <div className="text-xs font-mono text-zinc-400 mt-0.5">
             p = {formattedTPValue}
           </div>
         </div>
 
         {/* Col 3: Signal to Noise */}
         <div className="p-3.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          <div className="text-xs font-mono text-zinc-400">
             SNR
           </div>
           <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
@@ -199,14 +199,14 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
         {/* Col 4: Total Shift */}
         <div className="p-3.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+          <div className="text-xs font-mono text-zinc-400">
             {t.verdictTotalDelta}
           </div>
           <div className="text-sm font-mono font-semibold text-zinc-100 mt-1">
             {absDeltaSign}
             {statistics.total_change_abs.toFixed(2)} {variableMeta.unit}
           </div>
-          <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+          <div className="text-xs font-mono text-zinc-400 mt-0.5">
             R² ={' '}
             {statistics.ols_r_squared !== undefined
               ? statistics.ols_r_squared.toFixed(2)
@@ -216,10 +216,10 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
       </div>
 
       {/* Bottom Editorial Summary, Regime Shift, Autocorrelation & Seasonal Matrix */}
-      <div className="p-4 space-y-2.5 text-xs">
+      <div className="p-4 space-y-2.5 text-sm">
         {tts && (
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded bg-[#121216] border border-[#1f1f24] font-mono text-[11px]">
-            <span className="text-zinc-400 uppercase tracking-wider text-[10px]">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded bg-[#121216] border border-[#1f1f24] font-mono text-[13px]">
+            <span className="text-zinc-400 text-xs">
               Time-to-Significance (p &lt; 0.05)
             </span>
             <span
@@ -240,18 +240,18 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
 
         {/* Pettitt Change-Point (Regime Shift) & Hamed-Rao AR(1) Diagnostics */}
         {(statistics.regime_shift || statistics.autocorrelation) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[13px]">
             {statistics.regime_shift && (
               <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[9px] uppercase tracking-wider text-zinc-500">
+                  <div className="text-xs text-zinc-400">
                     {lang === 'en'
                       ? 'Pettitt Regime Shift'
                       : 'Точка зламу (Pettitt Test)'}
                   </div>
                   <div className="text-zinc-200 font-medium mt-0.5">
                     {statistics.regime_shift.change_point_year}{' '}
-                    <span className="text-zinc-500">
+                    <span className="text-zinc-400">
                       (Δ{' '}
                       {statistics.regime_shift.step_delta >= 0 ? '+' : ''}
                       {statistics.regime_shift.step_delta.toFixed(3)}{' '}
@@ -260,10 +260,10 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                   </div>
                 </div>
                 <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                  className={`px-1.5 py-0.5 rounded text-xs border ${
                     statistics.regime_shift.is_significant
                       ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
-                      : 'bg-zinc-900 text-zinc-500 border-zinc-800'
+                      : 'bg-zinc-900 text-zinc-400 border-zinc-800'
                   }`}
                 >
                   p ={' '}
@@ -277,7 +277,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
             {statistics.autocorrelation && (
               <div className="px-3 py-2 rounded bg-[#09090b] border border-[#1f1f24] flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[9px] uppercase tracking-wider text-zinc-500">
+                  <div className="text-xs text-zinc-400">
                     {lang === 'en'
                       ? 'AR(1) & Hamed-Rao MK'
                       : 'Автокореляція AR(1) · Hamed-Rao'}
@@ -289,7 +289,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                   </div>
                 </div>
                 <span
-                  className={`px-1.5 py-0.5 rounded text-[10px] border ${
+                  className={`px-1.5 py-0.5 rounded text-xs border ${
                     statistics.autocorrelation.is_significant_adjusted
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                       : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
@@ -308,15 +308,15 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         {/* Multi-Season Fingerprint Heatmap Matrix (DJF, MAM, JJA, SON, Deseas, Raw) */}
         {statistics.seasonal_matrix && statistics.seasonal_matrix.length > 0 && (
           <div className="rounded bg-[#09090b] border border-[#1f1f24] p-2.5 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-              <span className="uppercase tracking-wider">
+            <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
+              <span className="tracking-wider">
                 {lang === 'en'
                   ? 'Seasonal Fingerprint Matrix (Click to switch season)'
                   : 'Матриця сезонного підпису (клік — перемкнути сезон)'}
               </span>
               <span>Slope/dec · p-val</span>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 font-mono text-[10px]">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 font-mono text-xs">
               {statistics.seasonal_matrix.map((row) => {
                 const isCurrent =
                   (statistics.season_mode || 'raw') === row.season_mode;
@@ -359,7 +359,7 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                       {row.change_per_decade >= 0 ? '+' : ''}
                       {row.change_per_decade.toFixed(3)}
                     </div>
-                    <div className="text-[9px] text-zinc-500">
+                    <div className="text-xs text-zinc-400">
                       p=
                       {row.p_value < 0.001
                         ? '<.001'
@@ -373,10 +373,10 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
         )}
 
         <div className="border-l-2 border-zinc-700 pl-3 py-0.5">
-          <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-500 mb-0.5">
+          <div className="text-xs font-mono text-zinc-400 mb-0.5">
             {t.verdictSummaryTitle}
           </div>
-          <p className="text-xs text-zinc-300 leading-relaxed">
+          <p className="text-sm text-zinc-300 leading-relaxed">
             {lang === 'en'
               ? `[${statistics.season_mode || 'Annual'}] In ${location.name}, ${
                   variableMeta.name
@@ -420,22 +420,22 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
     <div className="rounded-md p-4 bg-[#0c0c0f] border border-[#1f1f24] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-zinc-800 text-zinc-200 border border-zinc-700">
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[13px] font-mono font-medium bg-zinc-800 text-zinc-200 border border-zinc-700">
             <GitCompareArrows className="w-3.5 h-3.5 text-zinc-400" />
             {dipoleI18n.badge}
           </span>
-          <span className="text-xs text-zinc-500 font-mono">
+          <span className="text-sm text-zinc-400 font-mono">
             {regionAName} ↔ {regionBName}
           </span>
         </div>
-        <p className="text-xs text-zinc-300 leading-relaxed">
+        <p className="text-sm text-zinc-300 leading-relaxed">
           {dipoleI18n.verdict}
         </p>
       </div>
 
       <div className="flex items-center divide-x divide-[#1f1f24] border border-[#1f1f24] rounded bg-[#09090b] shrink-0 font-mono">
         <div className="px-3.5 py-2 text-center">
-          <div className="text-[10px] uppercase text-zinc-500">
+          <div className="text-xs text-zinc-400">
             {t.pearsonLabel}
           </div>
           <div className="text-sm font-semibold text-zinc-100 mt-0.5">
@@ -443,7 +443,7 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
               ? `+${dipole.pearson_r.toFixed(2)}`
               : dipole.pearson_r.toFixed(2)}
           </div>
-          <div className="text-[10px] text-zinc-500">
+          <div className="text-xs text-zinc-400">
             p ={' '}
             {dipole.correlation_p_value < 0.0001
               ? '< 0.0001'
@@ -452,13 +452,13 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
         </div>
 
         <div className="px-3.5 py-2 text-center">
-          <div className="text-[10px] uppercase text-zinc-500">
+          <div className="text-xs text-zinc-400">
             {t.trendContrastLabel}
           </div>
-          <div className="text-xs font-semibold text-zinc-200 mt-1">
+          <div className="text-sm font-semibold text-zinc-200 mt-1">
             {dipole.is_opposite_trend ? t.contrastOpposite : t.contrastSync}
           </div>
-          <div className="text-[10px] text-zinc-500 mt-0.5">
+          <div className="text-xs text-zinc-400 mt-0.5">
             ρ ={' '}
             {dipole.spearman_r !== undefined
               ? dipole.spearman_r.toFixed(2)
