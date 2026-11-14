@@ -476,6 +476,7 @@ interface CsvImporterModalProps {
   isOpen: boolean;
   loading: boolean;
   defaultSeasonMode: SeasonMode;
+  isModal?: boolean;
   onClose: () => void;
   onRunCsvAnalysis: (request: AnalyzeCsvRequest) => Promise<void>;
 }
@@ -484,6 +485,7 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
   isOpen,
   loading,
   defaultSeasonMode,
+  isModal = true,
   onClose,
   onRunCsvAnalysis,
 }) => {
@@ -561,25 +563,31 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[2100] flex items-center justify-center p-3 sm:p-6 bg-ctp-crust/80 backdrop-blur-md">
-      <div className="w-full max-w-4xl max-h-[92vh] rounded-3xl bg-ctp-base border border-ctp-surface1 shadow-[0_25px_70px_rgba(17,17,27,0.95)] flex flex-col overflow-hidden">
-        {/* Modal Header */}
-        <div className="px-5 py-4 bg-ctp-mantle border-b border-ctp-surface0 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-ctp-green/15 border border-ctp-green/45 flex items-center justify-center text-ctp-green">
-              <FileSpreadsheet className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
-                Import CSV from NASA Giovanni / AppEEARS / GES DISC / NOAA CDO
-              </h2>
-              <p className="text-xs text-ctp-subtext0">
-                Завантажте будь-який CSV-файл із колонками дати (Date / Year / time) та значення (Value / data) для автоматичної десезоналізації, t-тесту, Манна-Кендалла, 95% CI та Time-to-Significance
-              </p>
-            </div>
+  const cardContent = (
+    <div
+      className={`w-full ${
+        isModal
+          ? 'max-w-4xl max-h-[92vh] rounded-3xl bg-ctp-base border border-ctp-surface1 shadow-[0_25px_70px_rgba(17,17,27,0.95)]'
+          : 'rounded-2xl bg-ctp-mantle border border-ctp-surface0 shadow-xl'
+      } flex flex-col overflow-hidden`}
+    >
+      {/* Header */}
+      <div className="px-5 py-4 bg-ctp-mantle border-b border-ctp-surface0 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-ctp-green/15 border border-ctp-green/45 flex items-center justify-center text-ctp-green">
+            <FileSpreadsheet className="w-5 h-5" />
           </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
+              Import CSV from NASA Giovanni / AppEEARS / GES DISC / NOAA CDO
+            </h2>
+            <p className="text-xs text-ctp-subtext0">
+              Завантажте будь-який CSV-файл із колонками дати (Date / Year / time) та значення (Value / data) для автоматичної десезоналізації, t-тесту, Манна-Кендалла, 95% CI та Time-to-Significance
+            </p>
+          </div>
+        </div>
 
+        {isModal && (
           <button
             type="button"
             onClick={onClose}
@@ -587,162 +595,164 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
           >
             <X className="w-4 h-4" />
           </button>
+        )}
+      </div>
+
+      {/* Body */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex-1 overflow-y-auto p-5 space-y-4"
+      >
+        {/* Quick Sample Templates from Official Portals */}
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0">
+            Швидкі еталонні CSV-шаблони з офіційних порталів (1-клік тест):
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {SAMPLE_CSV_TEMPLATES.map((tpl) => (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => {
+                  setDatasetName(tpl.datasetName);
+                  setVariableCode(tpl.variableCode);
+                  setUnit(tpl.unit);
+                  setSeasonMode(tpl.seasonMode);
+                  setLat(tpl.lat);
+                  setLon(tpl.lon);
+                  setCsvText(tpl.csvText);
+                  setUploadedFileName(`${tpl.id}.csv`);
+                  setLocalError(null);
+                }}
+                className="p-2.5 rounded-xl bg-ctp-crust hover:bg-ctp-surface0 border border-ctp-surface0 hover:border-ctp-blue/50 text-left transition space-y-1"
+              >
+                <div className="flex items-center justify-between text-[10px] font-mono text-ctp-blue font-bold">
+                  <span>{tpl.sourcePortal}</span>
+                  <span>{tpl.variableCode}</span>
+                </div>
+                <div className="text-xs font-semibold text-ctp-text truncate">
+                  {tpl.label}
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Modal Body */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-5 space-y-4"
+        {/* Drag-and-Drop CSV Dropzone */}
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className="border-2 border-dashed border-ctp-surface1 hover:border-ctp-green/60 rounded-2xl p-5 bg-ctp-crust/70 hover:bg-ctp-mantle transition cursor-pointer flex flex-col items-center justify-center gap-2 text-center"
         >
-          {/* Quick Sample Templates from Official Portals */}
-          <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono uppercase tracking-wider text-ctp-subtext0">
-              Швидкі еталонні CSV-шаблони з офіційних порталів (1-клік тест):
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {SAMPLE_CSV_TEMPLATES.map((tpl) => (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => {
-                    setDatasetName(tpl.datasetName);
-                    setVariableCode(tpl.variableCode);
-                    setUnit(tpl.unit);
-                    setSeasonMode(tpl.seasonMode);
-                    setLat(tpl.lat);
-                    setLon(tpl.lon);
-                    setCsvText(tpl.csvText);
-                    setUploadedFileName(`${tpl.id}.csv`);
-                    setLocalError(null);
-                  }}
-                  className="p-2.5 rounded-xl bg-ctp-crust hover:bg-ctp-surface0 border border-ctp-surface0 hover:border-ctp-blue/50 text-left transition space-y-1"
-                >
-                  <div className="flex items-center justify-between text-[10px] font-mono text-ctp-blue font-bold">
-                    <span>{tpl.sourcePortal}</span>
-                    <span>{tpl.variableCode}</span>
-                  </div>
-                  <div className="text-xs font-semibold text-ctp-text truncate">
-                    {tpl.label}
-                  </div>
-                </button>
-              ))}
-            </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt,.tsv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file);
+            }}
+          />
+          <Upload className="w-6 h-6 text-ctp-green" />
+          <div className="text-xs sm:text-sm font-bold text-ctp-text">
+            Перетягніть сюди CSV-файл із Giovanni / AppEEARS / NOAA CDO або натисніть для вибору
           </div>
-
-          {/* Drag-and-Drop CSV Dropzone */}
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-ctp-surface1 hover:border-ctp-green/60 rounded-2xl p-5 bg-ctp-crust/70 hover:bg-ctp-mantle transition cursor-pointer flex flex-col items-center justify-center gap-2 text-center"
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.txt,.tsv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileUpload(file);
-              }}
-            />
-            <Upload className="w-6 h-6 text-ctp-green" />
-            <div className="text-xs sm:text-sm font-bold text-ctp-text">
-              Перетягніть сюди CSV-файл із Giovanni / AppEEARS / NOAA CDO або натисніть для вибору
-            </div>
-            <div className="text-[11px] font-mono text-ctp-subtext0">
-              Підтримуються колонки: Date, Year, time, timestamp + Value, data, mean (коментарі # ігноруються автоматично)
-            </div>
-            {uploadedFileName && (
-              <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 text-ctp-green border border-ctp-green/40 text-xs font-mono font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Активний файл: {uploadedFileName}</span>
-              </div>
-            )}
+          <div className="text-[11px] font-mono text-ctp-subtext0">
+            Підтримуються колонки: Date, Year, time, timestamp + Value, data, mean (коментарі # ігноруються автоматично)
           </div>
-
-          {/* Metadata Configuration Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-                Назва датасету / ряду
-              </label>
-              <input
-                type="text"
-                value={datasetName}
-                onChange={(e) => setDatasetName(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs text-ctp-text focus:outline-none focus:border-ctp-blue"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-                Код змінної (NASA / CSA)
-              </label>
-              <input
-                type="text"
-                value={variableCode}
-                onChange={(e) => setVariableCode(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-                Одиниця вимірювання
-              </label>
-              <input
-                type="text"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
-                Сезонний фільтр (Season Mode)
-              </label>
-              <select
-                value={seasonMode}
-                onChange={(e) => setSeasonMode(e.target.value as SeasonMode)}
-                className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
-              >
-                {SEASON_MODE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.shortLabel}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Raw CSV Preview / Editor */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] font-mono uppercase text-ctp-subtext0">
-                Вміст CSV (Date / Year / time, Value / data):
-              </label>
-              <span className="text-[10px] font-mono text-ctp-subtext0">
-                {csvText.split(/\r?\n/).filter((l) => l.trim()).length} рядків
-              </span>
-            </div>
-            <textarea
-              rows={7}
-              value={csvText}
-              onChange={(e) => setCsvText(e.target.value)}
-              className="w-full p-3 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
-              placeholder="Date,Value&#10;2002-07,0.24&#10;2003-07,0.28..."
-            />
-          </div>
-
-          {localError && (
-            <div className="p-3 rounded-xl bg-ctp-red/15 border border-ctp-red/50 text-xs font-mono text-ctp-red">
-              {localError}
+          {uploadedFileName && (
+            <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ctp-green/15 text-ctp-green border border-ctp-green/40 text-xs font-mono font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Активний файл: {uploadedFileName}</span>
             </div>
           )}
+        </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-ctp-surface0">
+        {/* Metadata Configuration Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+              Назва датасету / ряду
+            </label>
+            <input
+              type="text"
+              value={datasetName}
+              onChange={(e) => setDatasetName(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs text-ctp-text focus:outline-none focus:border-ctp-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+              Код змінної (NASA / CSA)
+            </label>
+            <input
+              type="text"
+              value={variableCode}
+              onChange={(e) => setVariableCode(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+              Одиниця вимірювання
+            </label>
+            <input
+              type="text"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-mono uppercase text-ctp-subtext0 mb-1">
+              Сезонний фільтр (Season Mode)
+            </label>
+            <select
+              value={seasonMode}
+              onChange={(e) => setSeasonMode(e.target.value as SeasonMode)}
+              className="w-full px-3 py-1.5 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+            >
+              {SEASON_MODE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.shortLabel}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Raw CSV Preview / Editor */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-[10px] font-mono uppercase text-ctp-subtext0">
+              Вміст CSV (Date / Year / time, Value / data):
+            </label>
+            <span className="text-[10px] font-mono text-ctp-subtext0">
+              {csvText.split(/\r?\n/).filter((l) => l.trim()).length} рядків
+            </span>
+          </div>
+          <textarea
+            rows={7}
+            value={csvText}
+            onChange={(e) => setCsvText(e.target.value)}
+            className="w-full p-3 rounded-xl bg-ctp-crust border border-ctp-surface0 text-xs font-mono text-ctp-text focus:outline-none focus:border-ctp-blue"
+            placeholder="Date,Value&#10;2002-07,0.24&#10;2003-07,0.28..."
+          />
+        </div>
+
+        {localError && (
+          <div className="p-3 rounded-xl bg-ctp-red/15 border border-ctp-red/50 text-xs font-mono text-ctp-red">
+            {localError}
+          </div>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-ctp-surface0">
+          {isModal && (
             <button
               type="button"
               onClick={onClose}
@@ -750,21 +760,31 @@ export const CsvImporterModal: React.FC<CsvImporterModalProps> = ({
             >
               Скасувати
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-ctp-green to-ctp-teal hover:brightness-110 text-ctp-crust font-extrabold text-xs tracking-wide transition flex items-center gap-2 shadow-[0_0_20px_rgba(166,227,161,0.3)]"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>
-                {loading
-                  ? 'Обчислення тренду та p-value...'
-                  : 'Run Statistical Trend Engine on CSV'}
-              </span>
-            </button>
-          </div>
-        </form>
-      </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-ctp-green to-ctp-teal hover:brightness-110 text-ctp-crust font-extrabold text-xs tracking-wide transition flex items-center gap-2 shadow-[0_0_20px_rgba(166,227,161,0.3)]"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>
+              {loading
+                ? 'Обчислення тренду та p-value...'
+                : 'Run Statistical Trend Engine on CSV'}
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (!isModal) {
+    return cardContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[2100] flex items-center justify-center p-3 sm:p-6 bg-ctp-crust/80 backdrop-blur-md">
+      {cardContent}
     </div>
   );
 };

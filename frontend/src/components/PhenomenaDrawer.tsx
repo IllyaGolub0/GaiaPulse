@@ -170,6 +170,7 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
 
 interface PhenomenaDrawerProps {
   isOpen: boolean;
+  isModal?: boolean;
   loading: boolean;
   scenarios: PhenomenonScenario[];
   eonetIsLive: boolean;
@@ -181,6 +182,7 @@ interface PhenomenaDrawerProps {
 
 export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
   isOpen,
+  isModal = true,
   loading,
   scenarios,
   eonetIsLive,
@@ -245,53 +247,59 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
     },
   ];
 
-  return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-6 bg-ctp-crust/80 backdrop-blur-md">
-      <div className="w-full max-w-6xl max-h-[90vh] rounded-3xl bg-ctp-base border border-ctp-surface1 shadow-[0_25px_70px_rgba(17,17,27,0.95)] flex flex-col overflow-hidden">
-        {/* Modal Header */}
-        <div className="px-5 py-4 bg-ctp-mantle border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-ctp-mauve/15 border border-ctp-mauve/50 flex items-center justify-center text-ctp-mauve">
-              <Satellite className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
-                  Historical Earth Phenomena &amp; Live NASA EONET Events
-                </h2>
-                <span
-                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                    eonetIsLive
-                      ? 'bg-ctp-green/15 text-ctp-green border-ctp-green/40'
-                      : 'bg-ctp-yellow/15 text-ctp-yellow border-ctp-yellow/40'
-                  }`}
-                >
-                  {eonetIsLive
-                    ? 'EONET v3 API: LIVE CONNECTED'
-                    : 'EONET v3: OFFLINE CACHE'}
-                </span>
-              </div>
-              <p className="text-xs text-ctp-subtext0">
-                Оберіть науковий кейс д-ра Джеймса Екера (NASA Goddard) або живу супутникову подію EONET для миттєвої автоконфігурації та перевірки тренду
-              </p>
-            </div>
+  const innerPanel = (
+    <div
+      className={
+        isModal
+          ? 'w-full max-w-6xl max-h-[90vh] rounded-3xl bg-ctp-base border border-ctp-surface1 shadow-[0_25px_70px_rgba(17,17,27,0.95)] flex flex-col overflow-hidden'
+          : 'w-full rounded-3xl bg-ctp-mantle/95 border border-ctp-surface0 shadow-2xl flex flex-col overflow-hidden'
+      }
+    >
+      {/* Header */}
+      <div className="px-5 py-4 bg-ctp-mantle border-b border-ctp-surface0 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-ctp-mauve/15 border border-ctp-mauve/50 flex items-center justify-center text-ctp-mauve">
+            <Satellite className="w-5 h-5" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onRefresh}
-              disabled={loading}
-              className="px-3 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text text-xs font-mono font-semibold transition flex items-center gap-1.5 border border-ctp-surface1"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 text-ctp-blue ${
-                  loading ? 'animate-spin' : ''
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base sm:text-lg font-extrabold text-ctp-text">
+                Historical Earth Phenomena &amp; Live NASA EONET Events
+              </h2>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                  eonetIsLive
+                    ? 'bg-ctp-green/15 text-ctp-green border-ctp-green/40'
+                    : 'bg-ctp-yellow/15 text-ctp-yellow border-ctp-yellow/40'
                 }`}
-              />
-              <span>Re-Fetch NASA</span>
-            </button>
+              >
+                {eonetIsLive
+                  ? 'EONET v3 API: LIVE CONNECTED'
+                  : 'EONET v3: OFFLINE CACHE'}
+              </span>
+            </div>
+            <p className="text-xs text-ctp-subtext0">
+              Оберіть науковий кейс д-ра Джеймса Екера (NASA Goddard), CSA або живу супутникову подію EONET для миттєвої автоконфігурації та перевірки тренду
+            </p>
+          </div>
+        </div>
 
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-xl bg-ctp-surface0 hover:bg-ctp-surface1 text-ctp-text text-xs font-mono font-semibold transition flex items-center gap-1.5 border border-ctp-surface1"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-ctp-blue ${
+                loading ? 'animate-spin' : ''
+              }`}
+            />
+            <span>Re-Fetch NASA</span>
+          </button>
+
+          {isModal && (
             <button
               type="button"
               onClick={onClose}
@@ -300,63 +308,73 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
             >
               <X className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-
-        {/* 4 Category Filter Tabs */}
-        <div className="px-5 py-3 bg-ctp-mantle/60 border-b border-ctp-surface0 flex flex-wrap items-center gap-2">
-          {filterTabs.map((tab) => {
-            const selected = activeFilter === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveFilter(tab.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 border ${
-                  selected
-                    ? 'bg-ctp-mauve/20 text-ctp-mauve border-ctp-mauve/60 shadow-[0_0_15px_rgba(203,166,247,0.18)]'
-                    : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text hover:border-ctp-surface1'
-                }`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono ${
-                    selected
-                      ? 'bg-ctp-mauve/25 text-ctp-text'
-                      : 'bg-ctp-surface0 text-ctp-subtext0'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Scrollable Phenomenon Cards Grid */}
-        <div className="flex-1 overflow-y-auto p-5">
-          {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center gap-3 text-ctp-subtext0">
-              <RefreshCw className="w-8 h-8 animate-spin text-ctp-mauve" />
-              <p className="text-sm font-mono">
-                Опитування архіву феноменів та живого потоку NASA EONET v3 API...
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredScenarios.map((scenario) => (
-                <PhenomenonCard
-                  key={scenario.id}
-                  scenario={scenario}
-                  isActive={activeScenarioId === scenario.id}
-                  onLoadAndRun={onSelectScenario}
-                />
-              ))}
-            </div>
           )}
         </div>
       </div>
+
+      {/* 4 Category Filter Tabs */}
+      <div className="px-5 py-3 bg-ctp-mantle/60 border-b border-ctp-surface0 flex flex-wrap items-center gap-2">
+        {filterTabs.map((tab) => {
+          const selected = activeFilter === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveFilter(tab.id)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 border ${
+                selected
+                  ? 'bg-ctp-mauve/20 text-ctp-mauve border-ctp-mauve/60 shadow-[0_0_15px_rgba(203,166,247,0.18)]'
+                  : 'bg-ctp-crust text-ctp-subtext0 border-ctp-surface0 hover:text-ctp-text hover:border-ctp-surface1'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              <span
+                className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono ${
+                  selected
+                    ? 'bg-ctp-mauve/25 text-ctp-text'
+                    : 'bg-ctp-surface0 text-ctp-subtext0'
+                }`}
+              >
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Phenomenon Cards Grid */}
+      <div className={isModal ? 'flex-1 overflow-y-auto p-5' : 'p-5'}>
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3 text-ctp-subtext0">
+            <RefreshCw className="w-8 h-8 animate-spin text-ctp-mauve" />
+            <p className="text-sm font-mono">
+              Опитування архіву феноменів та живого потоку NASA EONET v3 API...
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredScenarios.map((scenario) => (
+              <PhenomenonCard
+                key={scenario.id}
+                scenario={scenario}
+                isActive={activeScenarioId === scenario.id}
+                onLoadAndRun={onSelectScenario}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!isModal) {
+    return innerPanel;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-3 sm:p-6 bg-ctp-crust/80 backdrop-blur-md">
+      {innerPanel}
     </div>
   );
 };
