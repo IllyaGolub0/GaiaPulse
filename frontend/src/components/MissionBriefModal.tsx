@@ -42,17 +42,17 @@ export const MissionBriefModal: React.FC<MissionBriefModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[3100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto print:static print:bg-white print:p-0"
+      className="fixed inset-0 z-[3100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto mission-brief-modal-root print:static print:bg-white print:p-0 print:m-0"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#24242b] shadow-2xl p-6 space-y-5 text-sm mission-brief-printable print:max-h-none print:overflow-visible print:border-zinc-300 print:shadow-none"
+        className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-md bg-[#0c0c0f] border border-[#24242b] shadow-2xl p-6 space-y-5 text-sm mission-brief-printable print:max-h-none print:overflow-visible print:border-none print:shadow-none print:p-0 print:space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header + Print Action */}
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#1f1f24] pb-4">
           <div>
-            <div className="text-xs font-monost text-[#597B8A]">
+            <div className="text-xs font-mono text-[#597B8A]">
               NASA Space Apps Challenge 2026 · Earth System Trend Detective
             </div>
             <h2 className="text-base font-semibold text-zinc-100 mt-1">

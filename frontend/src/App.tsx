@@ -1783,8 +1783,8 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-black text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950">
-      <div className="flex-1 min-w-0 min-h-0 flex flex-col">
+    <div className="h-[100dvh] overflow-hidden bg-black text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950 print:h-auto print:overflow-visible print:bg-white print:text-zinc-950">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col print:hidden">
         {/* Top bar: brand, section tabs, language, guide */}
         <header className="relative z-30 shrink-0 h-12 md:h-16 bg-[#597B8A] px-3 md:px-5 flex items-stretch justify-between gap-3">
           <div className="flex items-stretch gap-2 lg:gap-4 xl:gap-6 2xl:gap-10 min-w-0">
@@ -2238,7 +2238,7 @@ export const App: React.FC = () => {
       {/* Bottom navigation for phones */}
       <nav
         data-tour="nav"
-        className="md:hidden shrink-0 border-t border-[#1f1f24] bg-[#070709] grid grid-cols-4"
+        className="md:hidden shrink-0 border-t border-[#1f1f24] bg-[#070709] grid grid-cols-4 print:hidden"
         aria-label={L('Розділи', 'Sections')}
       >
         {navItems.map((item) => {
@@ -2265,7 +2265,7 @@ export const App: React.FC = () => {
         <div
           role="dialog"
           aria-label={L('Пропозиція пройти гід', 'Tour offer')}
-          className="fixed z-[2700] left-3 right-3 bottom-[68px] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-lg bg-[#101014] border border-[#597B8A]/40 shadow-2xl p-4 space-y-3"
+          className="fixed z-[2700] left-3 right-3 bottom-[68px] md:left-auto md:right-6 md:bottom-6 md:w-[360px] rounded-lg bg-[#101014] border border-[#597B8A]/40 shadow-2xl p-4 space-y-3 print:hidden"
         >
           <div className="space-y-1">
             <h2 className="text-base font-semibold text-zinc-50">
@@ -2336,7 +2336,7 @@ export const App: React.FC = () => {
       {/* Minimalist Command Palette (Ctrl+K / Cmd+K) */}
       {commandPaletteOpen && (
         <div
-          className="fixed inset-0 z-[3000] bg-black/75 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4"
+          className="fixed inset-0 z-[3000] bg-black/75 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 print:hidden"
           onClick={() => setCommandPaletteOpen(false)}
         >
           <div
