@@ -119,7 +119,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             onClick={() => setActiveTab('timeseries')}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'timeseries'
-                ? 'bg-zinc-100 text-zinc-950'
+                ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -132,7 +132,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             onClick={() => setActiveTab('stripes')}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'stripes'
-                ? 'bg-zinc-100 text-zinc-950'
+                ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -145,7 +145,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
             onClick={() => setActiveTab('decomposition')}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium transition ${
               activeTab === 'decomposition'
-                ? 'bg-zinc-100 text-zinc-950'
+                ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
@@ -163,7 +163,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               onClick={() => setDipoleView('anomalies')}
               className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 dipoleView === 'anomalies'
-                  ? 'bg-zinc-800 text-zinc-100 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
@@ -174,7 +174,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               onClick={() => setDipoleView('absolute')}
               className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 dipoleView === 'absolute'
-                  ? 'bg-zinc-800 text-zinc-100 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
@@ -190,7 +190,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               onClick={() => setDecompRegion('A')}
               className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 decompRegion === 'A'
-                  ? 'bg-sky-500/15 text-sky-400 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >
@@ -201,7 +201,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
               onClick={() => setDecompRegion('B')}
               className={`px-2 py-1 rounded font-mono text-[13px] transition ${
                 decompRegion === 'B'
-                  ? 'bg-orange-500/15 text-orange-400 font-medium'
+                  ? 'bg-orange-500/25 text-orange-200 border border-orange-400 font-semibold shadow-sm'
                   : 'text-zinc-400 hover:text-zinc-300'
               }`}
             >

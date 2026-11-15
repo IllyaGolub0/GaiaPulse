@@ -1087,7 +1087,7 @@ export const App: React.FC = () => {
             aria-expanded={advancedOpen}
             className={`h-11 md:h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
               advancedOpen
-                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                ? 'bg-sky-500/20 text-sky-200 border-sky-400 font-semibold shadow-sm'
                 : 'bg-[#121216] text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
             }`}
           >
@@ -1125,7 +1125,7 @@ export const App: React.FC = () => {
               aria-pressed={activeView === vm.id}
               className={`h-8 px-2.5 rounded text-sm transition flex items-center gap-1.5 ${
                 activeView === vm.id
-                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-300 hover:text-zinc-50'
               }`}
             >
@@ -1144,7 +1144,7 @@ export const App: React.FC = () => {
             title={L('Поділитися та експортувати', 'Share and export')}
             className={`h-11 md:h-9 px-3 rounded-md text-sm border transition flex items-center gap-1.5 ${
               exportOpen
-                ? 'bg-zinc-800 text-zinc-100 border-zinc-600'
+                ? 'bg-sky-500/20 text-sky-200 border-sky-400 font-semibold shadow-sm'
                 : 'bg-[#121216] text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
             }`}
           >
@@ -1312,7 +1312,7 @@ export const App: React.FC = () => {
                       title={biome.subtitle}
                       className={`h-8 px-2.5 rounded-md text-sm border transition ${
                         isSelected
-                          ? 'bg-zinc-800 text-zinc-100 border-zinc-600 font-medium'
+                          ? 'bg-sky-500/20 text-sky-200 border-sky-400 font-semibold shadow-sm'
                           : 'text-zinc-300 border-[#2a2a32] hover:text-zinc-100 hover:border-zinc-500'
                       }`}
                     >
@@ -2487,7 +2487,7 @@ export const App: React.FC = () => {
                         }}
                         className={`w-full px-2.5 py-1.5 rounded flex items-center justify-between gap-2 text-left transition ${
                           variable === v.code
-                            ? 'bg-zinc-800 text-zinc-100'
+                            ? 'bg-sky-500/20 text-sky-200 font-semibold'
                             : 'hover:bg-[#141419] text-zinc-300'
                         }`}
                       >
@@ -2536,7 +2536,7 @@ export const App: React.FC = () => {
                         }}
                         className={`w-full px-2.5 py-1.5 rounded flex items-center justify-between gap-2 text-left transition ${
                           activeScenarioId === s.id
-                            ? 'bg-zinc-800 text-zinc-100'
+                            ? 'bg-sky-500/20 text-sky-200 font-semibold'
                             : 'hover:bg-[#141419] text-zinc-300'
                         }`}
                       >

@@ -398,12 +398,16 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                     }
                     className={`p-1.5 rounded border text-left transition ${
                       isCurrent
-                        ? 'bg-zinc-800 border-zinc-500 text-zinc-100'
+                        ? 'bg-sky-500/25 border-sky-400 text-sky-100 font-medium shadow-sm ring-1 ring-sky-400/40'
                         : 'bg-[#0c0c0f] border-[#1f1f24] hover:border-zinc-700 text-zinc-400'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-semibold text-zinc-200">
+                      <span
+                        className={`font-semibold ${
+                          isCurrent ? 'text-sky-200 font-bold' : 'text-zinc-200'
+                        }`}
+                      >
                         {shortName}
                       </span>
                       <span
@@ -415,14 +419,20 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
                     <div
                       className={`mt-0.5 ${
                         row.change_per_decade >= 0
-                          ? 'text-sky-400'
+                          ? isCurrent
+                            ? 'text-sky-300'
+                            : 'text-sky-400'
                           : 'text-orange-400'
                       }`}
                     >
                       {row.change_per_decade >= 0 ? '+' : ''}
                       {row.change_per_decade.toFixed(3)}
                     </div>
-                    <div className="text-xs text-zinc-400">
+                    <div
+                      className={`text-xs ${
+                        isCurrent ? 'text-sky-200/80 font-medium' : 'text-zinc-400'
+                      }`}
+                    >
                       p=
                       {row.p_value < 0.001
                         ? '<.001'
@@ -483,8 +493,8 @@ export const DipoleVerdictBanner: React.FC<DipoleVerdictBannerProps> = ({
     <div className="rounded-md p-4 bg-[#0c0c0f] border border-[#1f1f24] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[13px] font-mono font-medium bg-zinc-800 text-zinc-200 border border-zinc-700">
-            <GitCompareArrows className="w-3.5 h-3.5 text-zinc-400" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[13px] font-mono font-medium bg-sky-500/15 text-sky-200 border border-sky-400/30">
+            <GitCompareArrows className="w-3.5 h-3.5 text-sky-400" />
             {dipoleI18n.badge}
           </span>
           <span className="text-sm text-zinc-400 font-mono">

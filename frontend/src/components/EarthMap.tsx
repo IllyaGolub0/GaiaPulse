@@ -619,7 +619,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               aria-pressed={viewMode === '2d'}
               className={`${floatBtn} ${
                 viewMode === '2d'
-                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-200 hover:text-white'
               }`}
             >
@@ -632,7 +632,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               aria-pressed={viewMode === '3d'}
               className={`${floatBtn} ${
                 viewMode === '3d'
-                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-200 hover:text-white'
               }`}
             >
@@ -652,7 +652,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 aria-pressed={activeTarget === 'A'}
                 className={`${floatBtn} ${
                   activeTarget === 'A'
-                    ? 'bg-sky-500/25 text-sky-300 font-medium'
+                    ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                     : 'text-zinc-200 hover:text-white'
                 }`}
               >
@@ -665,7 +665,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 aria-pressed={activeTarget === 'B'}
                 className={`${floatBtn} ${
                   activeTarget === 'B'
-                    ? 'bg-orange-500/25 text-orange-300 font-medium'
+                    ? 'bg-orange-500/25 text-orange-200 border-orange-400 font-semibold shadow-sm'
                     : 'text-zinc-200 hover:text-white'
                 }`}
               >
@@ -685,7 +685,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               aria-expanded={layersOpen}
               className={`${floatBtn} ${
                 layersOpen
-                  ? 'bg-zinc-100 text-zinc-950 font-medium'
+                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                   : 'text-zinc-200 hover:text-white'
               }`}
             >
@@ -709,7 +709,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                         onClick={() => setBasemapTheme(themeKey)}
                         className={`h-8 rounded-md text-sm border transition ${
                           basemapTheme === themeKey
-                            ? 'bg-zinc-800 text-zinc-50 border-zinc-500 font-medium'
+                            ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                             : 'text-zinc-300 border-[#2a2a32] hover:text-white'
                         }`}
                       >
@@ -809,7 +809,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                       onClick={() => setRoiShape(shape)}
                       className={`h-8 rounded-md text-sm border transition ${
                         roiShape === shape
-                          ? 'bg-zinc-800 text-zinc-50 border-zinc-500 font-medium'
+                          ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                           : 'text-zinc-300 border-[#2a2a32] hover:text-white'
                       }`}
                     >

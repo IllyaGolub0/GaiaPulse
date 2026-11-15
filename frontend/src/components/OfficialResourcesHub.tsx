@@ -513,7 +513,7 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
         <button
           type="button"
           onClick={onOpenResourcesModal}
-          className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition"
+          className="px-2 py-0.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 font-medium transition"
         >
           {t.all13ResourcesBtn}
         </button>

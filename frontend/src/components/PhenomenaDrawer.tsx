@@ -158,8 +158,8 @@ export const PhenomenonCard: React.FC<PhenomenonCardProps> = ({
         onClick={() => onLoadAndRun(scenario)}
         className={`w-full py-2 px-3 rounded text-sm font-mono font-medium transition flex items-center justify-between ${
           isActive
-            ? 'bg-zinc-100 text-zinc-950'
-            : 'bg-[#141419] hover:bg-zinc-100 text-zinc-200 hover:text-zinc-950 border border-[#24242b]'
+            ? 'bg-sky-500/25 text-sky-200 border border-sky-400 font-semibold shadow-sm'
+            : 'bg-[#141419] hover:bg-sky-500/15 text-zinc-200 hover:text-sky-200 border border-[#24242b]'
         }`}
       >
         <span>{lang === 'en' ? 'Load Scenario' : 'Завантажити сценарій'}</span>
@@ -280,7 +280,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
             type="button"
             onClick={onRefresh}
             disabled={loading}
-            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-[#1c1c22] text-zinc-200 text-sm font-mono transition flex items-center gap-1.5 border border-[#24242b]"
+            className="px-2.5 py-1 rounded bg-[#141419] hover:bg-sky-500/15 text-zinc-200 hover:text-sky-200 text-sm font-mono transition flex items-center gap-1.5 border border-[#24242b]"
           >
             <RefreshCw
               className={`w-3 h-3 text-zinc-400 ${
@@ -313,7 +313,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
               onClick={() => setActiveFilter(tab.id)}
               className={`px-2.5 py-1 rounded text-sm font-medium transition flex items-center gap-1.5 border ${
                 selected
-                  ? 'bg-zinc-100 text-zinc-950 border-zinc-100'
+                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                   : 'bg-[#09090b] text-zinc-400 border-[#1f1f24] hover:text-zinc-200'
               }`}
             >
@@ -322,7 +322,7 @@ export const PhenomenaDrawer: React.FC<PhenomenaDrawerProps> = ({
               <span
                 className={`px-1.5 py-0.2 rounded text-xs font-mono ${
                   selected
-                    ? 'bg-zinc-900/15 text-zinc-950'
+                    ? 'bg-sky-400/20 text-sky-200 font-semibold'
                     : 'bg-[#141419] text-zinc-400'
                 }`}
               >

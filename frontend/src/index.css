@@ -318,9 +318,14 @@ html.light .bg-\[\#0c0c0f\] {
 html.light .bg-\[\#111115\],
 html.light .bg-\[\#11111b\],
 html.light .bg-\[\#121216\],
+html.light .bg-\[\#121217\],
+html.light .bg-\[\#141419\],
+html.light .bg-\[\#16161b\],
 html.light .bg-\[\#17171c\],
 html.light .bg-\[\#18181c\],
-html.light .bg-\[\#1a1a1a\] {
+html.light .bg-\[\#1a1a1a\],
+html.light .bg-zinc-800,
+html.light .bg-zinc-900 {
   background-color: #f1f5f9 !important;
 }
 
@@ -333,7 +338,9 @@ html.light .border-\[\#1f1f24\],
 html.light .border-\[\#24242b\],
 html.light .border-\[\#27272a\],
 html.light .border-\[\#2a2a2a\],
-html.light .border-\[\#2a2a32\] {
+html.light .border-\[\#2a2a32\],
+html.light .border-zinc-700,
+html.light .border-zinc-800 {
   border-color: #e2e8f0 !important;
 }
 
@@ -342,14 +349,14 @@ html.light .divide-\[\#1f1f24\] > :not([hidden]) ~ :not([hidden]) {
 }
 
 /* Text colors */
-html.light .text-zinc-50,
-html.light .text-zinc-100,
+html.light .text-zinc-50:not(.text-white):not([class*="bg-sky"]):not([class*="bg-black"]),
+html.light .text-zinc-100:not(.text-white):not([class*="bg-sky"]):not([class*="bg-black"]),
 html.light .text-\[\#f4f4f6\] {
   color: #0f172a !important;
 }
 
-html.light .text-zinc-200,
-html.light .text-zinc-300 {
+html.light .text-zinc-200:not([class*="text-sky"]):not([class*="bg-sky"]),
+html.light .text-zinc-300:not([class*="text-sky"]):not([class*="bg-sky"]) {
   color: #1e293b !important;
 }
 
@@ -473,4 +480,71 @@ html.light .bg-\[\#121216\]\/95 .border-\[\#27272a\] {
 /* 3D globe background container in light mode */
 html.light .maplibregl-map {
   background-color: #f1f5f9 !important;
+}
+
+/* =========================================================================
+   ACTIVE / SELECTED BUTTON ACCENTS (Dark & Light Theme)
+   ========================================================================= */
+
+/* Dark Theme: Vibrant Sky/Cyan Glow & High-Contrast Typography */
+html:not(.light) .bg-sky-500\/25,
+html.dark .bg-sky-500\/25 {
+  background-color: rgba(14, 165, 233, 0.25) !important;
+  color: #bae6fd !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.28) !important;
+}
+
+html:not(.light) .bg-sky-500\/20,
+html.dark .bg-sky-500\/20 {
+  background-color: rgba(14, 165, 233, 0.20) !important;
+  color: #bae6fd !important;
+  border-color: #38bdf8 !important;
+}
+
+html:not(.light) .bg-sky-500\/15,
+html.dark .bg-sky-500\/15 {
+  background-color: rgba(14, 165, 233, 0.16) !important;
+  color: #7dd3fc !important;
+}
+
+/* Light Theme: Deep Crisp Ocean/Sky Contrast */
+html.light .bg-sky-500\/25,
+html.light .bg-sky-500\/20,
+html.light .bg-sky-500\/15 {
+  background-color: #e0f2fe !important;
+  border-color: #0284c7 !important;
+  color: #0369a1 !important;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.15) !important;
+}
+
+html.light .text-sky-100,
+html.light .text-sky-200,
+html.light .text-sky-300 {
+  color: #0369a1 !important;
+}
+
+html.light .border-sky-400,
+html.light .border-sky-500 {
+  border-color: #0284c7 !important;
+}
+
+html.light .ring-sky-400\/40,
+html.light .ring-sky-400\/30 {
+  --tw-ring-color: rgba(2, 132, 199, 0.5) !important;
+}
+
+/* Orange Dipole Point B Active Button */
+html:not(.light) .bg-orange-500\/25,
+html.dark .bg-orange-500\/25 {
+  background-color: rgba(249, 115, 22, 0.25) !important;
+  color: #fed7aa !important;
+  border-color: #fb923c !important;
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.28) !important;
+}
+
+html.light .bg-orange-500\/25 {
+  background-color: #ffedd5 !important;
+  border-color: #ea580c !important;
+  color: #c2410c !important;
 }
