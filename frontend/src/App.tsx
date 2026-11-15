@@ -57,6 +57,7 @@ import {
   getYearPresetsForVariable,
   parseInitialUrlState,
 } from './utils/urlState';
+import { getFriendlyLocationName } from './utils/reverseGeocode';
 import {
   formatDipoleVerdictI18n,
   getBiomeOptionsI18n,
@@ -242,6 +243,58 @@ export const App: React.FC = () => {
     initialUrlState.regionB
   );
   const [activeTarget, setActiveTarget] = useState<'A' | 'B'>('A');
+
+  const userCustomNamedARef = useRef<boolean>(false);
+  const userCustomNamedBRef = useRef<boolean>(false);
+
+  // Auto reverse-geocode custom locations to resolve city / village / region / country
+  useEffect(() => {
+    if (activeScenarioId !== 'custom') return;
+
+    let isSubscribed = true;
+
+    if (!userCustomNamedARef.current) {
+      getFriendlyLocationName('A', regionA.lat, regionA.lon, lang).then(
+        (friendlyName) => {
+          if (!isSubscribed) return;
+          if (friendlyName && friendlyName !== regionA.name) {
+            setRegionA((prev) =>
+              prev.lat === regionA.lat && prev.lon === regionA.lon
+                ? { ...prev, name: friendlyName }
+                : prev
+            );
+          }
+        }
+      );
+    }
+
+    if (mode === 'dipole' && regionB && !userCustomNamedBRef.current) {
+      getFriendlyLocationName('B', regionB.lat, regionB.lon, lang).then(
+        (friendlyName) => {
+          if (!isSubscribed) return;
+          if (friendlyName && friendlyName !== regionB.name) {
+            setRegionB((prev) =>
+              prev && prev.lat === regionB.lat && prev.lon === regionB.lon
+                ? { ...prev, name: friendlyName }
+                : prev
+            );
+          }
+        }
+      );
+    }
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [
+    activeScenarioId,
+    regionA.lat,
+    regionA.lon,
+    regionB?.lat,
+    regionB?.lon,
+    mode,
+    lang,
+  ]);
 
   // Analysis Execution State
   const [analysisResult, setAnalysisResult] =
@@ -440,6 +493,8 @@ export const App: React.FC = () => {
   };
 
   const applyScenario = (scenario: PhenomenonScenario) => {
+    userCustomNamedARef.current = false;
+    userCustomNamedBRef.current = false;
     const varMeta =
       variables.find((v) => v.code === scenario.variable) ||
       getVariableMetaLocal(scenario.variable);
@@ -468,14 +523,36 @@ export const App: React.FC = () => {
 
   const handleMapClickRegion = useCallback(
     (target: 'A' | 'B', loc: RegionLocation) => {
-    setActiveScenarioId('custom');
-    if (target === 'A') {
-      setRegionA(loc);
-    } else {
-      setRegionB(loc);
-    }
+      setActiveScenarioId('custom');
+      if (target === 'A') {
+        userCustomNamedARef.current = false;
+        setRegionA(loc);
+      } else {
+        userCustomNamedBRef.current = false;
+        setRegionB(loc);
+      }
+
+      getFriendlyLocationName(target, loc.lat, loc.lon, lang).then(
+        (friendlyName) => {
+          if (friendlyName && friendlyName !== loc.name) {
+            if (target === 'A') {
+              setRegionA((prev) =>
+                prev.lat === loc.lat && prev.lon === loc.lon
+                  ? { ...prev, name: friendlyName }
+                  : prev
+              );
+            } else {
+              setRegionB((prev) =>
+                prev && prev.lat === loc.lat && prev.lon === loc.lon
+                  ? { ...prev, name: friendlyName }
+                  : prev
+              );
+            }
+          }
+        }
+      );
     },
-    []
+    [lang]
   );
 
   const openResources = useCallback(() => setActiveView('resources'), []);
@@ -1314,9 +1391,10 @@ export const App: React.FC = () => {
               <input
                 type="text"
                 value={regionA.name}
-                onChange={(e) =>
-                  setRegionA({ ...regionA, name: e.target.value })
-                }
+                onChange={(e) => {
+                  userCustomNamedARef.current = true;
+                  setRegionA({ ...regionA, name: e.target.value });
+                }}
                 placeholder={t.regionANamePlaceholder}
                 className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[13px]"
               />
@@ -1333,6 +1411,7 @@ export const App: React.FC = () => {
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
                     if (!Number.isNaN(val) && val >= -90 && val <= 90) {
+                      userCustomNamedARef.current = false;
                       setRegionA({ ...regionA, lat: val });
                       setCameraTrigger((c) => c + 1);
                     }
@@ -1353,6 +1432,7 @@ export const App: React.FC = () => {
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
                     if (!Number.isNaN(val) && val >= -180 && val <= 180) {
+                      userCustomNamedARef.current = false;
                       setRegionA({ ...regionA, lon: val });
                       setCameraTrigger((c) => c + 1);
                     }
@@ -1377,9 +1457,10 @@ export const App: React.FC = () => {
                 <input
                   type="text"
                   value={regionB.name}
-                  onChange={(e) =>
-                    setRegionB({ ...regionB, name: e.target.value })
-                  }
+                  onChange={(e) => {
+                    userCustomNamedBRef.current = true;
+                    setRegionB({ ...regionB, name: e.target.value });
+                  }}
                   placeholder={t.regionBNamePlaceholder}
                   className="col-span-3 sm:col-span-1 px-2 py-1 rounded bg-[#09090b] border border-[#24242b] text-zinc-100 font-mono text-[13px]"
                 />
@@ -1396,6 +1477,7 @@ export const App: React.FC = () => {
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (!Number.isNaN(val) && val >= -90 && val <= 90) {
+                        userCustomNamedBRef.current = false;
                         setRegionB({ ...regionB, lat: val });
                         setCameraTrigger((c) => c + 1);
                       }
@@ -1416,6 +1498,7 @@ export const App: React.FC = () => {
                     onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (!Number.isNaN(val) && val >= -180 && val <= 180) {
+                        userCustomNamedBRef.current = false;
                         setRegionB({ ...regionB, lon: val });
                         setCameraTrigger((c) => c + 1);
                       }
