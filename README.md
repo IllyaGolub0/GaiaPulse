@@ -35,7 +35,7 @@ The platform integrates official satellite, reanalysis, radar, and station resou
 
 2. **Curated Historical Phenomena & Live NASA EONET v3 Feed (`GET /api/v2/fetch-phenomena`)**:
    - **7 Curated Scientific Scenarios**:
-     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2026)* — MODIS Aqua `AOD`, Summer `JJA` vs. Winter `DJF`
+     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)* — MODIS Aqua `AOD`, Summer `JJA` vs. Winter `DJF`
      2. *Acker's SeaWiFS Coastal Chlorophyll Study (NASA NTRS 20090042747)* — Mississippi River Plume / Chesapeake Bay vs. Open Gulf of Mexico Shelf (`SEAWIFS_CHLA` & `QRUNOFF` Dipole)
      3. *CSA SWOT & RADARSAT Canadian Water & Ice Monitor* — Hudson Bay & Boreal Lakes (`SWOT_WSE` & `RCM_SAR_BACKSCATTER`)
      4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Aura OMI `SO2` & CERES `ALLSKY_SFC_SW_DWN`
@@ -111,6 +111,7 @@ The platform integrates official satellite, reanalysis, radar, and station resou
         │   └── __tests__/api.test.ts
         ├── utils/
         │   ├── format.ts
+        │   ├── urlState.ts
         │   └── useMediaQuery.ts
         └── components/
             ├── DetectiveStepper.tsx
@@ -229,7 +230,7 @@ In accordance with the **NASA Space Apps Challenge 2026 Project Submission Guide
 
 2. **Історичні феномени та живі події NASA EONET v3 API (`GET /api/v2/fetch-phenomena`)**:
    - **7 курованих наукових сценаріїв**:
-     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2026)* — MODIS Aqua `AOD`, порівняння літнього сезону `JJA` із зимовим `DJF`
+     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)* — MODIS Aqua `AOD`, порівняння літнього сезону `JJA` із зимовим `DJF`
      2. *Acker's SeaWiFS Coastal Chlorophyll Study (NASA NTRS 20090042747)* — Гирло Міссісіпі / Чесапікська затока проти Відкритого шельфу Мексиканської затоки (`SEAWIFS_CHLA` ↔ `QRUNOFF`)
      3. *CSA SWOT & RADARSAT Canadian Water & Ice Monitor* — Північна Канада / Гудзонова затока (`SWOT_WSE` ↔ `RCM_SAR_BACKSCATTER`)
      4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Aura OMI `SO2` та радіаційне охолодження `ALLSKY_SFC_SW_DWN`

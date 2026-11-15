@@ -35,7 +35,7 @@ def serialize_variable_meta(var_meta: Dict[str, Any]) -> Dict[str, Any]:
         "source": var_meta.get("source", var_meta.get("satellite_badge", "NASA EOS")),
         "gibs_layer": var_meta.get("gibs_layer", "MODIS_Terra_Land_Surface_Temp_Day"),
         "min_year": int(var_meta.get("min_year", 1981)),
-        "max_year": int(var_meta.get("max_year", 2026)),
+        "max_year": int(var_meta.get("max_year", 2025)),
         "mission_status": var_meta.get("mission_status", "active"),
         "description": var_meta.get("description", ""),
         "student_definition": var_meta.get("student_definition", var_meta.get("description", "")),

@@ -16,21 +16,21 @@ class RegionLocationInput(BaseModel):
 
     name: Optional[str] = Field(
         default=None,
-        description="Назва регіону або досліджуваної локації",
+        description="Name of the region or target study location",
         examples=["Wisconsin, USA"],
     )
     lat: float = Field(
         ...,
         ge=-90.0,
         le=90.0,
-        description="Географічна широта (-90..90)",
+        description="Geographic latitude (-90..90)",
         examples=[44.5],
     )
     lon: float = Field(
         ...,
         ge=-180.0,
         le=180.0,
-        description="Географічна довгота (-180..180)",
+        description="Geographic longitude (-180..180)",
         examples=[-89.5],
     )
 
@@ -47,7 +47,7 @@ class AnalyzeTrendRequestV2(BaseModel):
     variable: str = Field(
         default="T2M",
         description=(
-            "Код змінної NASA/CSA: T2M, PRECTOTCORR, GWETROOT, ALLSKY_SFC_SW_DWN, "
+            "NASA/CSA variable code: T2M, PRECTOTCORR, GWETROOT, ALLSKY_SFC_SW_DWN, "
             "AOD, SO2, EVPTRNS, QRUNOFF, SNODP, SST, SEAWIFS_CHLA, SWOT_WSE, RCM_SAR_BACKSCATTER"
         ),
         examples=["AOD"],
@@ -56,36 +56,36 @@ class AnalyzeTrendRequestV2(BaseModel):
         default=1985,
         ge=1981,
         le=2030,
-        description="Початковий рік аналізу (>= 1981)",
+        description="Analysis start year (>= 1981)",
         examples=[2002],
     )
     end_year: int = Field(
-        default=2026,
+        default=2025,
         ge=1985,
         le=2030,
-        description="Кінцевий рік аналізу (<= 2030)",
-        examples=[2026],
+        description="Analysis end year (clamped to satellite mission upper bound <= 2025)",
+        examples=[2025],
     )
     season_mode: str = Field(
         default="raw",
-        description="Режим сезонної фільтрації: raw, deseasonalized, DJF, MAM, JJA, SON",
+        description="Seasonal filtering mode: raw, deseasonalized, DJF, MAM, JJA, SON",
         examples=["JJA"],
     )
     region_a: RegionLocationInput = Field(
         ...,
-        description="Основний досліджуваний регіон (Точка А)",
+        description="Primary study region (Region A)",
     )
     region_b: Optional[RegionLocationInput] = Field(
         default=None,
-        description="Опціональний другий регіон для режиму Dipole Comparison (Точка Б)",
+        description="Optional secondary region for Dipole Comparison mode (Region B)",
     )
     prefer_live_api: bool = Field(
         default=True,
-        description="Використовувати живий запит до NASA POWER API з автоматичним fallback",
+        description="Query live NASA POWER API with calibrated offline fallback",
     )
     spatial_box_averaging: bool = Field(
         default=False,
-        description="Полігональне усереднення ROI 5-точкової сітки (±1.5° lat/lon) для зменшення інструментального шуму",
+        description="Enable 5-point ROI spatial box averaging (±0.5° lat/lon around center) to reduce single-pixel noise",
     )
 
     @model_validator(mode="after")
@@ -93,8 +93,8 @@ class AnalyzeTrendRequestV2(BaseModel):
         """Ensure at least a 5-year span and normalize season_mode."""
         if self.end_year - self.start_year < 4:
             raise ValueError(
-                "Часовий діапазон (end_year - start_year) має становити щонайменше 5 років "
-                "для коректного розрахунку статистичної значущості."
+                "Time window (end_year - start_year) must span at least 5 inclusive years "
+                "for valid statistical significance testing."
             )
         self.season_mode = normalize_season_mode(self.season_mode)
         return self
@@ -107,23 +107,23 @@ class AnalyzeCsvRequestV2(BaseModel):
         ...,
         min_length=10,
         max_length=2_000_000,
-        description="Сирі текстові дані CSV-файлу з колонками Date/Year/time та Value/data",
+        description="Raw CSV text with Date/Year/time and Value/data columns",
     )
     dataset_name: str = Field(
         default="Imported NASA/NOAA CSV Series",
-        description="Назва файлу або датасету (наприклад, Giovanni MODIS AOD / NOAA CDO)",
+        description="Dataset or file label (e.g., Giovanni MODIS AOD / NOAA CDO)",
     )
     variable_code: str = Field(
         default="AOD",
-        description="Код змінної або власна назва показника",
+        description="Variable code or custom indicator name",
     )
     unit: Optional[str] = Field(
         default=None,
-        description="Одиниця вимірювання (опціонально)",
+        description="Optional measurement unit",
     )
     season_mode: str = Field(
         default="deseasonalized",
-        description="Сезонний фільтр: raw, deseasonalized, DJF, MAM, JJA, SON",
+        description="Seasonal filter: raw, deseasonalized, DJF, MAM, JJA, SON",
     )
     lat: float = Field(default=38.90, ge=-90.0, le=90.0)
     lon: float = Field(default=-76.40, ge=-180.0, le=180.0)

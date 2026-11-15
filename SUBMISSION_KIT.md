@@ -48,7 +48,7 @@ Source Code Repository: https://github.com/IllyaGolub0/GaiaPulse
 ### What It Does
 GaiaPulse turns the statistical detective workflow inspired by Dr. James Acker's NASA Goddard challenge ("Be an Earth System Trend Detective") into an interactive, reproducible workspace:
 1. Interactive 2D & 3D Earth Explorer: Switch seamlessly between a 2D Leaflet map with NASA GIBS satellite imagery layers (VIIRS CityLights, Blue Marble, MODIS True Color, MODIS Land Surface Temperature, Aerosol Optical Depth) and an interactive 3D MapLibre globe. Click any coordinates on Earth—or select two regions simultaneously for cross-regional Dipole Comparison—with optional 5-point Region of Interest (ROI) spatial box averaging (center + ±0.5° lat/lon) to reduce single-pixel noise.
-2. 13 Multi-Agency Satellite & Reanalysis Variables: Analyze SEAWIFS_CHLA (1998–2010), SWOT_WSE (2016–2026), RCM_SAR_BACKSCATTER (2019–2026), AOD, SO2, T2M, PRECTOTCORR, GWETROOT, QRUNOFF, EVPTRNS, ALLSKY_SFC_SW_DWN, SNODP, and SST, complete with biome filters and plain-language definitions for students.
+2. 13 Multi-Agency Satellite & Reanalysis Variables: Analyze SEAWIFS_CHLA (1998–2010), SWOT_WSE (2016–2025), RCM_SAR_BACKSCATTER (2019–2025), AOD (2002–2024), SO2 (2004–2024), T2M, PRECTOTCORR, GWETROOT, QRUNOFF, EVPTRNS, ALLSKY_SFC_SW_DWN, SNODP, and SST (1981–2025), complete with biome filters and plain-language definitions for students.
 3. Curated Case Studies & Live NASA EONET v3 Events: Explore 7 benchmark scenarios (including Dr. Acker's SeaWiFS coastal chlorophyll vs. open-shelf study from NASA NTRS 20090042747, Canadian wildfires & Wisconsin summer AOD smoke transport, CSA SWOT & RADARSAT boreal lake/sea-ice monitoring, Kasatochi SO2 radiative cooling, ENSO Pacific rainfall dipole, Arctic amplification vs. the North Atlantic warming hole, and an emerging soil-moisture trend in Southern Ukraine) or load live events directly from the NASA EONET v3 API.
 4. Rigorous Statistical & Seasonal Filtering Engine: Switch between Raw, Deseasonalized (climatological cycle removed), DJF, MAM, JJA, and SON modes, or inspect the 6-Mode Seasonal Fingerprint Matrix at a glance. The engine runs OLS linear regression, Student's t-test, Hamed-Rao AR(1) autocorrelation-corrected Mann-Kendall trend tests, Theil-Sen robust slopes with 95% confidence intervals, Pettitt change-point detection, LOESS STL decomposition (Trend / Seasonal / Residual), Pearson & Spearman dipole correlation, and a Weatherhead-based Time-to-Significance calculator showing how many additional years of satellite observations are needed when p >= 0.05.
 5. Direct CSV Ingestion & Official Verification Hub: Drag-and-drop CSV time series exported from NASA Giovanni, AppEEARS, GES DISC, or NOAA CDO (with automatic `#` metadata header stripping and `-900` fill-value filtering), export JSON/CSV or a printable PDF Mission Brief, and jump straight to 13 official NASA, NOAA, KNMI, and CSA verification portals via context-aware deep links pre-filled with the active bounding box and time window.
@@ -83,7 +83,7 @@ GaiaPulse integrates the following official NASA datasets, APIs, and research po
 5. NASA GES DISC Hydrology Time Series (`https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Time%20Series`): GLDAS/NLDAS soil moisture, evapotranspiration, and streamflow runoff variables.
 6. NASA AppEEARS (`https://appeears.earthdatacloud.nasa.gov/`): Referenced and supported for CSV point/polygon time-series extraction.
 7. NASA NTRS Technical Report 20090042747 (`https://ntrs.nasa.gov/api/citations/20090042747/downloads/20090042747.pdf` — Dr. James Acker's SeaWiFS coastal chlorophyll study): Used as our benchmark estuarine chlorophyll-a vs. river runoff case study.
-8. NASA / CNES / CSA SWOT Mission (`SWOT_WSE`, 2016–2026): Water surface elevation analytics for lakes, rivers, and reservoirs.
+8. NASA / CNES / CSA SWOT Mission (`SWOT_WSE`, 2016–2025): Water surface elevation analytics combining Jason-3/Sentinel-3 inland radar altimetry (2016–2022) with SWOT KaRIn interferometry (launched Dec 2022) for lakes, rivers, and reservoirs.
 ```
 
 ---
@@ -92,7 +92,7 @@ GaiaPulse integrates the following official NASA datasets, APIs, and research po
 ```text
 Space Agency Partners:
 - Canadian Space Agency (CSA):
-  * RADARSAT Constellation Mission (RCM) Data (`https://donnees-data.asc-csa.gc.ca/en/dataset/rcm`) — C-band SAR backscatter (σ°, dB) for all-weather sea ice, flood, wetland, and surface moisture monitoring (2019–2026).
+  * RADARSAT Constellation Mission (RCM) Data (`https://donnees-data.asc-csa.gc.ca/en/dataset/rcm`) — C-band SAR backscatter (σ°, dB) for all-weather sea ice, flood, wetland, and surface moisture monitoring (2019–2025).
   * Geo.ca (`https://geo.ca/`) — Canada's open geospatial portal for boreal ecosystems, wildfire, and surface water reference context.
   * CSA SWOT Mission Portal (`https://www.asc-csa.gc.ca/eng/satellites/swot/`) — Surface Water and Ocean Topography mission context.
   * CSA "Monitoring and Protecting Our Ecosystems from Space" (`https://www.asc-csa.gc.ca/eng/satellites/everyday-lives/monitoring-and-protecting-our-ecosystems-from-space.asp`) and CSA SAR Python Tutorial (`https://github.com/asc-csa/Synthetic_Aperture_Radar_Tutorial`).
