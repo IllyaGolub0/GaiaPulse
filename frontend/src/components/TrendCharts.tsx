@@ -14,6 +14,7 @@ import {
   VariableMetadata,
 } from '../types/climate';
 import { useLanguage } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
 
 interface TrendChartsProps {
   mode: AnalysisMode;
@@ -45,6 +46,15 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
   regionB,
 }) => {
   const { t, lang } = useLanguage();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light';
+
+  const chartBg = isLight ? '#ffffff' : '#09090b';
+  const chartFontColor = isLight ? '#334155' : '#a1a1aa';
+  const chartGridColor = isLight ? '#f1f5f9' : '#18181c';
+  const chartZeroLineColor = isLight ? '#cbd5e1' : '#27272a';
+  const chartTooltipBg = isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(9, 9, 11, 0.85)';
+
   const isNarrow = !useMediaQuery('(min-width: 640px)');
   const [activeTab, setActiveTab] = useState<ChartTab>('timeseries');
   const [dipoleView, setDipoleView] = useState<DipoleViewMode>('anomalies');
@@ -351,17 +361,17 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                 autosize: true,
                 height: 360,
                 paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: '#09090b',
+                plot_bgcolor: chartBg,
                 font: {
                   family: 'Inter, sans-serif',
-                  color: '#a1a1aa',
+                  color: chartFontColor,
                   size: 13,
                 },
                 margin: { l: 58, r: 20, t: 48, b: 44 },
                 xaxis: {
                   title: { text: lang === 'en' ? 'Year' : 'Рік' },
-                  gridcolor: '#18181c',
-                  zerolinecolor: '#27272a',
+                  gridcolor: chartGridColor,
+                  zerolinecolor: chartZeroLineColor,
                 },
                 yaxis: {
                   title: {
@@ -369,9 +379,9 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                       ? `Anomaly (${variableMeta.unit})`
                       : `${variableMeta.code} (${variableMeta.unit})`,
                   },
-                  gridcolor: '#18181c',
+                  gridcolor: chartGridColor,
                   zeroline: true,
-                  zerolinecolor: '#27272a',
+                  zerolinecolor: chartZeroLineColor,
                   zerolinewidth: 1,
                 },
                 showlegend: !isNarrow,
@@ -381,7 +391,7 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   y: 1.02,
                   xanchor: 'left',
                   x: 0,
-                  bgcolor: 'rgba(9, 9, 11, 0.85)',
+                  bgcolor: chartTooltipBg,
                 },
                 shapes:
                   showRegimeShift && regimeShiftA
@@ -418,10 +428,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                             size: 12,
                             color: regimeShiftA.is_significant
                               ? '#fbbf24'
-                              : '#a1a1aa',
+                              : chartFontColor,
                             family: 'JetBrains Mono, monospace',
                           },
-                          bgcolor: 'rgba(9, 9, 11, 0.85)',
+                          bgcolor: chartTooltipBg,
                           borderpad: 2,
                         },
                       ]
@@ -476,10 +486,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   autosize: true,
                   height: 145,
                   paper_bgcolor: 'rgba(0,0,0,0)',
-                  plot_bgcolor: '#09090b',
+                  plot_bgcolor: chartBg,
                   font: {
                     family: 'JetBrains Mono, monospace',
-                    color: '#a1a1aa',
+                    color: chartFontColor,
                     size: 13,
                   },
                   margin: { l: 90, r: 60, t: 8, b: 30 },
@@ -527,10 +537,10 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                     autosize: true,
                     height: 145,
                     paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: '#09090b',
+                    plot_bgcolor: chartBg,
                     font: {
                       family: 'JetBrains Mono, monospace',
-                      color: '#a1a1aa',
+                      color: chartFontColor,
                       size: 13,
                     },
                     margin: { l: 90, r: 60, t: 8, b: 30 },
@@ -583,19 +593,19 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   height: 240,
                   barmode: 'group',
                   paper_bgcolor: 'rgba(0,0,0,0)',
-                  plot_bgcolor: '#09090b',
+                  plot_bgcolor: chartBg,
                   font: {
                     family: 'JetBrains Mono, monospace',
-                    color: '#a1a1aa',
+                    color: chartFontColor,
                     size: 13,
                   },
                   margin: { l: 54, r: 20, t: 36, b: 36 },
-                  xaxis: { gridcolor: '#18181c' },
+                  xaxis: { gridcolor: chartGridColor },
                   yaxis: {
                     title: { text: `Δ (${variableMeta.unit})` },
-                    gridcolor: '#18181c',
+                    gridcolor: chartGridColor,
                     zeroline: true,
-                    zerolinecolor: '#3f3f46',
+                    zerolinecolor: chartZeroLineColor,
                   },
                   showlegend: !isNarrow,
                   legend: {
@@ -655,20 +665,20 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   autosize: true,
                   height: 340,
                   paper_bgcolor: 'rgba(0,0,0,0)',
-                  plot_bgcolor: '#09090b',
+                  plot_bgcolor: chartBg,
                   font: {
                     family: 'JetBrains Mono, monospace',
-                    color: '#a1a1aa',
+                    color: chartFontColor,
                     size: 13,
                   },
                   margin: { l: 50, r: 50, t: 38, b: 38 },
                   xaxis: {
                     title: { text: 'Year' },
-                    gridcolor: '#18181c',
+                    gridcolor: chartGridColor,
                   },
                   yaxis: {
                     title: { text: `Trend (${variableMeta.unit})` },
-                    gridcolor: '#18181c',
+                    gridcolor: chartGridColor,
                   },
                   yaxis2: {
                     title: { text: 'Residuals' },
@@ -763,24 +773,24 @@ export const TrendCharts: React.FC<TrendChartsProps> = ({
                   autosize: true,
                   height: 340,
                   paper_bgcolor: 'rgba(0,0,0,0)',
-                  plot_bgcolor: '#09090b',
+                  plot_bgcolor: chartBg,
                   font: {
                     family: 'JetBrains Mono, monospace',
-                    color: '#a1a1aa',
+                    color: chartFontColor,
                     size: 13,
                   },
                   margin: { l: 50, r: 20, t: 38, b: 38 },
                   xaxis: {
                     title: { text: 'Month' },
-                    gridcolor: '#18181c',
+                    gridcolor: chartGridColor,
                   },
                   yaxis: {
                     title: {
                       text: `Seasonal Effect (${variableMeta.unit})`,
                     },
-                    gridcolor: '#18181c',
+                    gridcolor: chartGridColor,
                     zeroline: true,
-                    zerolinecolor: '#27272a',
+                    zerolinecolor: chartZeroLineColor,
                   },
                   showlegend: !isNarrow,
                   legend: {

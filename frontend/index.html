@@ -19,6 +19,26 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Gajraj+One&family=Koulen&family=Oswald:wght@500&display=swap"
       rel="stylesheet"
     />
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('gaiapulse_theme');
+          var isDark = stored === 'dark' || (!stored || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.classList.remove('light');
+            root.setAttribute('data-theme', 'dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.add('light');
+            root.classList.remove('dark');
+            root.setAttribute('data-theme', 'light');
+            root.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#09090b] text-[#f4f4f6] antialiased selection:bg-[#38bdf8]/30 selection:text-[#f4f4f6]">
     <div id="root"></div>

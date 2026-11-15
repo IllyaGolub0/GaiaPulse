@@ -73,6 +73,7 @@ import { GuidedTour, TourStep } from './components/GuidedTour';
 import { MissionBriefModal } from './components/MissionBriefModal';
 import { useMediaQuery } from './utils/useMediaQuery';
 import { PhenomenaDrawer } from './components/PhenomenaDrawer';
+import { ThemeToggle } from './components/ThemeToggle';
 import {
   ContextDeepLinksBar,
   CsvImporterModal,
@@ -1941,6 +1942,8 @@ export const App: React.FC = () => {
               <Search className="w-4 h-4" />
               <span className="hidden xl:inline">{L('Пошук', 'Search')}</span>
             </button>
+
+            <ThemeToggle />
 
             <div
               className="inline-flex items-stretch rounded-lg bg-black h-9 md:h-11 p-1 md:p-1.5"

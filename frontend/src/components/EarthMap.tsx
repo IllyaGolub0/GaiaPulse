@@ -35,6 +35,7 @@ import {
   buildROIPolygonCoords,
 } from '../utils/roiGeometry';
 import { Language, useLanguage } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
 
 const LazyGlobe3DView = React.lazy(() =>
   import('./Globe3DView').then((mod) => ({ default: mod.Globe3DView }))
@@ -52,7 +53,7 @@ interface EarthMapProps {
 }
 
 type ViewProjectionMode = '2d' | '3d';
-type BasemapTheme = 'dark' | 'night' | 'satellite';
+type BasemapTheme = 'dark' | 'light' | 'night' | 'satellite';
 
 interface GibsLayerConfig {
   id: string;
@@ -355,6 +356,15 @@ const BASEMAP_THEMES: Record<
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
     attribution: 'Esri World Dark Gray | NASA Earthdata GIBS',
   },
+  light: {
+    label: 'Світла',
+    labelEn: 'Light',
+    baseUrl:
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    refUrl:
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Esri World Light Gray | NASA Earthdata GIBS',
+  },
   night: {
     label: 'Нічна',
     labelEn: 'Night',
@@ -494,8 +504,20 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   onToggleActiveTarget,
 }) => {
   const { lang } = useLanguage();
+  const { resolvedTheme } = useTheme();
   const [viewMode, setViewMode] = useState<ViewProjectionMode>('2d');
-  const [basemapTheme, setBasemapTheme] = useState<BasemapTheme>('dark');
+  const [basemapTheme, setBasemapTheme] = useState<BasemapTheme>(() =>
+    resolvedTheme === 'light' ? 'light' : 'dark'
+  );
+
+  // Synchronize default basemap when user switches theme
+  useEffect(() => {
+    setBasemapTheme((prev) => {
+      if (resolvedTheme === 'light' && prev === 'dark') return 'light';
+      if (resolvedTheme === 'dark' && prev === 'light') return 'dark';
+      return prev;
+    });
+  }, [resolvedTheme]);
   const [gibsEnabled, setGibsEnabled] = useState<boolean>(true);
   const [gibsOpacity, setGibsOpacity] = useState<number>(0.55);
 
