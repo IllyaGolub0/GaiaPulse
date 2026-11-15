@@ -544,12 +544,77 @@ html.light select:focus {
   outline: none;
 }
 
-html.light .hover\:bg-\[\#262626\]:hover {
-  background-color: #e2e8f0 !important;
+html.light .hover\:bg-\[\#262626\]:hover,
+html.light .hover\:bg-\[\#1a1a20\]:hover,
+html.light .hover\:bg-\[\#1a1a22\]:hover,
+html.light .hover\:bg-\[\#141419\]:hover,
+html.light .hover\:bg-\[\#121216\]:hover,
+html.light .hover\:bg-\[\#16161b\]:hover,
+html.light .hover\:bg-\[\#1c1c22\]:hover,
+html.light .hover\:bg-\[\#1f1f24\]:hover,
+html.light .hover\:bg-zinc-800:hover,
+html.light .hover\:bg-zinc-700:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
-html.light .hover\:bg-\[\#1a1a22\]:hover {
-  background-color: #e2e8f0 !important;
+/* Light mode hover border overrides - avoid dark gray/black borders */
+html.light .hover\:border-zinc-500:hover,
+html.light .hover\:border-zinc-600:hover,
+html.light .hover\:border-zinc-700:hover,
+html.light .hover\:border-\[\#2a2a32\]:hover,
+html.light .hover\:border-\[\#1f1f24\]:hover {
+  border-color: #94a3b8 !important;
+}
+
+/* Share & Export dropdown menu in light mode */
+html.light [role="menu"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light [role="menu"] button {
+  color: #1e293b !important;
+}
+
+html.light [role="menu"] button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html.light [role="menu"] button svg {
+  color: #64748b !important;
+}
+
+html.light [role="menu"] button:hover svg {
+  color: #0f172a !important;
+}
+
+/* Tour Offer Card in Light Mode */
+html.light .tour-offer-card {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+
+html.light .tour-offer-card h2 {
+  color: #0f172a !important;
+}
+
+html.light .tour-offer-card p {
+  color: #334155 !important;
+}
+
+html.light .tour-offer-card button:last-child {
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+html.light .tour-offer-card button:last-child:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
 /* Leaflet & MapLibre light styling */

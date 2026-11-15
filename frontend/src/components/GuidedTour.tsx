@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export interface TourStep {
   /** Value of the data-tour attribute to highlight; omit for a centered step. */
@@ -53,6 +54,8 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
 }) => {
   const step = steps[stepIndex];
   const en = lang === 'en';
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light';
   const [box, setBox] = useState<Box | null>(null);
   const [viewport, setViewport] = useState({
     w: window.innerWidth,
@@ -215,25 +218,39 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             left: box.left - PAD,
             width: box.width + PAD * 2,
             height: box.height + PAD * 2,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.66)',
+            boxShadow: isLight
+              ? '0 0 0 9999px rgba(15, 23, 42, 0.45)'
+              : '0 0 0 9999px rgba(0, 0, 0, 0.66)',
           }}
         />
       ) : (
-        <div className="absolute inset-0 bg-black/70 pointer-events-none" />
+        <div
+          className={`absolute inset-0 pointer-events-none ${
+            isLight ? 'bg-slate-900/40' : 'bg-black/70'
+          }`}
+        />
       )}
 
       <div
         ref={cardRef}
-        className="absolute rounded-lg bg-[#101014] border border-[#34343e] shadow-2xl p-4 space-y-3 transition-all duration-200"
+        className={`absolute rounded-xl shadow-2xl p-4 space-y-3 transition-all duration-200 border ${
+          isLight
+            ? 'bg-white border-slate-200 text-slate-900 shadow-2xl'
+            : 'bg-[#101014] border-[#34343e] text-zinc-100'
+        }`}
         style={cardStyle}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-0.5">
-            <div className="text-xs text-[#597B8A] font-medium">
+            <div className="text-xs text-[#597B8A] font-semibold tracking-wide">
               {en ? 'Step' : 'Крок'} {stepIndex + 1} {en ? 'of' : 'з'}{' '}
               {steps.length}
             </div>
-            <h2 className="text-base font-semibold text-zinc-50 leading-snug">
+            <h2
+              className={`text-base font-semibold leading-snug ${
+                isLight ? 'text-slate-900' : 'text-zinc-50'
+              }`}
+            >
               {step.title}
             </h2>
           </div>
@@ -241,20 +258,34 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             type="button"
             onClick={onClose}
             aria-label={en ? 'Close the tour' : 'Закрити гід'}
-            className="shrink-0 w-9 h-9 -mt-1 -mr-1 rounded-md hover:bg-[#1f1f24] text-zinc-300 hover:text-zinc-50 flex items-center justify-center transition"
+            className={`shrink-0 w-9 h-9 -mt-1 -mr-1 rounded-md flex items-center justify-center transition ${
+              isLight
+                ? 'hover:bg-slate-100 text-slate-400 hover:text-slate-800'
+                : 'hover:bg-[#1f1f24] text-zinc-300 hover:text-zinc-50'
+            }`}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <p className="text-sm text-zinc-200 leading-relaxed">{step.body}</p>
+        <p
+          className={`text-sm leading-relaxed ${
+            isLight ? 'text-slate-600' : 'text-zinc-200'
+          }`}
+        >
+          {step.body}
+        </p>
 
         <div className="flex items-center gap-1" aria-hidden="true">
           {steps.map((_, idx) => (
             <span
               key={idx}
               className={`h-1 flex-1 rounded-full ${
-                idx <= stepIndex ? 'bg-[#597B8A]' : 'bg-[#2a2a32]'
+                idx <= stepIndex
+                  ? 'bg-[#597B8A]'
+                  : isLight
+                  ? 'bg-slate-200'
+                  : 'bg-[#2a2a32]'
               }`}
             />
           ))}
@@ -265,7 +296,11 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             type="button"
             onClick={() => onStepChange(stepIndex - 1)}
             disabled={stepIndex === 0}
-            className="h-10 md:h-9 px-3 rounded-md border border-[#2a2a32] text-sm text-zinc-200 hover:text-zinc-50 hover:border-zinc-500 transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+            className={`h-10 md:h-9 px-3 rounded-md border text-sm transition inline-flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none ${
+              isLight
+                ? 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                : 'border-[#2a2a32] text-zinc-200 hover:text-zinc-50 hover:border-zinc-500'
+            }`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{en ? 'Back' : 'Назад'}</span>
@@ -274,7 +309,7 @@ export const GuidedTour: React.FC<GuidedTourProps> = ({
             type="button"
             onClick={() => (isLast ? onClose() : onStepChange(stepIndex + 1))}
             autoFocus
-            className="h-10 md:h-9 px-4 rounded-md bg-[#597B8A] hover:bg-[#597B8A] text-zinc-950 text-sm font-semibold transition inline-flex items-center gap-1.5"
+            className="h-10 md:h-9 px-4 rounded-md bg-[#597B8A] hover:bg-[#486775] text-white text-sm font-semibold transition inline-flex items-center gap-1.5 shadow-sm"
           >
             <span>
               {isLast ? (en ? 'Finish' : 'Завершити') : en ? 'Next' : 'Далі'}
