@@ -59,15 +59,8 @@ export interface YearPresetOption {
   end: number;
 }
 
-const CANDIDATE_YEAR_WINDOWS: Array<[number, number]> = [
-  [1985, 2026],
-  [2000, 2026],
-  [2002, 2026],
-  [2004, 2026],
-  [2006, 2026],
-  [2010, 2026],
-  [2015, 2026],
-  [2019, 2026],
+const RECENT_MILESTONE_STARTS = [1985, 2000, 2002, 2004, 2010, 2015, 2019, 2020];
+const HISTORICAL_YEAR_WINDOWS: Array<[number, number]> = [
   [1998, 2005],
   [2003, 2010],
 ];
@@ -76,13 +69,22 @@ export function getYearPresetsForVariable(
   varMeta?: Pick<VariableMetadata, 'min_year' | 'max_year'>
 ): YearPresetOption[] {
   const varMin = varMeta?.min_year ?? 1981;
-  const varMax = varMeta?.max_year ?? 2026;
+  const varMax = varMeta?.max_year ?? 2025;
   const full: YearPresetOption = {
     label: `${varMin}–${varMax}`,
     start: varMin,
     end: varMax,
   };
-  const extras = CANDIDATE_YEAR_WINDOWS.filter(
+
+  const recentExtras: YearPresetOption[] = RECENT_MILESTONE_STARTS.filter(
+    (s) => s > varMin && varMax - s >= 4
+  ).map((s) => ({
+    label: `${s}–${varMax}`,
+    start: s,
+    end: varMax,
+  }));
+
+  const historicalExtras: YearPresetOption[] = HISTORICAL_YEAR_WINDOWS.filter(
     ([s, e]) =>
       s >= varMin &&
       e <= varMax &&
@@ -90,7 +92,7 @@ export function getYearPresetsForVariable(
       !(s === varMin && e === varMax)
   ).map(([s, e]) => ({ label: `${s}–${e}`, start: s, end: e }));
 
-  return [full, ...extras];
+  return [full, ...recentExtras, ...historicalExtras];
 }
 
 export interface UrlInvestigationState {

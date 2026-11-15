@@ -644,9 +644,9 @@ const VARIABLE_DEFINITIONS_EN: Record<string, string> = {
   SEAWIFS_CHLA:
     'Chlorophyll-a concentration in coastal waters and river estuaries from the NASA OrbView-2 SeaWiFS mission (1998–2010, mission ended in Dec 2010), tracking nutrient-driven phytoplankton blooms.',
   SWOT_WSE:
-    'Water Surface Elevation of lakes, rivers, reservoirs, and estuaries (2016–2026), combining Jason-3/Sentinel-3 inland radar altimetry (2016–2022) with NASA / CNES / CSA SWOT KaRIn interferometry (launched Dec 2022).',
+    'Water Surface Elevation of lakes, rivers, reservoirs, and estuaries (2016–2025), combining Jason-3/Sentinel-3 inland radar altimetry (2016–2022) with NASA / CNES / CSA SWOT KaRIn interferometry (launched Dec 2022).',
   RCM_SAR_BACKSCATTER:
-    'Normalized C-band Synthetic Aperture Radar backscatter (σ°, dB) from the CSA RADARSAT Constellation Mission (RCM, 2019–2026), imaging sea ice, floods, and wetlands day or night through clouds.',
+    'Normalized C-band Synthetic Aperture Radar backscatter (σ°, dB) from the CSA RADARSAT Constellation Mission (RCM, 2019–2025), imaging sea ice, floods, and wetlands day or night through clouds.',
 };
 
 export function getVariableDefinitionI18n(
@@ -706,7 +706,7 @@ const SCENARIO_TEXT_EN: Record<
   },
   'eonet-fallback-wildfires-canada': {
     summary:
-      'NASA EONET catalog event (Wildfires): evaluating the multi-decadal trend in smoke Aerosol Optical Depth (MODIS Aqua AOD) during the peak summer wildfire season (JJA, 2002–2026).',
+      'NASA EONET catalog event (Wildfires): evaluating the multi-decadal trend in smoke Aerosol Optical Depth (MODIS Aqua AOD) during the peak summer wildfire season (JJA, 2002–2024).',
     note: 'Automatically generated scenario anchored to NASA EONET event coordinates (Wildfires -> MODIS Aqua AOD).',
   },
   'eonet-fallback-volcano-reykjanes': {
@@ -878,10 +878,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       if (typeof window !== 'undefined') {
         const paramLang = new URLSearchParams(window.location.search).get('lang');
-        if (paramLang === 'en' || paramLang === 'ua') return paramLang;
+        if (paramLang === 'ua' || paramLang === 'en') {
+          return paramLang;
+        }
+        try {
+          localStorage.removeItem('gaia_lang');
+        } catch {
+          // ignore storage errors
+        }
       }
-      const saved = localStorage.getItem('gaia_lang');
-      if (saved === 'en' || saved === 'ua') return saved;
     } catch {
       // ignore storage errors
     }
@@ -890,11 +895,6 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const setLang = (next: Language) => {
     setLangState(next);
-    try {
-      localStorage.setItem('gaia_lang', next);
-    } catch {
-      // ignore
-    }
   };
 
   const toggleLang = () => {

@@ -119,8 +119,24 @@ def test_analyze_enforces_satellite_mission_year_bounds() -> None:
 
     assert "RCM_SAR_BACKSCATTER" in by_code
     assert by_code["RCM_SAR_BACKSCATTER"]["min_year"] == 2019
-    assert by_code["RCM_SAR_BACKSCATTER"]["max_year"] == 2026
+    assert by_code["RCM_SAR_BACKSCATTER"]["max_year"] == 2025
     assert by_code["RCM_SAR_BACKSCATTER"]["mission_status"] == "active"
+
+    assert by_code["AOD"]["min_year"] == 2002
+    assert by_code["AOD"]["max_year"] == 2024
+    assert by_code["AOD"]["mission_status"] == "completed"
+
+    assert by_code["SO2"]["min_year"] == 2004
+    assert by_code["SO2"]["max_year"] == 2024
+    assert by_code["SO2"]["mission_status"] == "completed"
+
+    assert by_code["SNODP"]["min_year"] == 2000
+    assert by_code["SNODP"]["max_year"] == 2024
+    assert by_code["SNODP"]["mission_status"] == "completed"
+
+    assert by_code["SWOT_WSE"]["min_year"] == 2016
+    assert by_code["SWOT_WSE"]["max_year"] == 2025
+    assert all(int(v["max_year"]) <= 2025 for v in vars_list)
 
     seawifs_resp = client.post(
         "/api/v2/analyze",
@@ -154,7 +170,7 @@ def test_analyze_enforces_satellite_mission_year_bounds() -> None:
     rcm_years = [int(pt["year"]) for pt in rcm_body["region_a_analysis"]["time_series"]]
     assert rcm_years
     assert min(rcm_years) >= 2019
-    assert max(rcm_years) <= 2026
+    assert max(rcm_years) <= 2025
 
     # Verify NASA POWER unit normalizations in _parse_nasa_monthly_dict
     raw_sw = {f"{yr}{mo:02d}": 10.0 for yr in range(2015, 2025) for mo in range(1, 13)}

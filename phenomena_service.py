@@ -26,7 +26,7 @@ _EONET_CACHE: Dict[str, Any] = {
 CURATED_PHENOMENA: List[Dict[str, Any]] = [
     {
         "id": "wisconsin-wildfire-smoke",
-        "title": "Canadian Wildfires & Smoke Transport over Wisconsin (2002–2026)",
+        "title": "Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)",
         "category": "Wildfires",
         "source_type": "curated",
         "tags": ["acker_video", "curated"],
@@ -35,7 +35,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "ALLSKY_SFC_SW_DWN",
         "mode": "single",
         "start_year": 2002,
-        "end_year": 2026,
+        "end_year": 2024,
         "season_mode": "JJA",
         "region_a": {
             "name": "Wisconsin, USA",
@@ -101,7 +101,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "RCM_SAR_BACKSCATTER",
         "mode": "single",
         "start_year": 2019,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "deseasonalized",
         "region_a": {
             "name": "Northern Canada / Hudson Bay",
@@ -131,7 +131,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "ALLSKY_SFC_SW_DWN",
         "mode": "single",
         "start_year": 2004,
-        "end_year": 2025,
+        "end_year": 2024,
         "season_mode": "deseasonalized",
         "region_a": {
             "name": "Kasatochi Volcano, Aleutian Islands",
@@ -162,7 +162,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "SST",
         "mode": "dipole",
         "start_year": 1985,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "DJF",
         "region_a": {
             "name": "Peru / Ecuador Coast",
@@ -196,7 +196,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "SST",
         "mode": "dipole",
         "start_year": 1985,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "deseasonalized",
         "region_a": {
             "name": "Svalbard, High Arctic",
@@ -230,7 +230,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "secondary_variable": "EVPTRNS",
         "mode": "single",
         "start_year": 2005,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "JJA",
         "region_a": {
             "name": "Southern Steppe / Black Sea, Ukraine",
@@ -264,14 +264,14 @@ FALLBACK_EONET_SCENARIOS: List[Dict[str, Any]] = [
         "variable": "AOD",
         "mode": "single",
         "start_year": 2002,
-        "end_year": 2026,
+        "end_year": 2024,
         "season_mode": "JJA",
         "region_a": {"name": "Northern Alberta Boreal, Canada", "lat": 56.72, "lon": -111.38},
         "region_b": None,
         "event_date": "2025-07-18",
         "scientific_summary": (
             "Подія з каталогу NASA EONET (Wildfires): аналіз багаторічного тренду оптичної товщини "
-            "аерозолів диму (MODIS Aqua AOD) у літній пожежонебезпечний сезон (JJA, 2002–2026)."
+            "аерозолів диму (MODIS Aqua AOD) у літній пожежонебезпечний сезон (JJA, 2002–2024)."
         ),
         "student_note": "Автоматично згенерований сценарій на основі координат події NASA EONET.",
     },
@@ -286,7 +286,7 @@ FALLBACK_EONET_SCENARIOS: List[Dict[str, Any]] = [
         "variable": "SO2",
         "mode": "single",
         "start_year": 2004,
-        "end_year": 2026,
+        "end_year": 2024,
         "season_mode": "deseasonalized",
         "region_a": {"name": "Reykjanes Peninsula, Iceland", "lat": 63.88, "lon": -22.42},
         "region_b": None,
@@ -308,7 +308,7 @@ FALLBACK_EONET_SCENARIOS: List[Dict[str, Any]] = [
         "variable": "PRECTOTCORR",
         "mode": "single",
         "start_year": 1998,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "SON",
         "region_a": {"name": "Western Caribbean Basin", "lat": 19.40, "lon": -83.50},
         "region_b": None,
@@ -330,7 +330,7 @@ FALLBACK_EONET_SCENARIOS: List[Dict[str, Any]] = [
         "variable": "GWETROOT",
         "mode": "single",
         "start_year": 2000,
-        "end_year": 2026,
+        "end_year": 2025,
         "season_mode": "SON",
         "region_a": {"name": "Manaus / Rio Negro, Amazon", "lat": -3.12, "lon": -60.02},
         "region_b": None,
@@ -389,7 +389,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "MODIS Aqua",
             "season_mode": "JJA",
             "start_year": 2002,
-            "end_year": 2026,
+            "end_year": 2024,
             "category_label": "Wildfires",
         }
     if "volcano" in cat_lower:
@@ -398,7 +398,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "Aura OMI",
             "season_mode": "deseasonalized",
             "start_year": 2004,
-            "end_year": 2026,
+            "end_year": 2024,
             "category_label": "Volcanoes",
         }
     if "flood" in cat_lower:
@@ -407,7 +407,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "GLDAS / SWOT",
             "season_mode": "deseasonalized",
             "start_year": 1998,
-            "end_year": 2026,
+            "end_year": 2024,
             "category_label": "Floods",
         }
     if "storm" in cat_lower or "cyclone" in cat_lower or "hurricane" in cat_lower:
@@ -416,7 +416,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "GPM",
             "season_mode": "deseasonalized",
             "start_year": 1998,
-            "end_year": 2026,
+            "end_year": 2025,
             "category_label": "Severe Storms",
         }
     if "drought" in cat_lower:
@@ -425,7 +425,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "GLDAS",
             "season_mode": "JJA",
             "start_year": 2000,
-            "end_year": 2026,
+            "end_year": 2025,
             "category_label": "Drought",
         }
     if "ice" in cat_lower or "snow" in cat_lower:
@@ -434,7 +434,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "satellite_badge": "CSA RADARSAT / MODIS",
             "season_mode": "DJF",
             "start_year": 2019,
-            "end_year": 2026,
+            "end_year": 2025,
             "category_label": "Sea and Lake Ice",
         }
 
@@ -443,7 +443,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
         "satellite_badge": "MERRA-2 / AIRS",
         "season_mode": "deseasonalized",
         "start_year": 1995,
-        "end_year": 2026,
+        "end_year": 2025,
         "category_label": category_title or "Earth Event",
     }
 

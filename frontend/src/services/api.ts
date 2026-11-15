@@ -95,16 +95,16 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     unit: 'm (meters above reference ellipsoid)',
     satellite_badge: 'NASA / CNES / CSA SWOT Satellite',
     source:
-      'NASA / CNES / CSA SWOT (2022–2026) & Jason-3 / Sentinel-3 Inland Altimetry (2016–2026)',
+      'NASA / CNES / CSA SWOT (2022–2025) & Jason-3 / Sentinel-3 Inland Altimetry (2016–2025)',
     gibs_layer: 'MODIS_Terra_CorrectedReflectance_Bands721',
     min_year: 2016,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['tidal_estuary', 'rain_forest', 'desert'],
     description:
-      'Висота водної поверхні річок, озер та водосховищ за даними радарної альтиметрії SWOT KaRIn (запуск грудень 2022) у поєднанні з Jason-3 / Sentinel-3 (2016–2026).',
+      'Висота водної поверхні річок, озер та водосховищ за даними радарної альтиметрії SWOT KaRIn (запуск грудень 2022) у поєднанні з Jason-3 / Sentinel-3 (2016–2025).',
     student_definition:
-      'Висота водної поверхні річок, озер та водосховищ із космосу (2016–2026): поєднує попередню супутникову альтиметрію (Jason-3 / Sentinel-3, 2016–2022) із місією SWOT KaRIn (запуск у грудні 2022 р.), що покриває 90% поверхневих вод Землі.',
+      'Висота водної поверхні річок, озер та водосховищ із космосу (2016–2025): поєднує попередню супутникову альтиметрію (Jason-3 / Sentinel-3, 2016–2022) із місією SWOT KaRIn (запуск у грудні 2022 р.), що покриває 90% поверхневих вод Землі.',
   },
   {
     code: 'RCM_SAR_BACKSCATTER',
@@ -112,10 +112,10 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     name_ua: 'Радарний індекс льоду, повеней та вологості (CSA RADARSAT SAR)',
     unit: 'dB (SAR Backscatter σ°)',
     satellite_badge: 'CSA RADARSAT (RCM) / Geo.ca',
-    source: 'CSA RADARSAT (RCM) / Geo.ca (2019–2026)',
+    source: 'CSA RADARSAT (RCM) / Geo.ca (2019–2025)',
     gibs_layer: 'MODIS_Terra_NDSI_Snow_Cover',
     min_year: 2019,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['cryosphere', 'tidal_estuary'],
     description:
@@ -132,8 +132,8 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA MODIS Aqua / Giovanni',
     gibs_layer: 'MODIS_Terra_Aerosol',
     min_year: 2002,
-    max_year: 2026,
-    mission_status: 'active',
+    max_year: 2024,
+    mission_status: 'completed',
     biomes: ['rain_forest', 'desert'],
     description:
       'Індикатор диму лісових пожеж, пилу та сульфатних аерозолів (MODIS Aqua).',
@@ -149,7 +149,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA MERRA-2 / Aqua AIRS / Giovanni',
     gibs_layer: 'MODIS_Terra_Land_Surface_Temp_Day',
     min_year: 1981,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['cryosphere', 'desert', 'rain_forest', 'tidal_estuary'],
     description:
@@ -166,7 +166,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA GPM IMERG / MERRA-2 / Giovanni',
     gibs_layer: 'IMERG_Precipitation_Rate',
     min_year: 1985,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['rain_forest', 'desert', 'tidal_estuary'],
     description:
@@ -183,8 +183,8 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA Aura OMI / Giovanni',
     gibs_layer: 'OMI_SO2_Middle_Troposphere',
     min_year: 2004,
-    max_year: 2026,
-    mission_status: 'active',
+    max_year: 2024,
+    mission_status: 'completed',
     biomes: ['cryosphere', 'desert'],
     description:
       'Вміст вулканічного та антропогенного SO₂ у стовпі атмосфери (Aura OMI).',
@@ -200,7 +200,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA GES DISC Hydrology / GLDAS / SMAP',
     gibs_layer: 'SMAP_L4_Analyzed_Root_Zone_Soil_Moisture',
     min_year: 2000,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['desert', 'rain_forest'],
     description:
@@ -217,7 +217,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA GES DISC Hydrology Time Series / GLDAS',
     gibs_layer: 'IMERG_Precipitation_Rate',
     min_year: 1998,
-    max_year: 2026,
+    max_year: 2024,
     mission_status: 'active',
     biomes: ['tidal_estuary', 'rain_forest'],
     description:
@@ -234,7 +234,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA CERES / FLASHFlux',
     gibs_layer: 'MODIS_Terra_CorrectedReflectance_TrueColor',
     min_year: 2000,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['desert', 'cryosphere', 'rain_forest'],
     description:
@@ -251,7 +251,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA GES DISC Hydrology / GLDAS',
     gibs_layer: 'SMAP_L4_Analyzed_Root_Zone_Soil_Moisture',
     min_year: 2000,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['rain_forest', 'desert'],
     description:
@@ -268,8 +268,8 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA MODIS / MERRA-2 Cryosphere',
     gibs_layer: 'MODIS_Terra_NDSI_Snow_Cover',
     min_year: 2000,
-    max_year: 2026,
-    mission_status: 'active',
+    max_year: 2024,
+    mission_status: 'completed',
     biomes: ['cryosphere'],
     description:
       'Глибина снігового покриву кріосфери (MODIS / MERRA-2).',
@@ -285,7 +285,7 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     source: 'NASA GHRSST / MODIS Aqua',
     gibs_layer: 'GHRSST_L4_MUR_Sea_Surface_Temperature',
     min_year: 1981,
-    max_year: 2026,
+    max_year: 2025,
     mission_status: 'active',
     biomes: ['tidal_estuary', 'cryosphere'],
     description: 'Радіаційна температура поверхні океану та суші.',
@@ -472,7 +472,7 @@ export const OFFICIAL_RESOURCES_LIST: OfficialResourceItem[] = [
 export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
   {
     id: 'wisconsin-wildfire-smoke',
-    title: 'Canadian Wildfires & Smoke Transport over Wisconsin (2002–2026)',
+    title: 'Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)',
     category: 'Wildfires',
     source_type: 'curated',
     tags: ['acker_video', 'curated'],
@@ -481,7 +481,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     secondary_variable: 'ALLSKY_SFC_SW_DWN',
     mode: 'single',
     start_year: 2002,
-    end_year: 2026,
+    end_year: 2024,
     season_mode: 'JJA',
     region_a: { name: 'Wisconsin, USA', lat: 44.5, lon: -89.5 },
     region_b: null,
@@ -534,7 +534,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     secondary_variable: 'RCM_SAR_BACKSCATTER',
     mode: 'single',
     start_year: 2019,
-    end_year: 2026,
+    end_year: 2025,
     season_mode: 'deseasonalized',
     region_a: {
       name: 'Northern Canada / Hudson Bay',
@@ -560,7 +560,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     secondary_variable: 'ALLSKY_SFC_SW_DWN',
     mode: 'single',
     start_year: 2004,
-    end_year: 2025,
+    end_year: 2024,
     season_mode: 'deseasonalized',
     region_a: {
       name: 'Kasatochi Volcano, Aleutian Islands',
@@ -585,7 +585,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     variable: 'PRECTOTCORR',
     mode: 'dipole',
     start_year: 1985,
-    end_year: 2026,
+    end_year: 2025,
     season_mode: 'DJF',
     region_a: { name: 'Peru / Ecuador Coast', lat: -4.5, lon: -81.2 },
     region_b: {
@@ -610,7 +610,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     variable: 'T2M',
     mode: 'dipole',
     start_year: 1985,
-    end_year: 2026,
+    end_year: 2025,
     season_mode: 'deseasonalized',
     region_a: { name: 'Svalbard, High Arctic', lat: 78.22, lon: 15.63 },
     region_b: { name: 'North Atlantic Subpolar Gyre', lat: 53.0, lon: -35.0 },
@@ -632,7 +632,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     secondary_variable: 'EVPTRNS',
     mode: 'single',
     start_year: 2005,
-    end_year: 2026,
+    end_year: 2025,
     season_mode: 'JJA',
     region_a: {
       name: 'Southern Steppe / Black Sea, Ukraine',
@@ -659,7 +659,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     variable: 'AOD',
     mode: 'single',
     start_year: 2002,
-    end_year: 2026,
+    end_year: 2024,
     season_mode: 'JJA',
     region_a: {
       name: 'Northern Alberta Boreal, Canada',
@@ -683,7 +683,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     variable: 'SO2',
     mode: 'single',
     start_year: 2004,
-    end_year: 2026,
+    end_year: 2024,
     season_mode: 'deseasonalized',
     region_a: {
       name: 'Reykjanes Peninsula, Iceland',
@@ -726,7 +726,7 @@ export const DEFAULT_DETECTIVE_CASES: DetectiveCasePreset[] = [
     mode: 'single',
     variable: 'SWOT_WSE',
     start_year: 2019,
-    end_year: 2026,
+    end_year: 2025,
     season_mode: 'deseasonalized',
     physical_process:
       'Альтиметрія SWOT та радар CSA RADARSAT (RCM) фіксують зміни рівня води озер та скорочення льодового покриву Канади.',
@@ -742,11 +742,11 @@ export const DEFAULT_DETECTIVE_CASES: DetectiveCasePreset[] = [
   {
     id: 'wisconsin-wildfire-smoke',
     title: 'Canadian Wildfires & Wisconsin Smoke',
-    subtitle: 'MODIS Aqua AOD (2002–2026, Summer JJA)',
+    subtitle: 'MODIS Aqua AOD (2002–2024, Summer JJA)',
     mode: 'single',
     variable: 'AOD',
     start_year: 2002,
-    end_year: 2026,
+    end_year: 2024,
     season_mode: 'JJA',
     physical_process:
       'Перенесення диму масштабних канадських пожеж у Вісконсин у літній сезон (JJA).',
@@ -965,7 +965,7 @@ export function getVariableMetaLocal(
       source: 'NASA / CSA EOS',
       gibs_layer: 'MODIS_Terra_Land_Surface_Temp_Day',
       min_year: 1981,
-      max_year: 2026,
+      max_year: 2025,
       mission_status: 'active',
       student_definition:
         'Супутниковий параметр спостереження Землі для статистичної перевірки кліматичних трендів.',
@@ -985,7 +985,7 @@ export function clampYearRangeForVariable(
   minSpanYears = 5
 ): [number, number] {
   const varMin = varMeta?.min_year ?? 1981;
-  const varMax = varMeta?.max_year ?? 2026;
+  const varMax = varMeta?.max_year ?? 2025;
   const minDelta = Math.max(1, Math.min(minSpanYears - 1, varMax - varMin));
 
   let clampedStart = Math.max(varMin, Math.min(startYear, varMax - minDelta));
@@ -999,19 +999,59 @@ export function clampYearRangeForVariable(
   return [clampedStart, clampedEnd];
 }
 
+function normalizeVariableMetadata(v: VariableMetadata): VariableMetadata {
+  const local = getVariableMetaLocal(v.code);
+  const maxYear = Math.min(local.max_year ?? 2025, v.max_year ?? 2025, 2025);
+  const minYear = Math.max(local.min_year ?? 1981, v.min_year ?? 1981);
+  return {
+    ...local,
+    ...v,
+    name: local.name || v.name,
+    name_ua: local.name_ua || v.name_ua,
+    gibs_layer: local.gibs_layer || v.gibs_layer,
+    min_year: minYear,
+    max_year: maxYear,
+    mission_status:
+      local.mission_status === 'completed' || maxYear < 2025
+        ? 'completed'
+        : v.mission_status ?? local.mission_status ?? 'active',
+  };
+}
+
 export async function fetchPresetsFromApi(): Promise<{
   presets: DetectiveCasePreset[];
   available_variables: VariableMetadata[];
 }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/presets`);
+    const response = await fetch(`${API_BASE_URL}/api/presets?v=20261115b`, {
+      cache: 'no-store',
+    });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     const data = await response.json();
+    const rawVars: VariableMetadata[] =
+      Array.isArray(data.available_variables) &&
+      data.available_variables.length > 0
+        ? data.available_variables
+        : DEFAULT_VARIABLES;
+    const availableVariables = rawVars.map(normalizeVariableMetadata);
+    const rawPresets: DetectiveCasePreset[] =
+      Array.isArray(data.presets) && data.presets.length > 0
+        ? data.presets
+        : DEFAULT_DETECTIVE_CASES;
+    const normalizedPresets = rawPresets.map((p) => {
+      const varMeta = getVariableMetaLocal(p.variable);
+      const [startYear, endYear] = clampYearRangeForVariable(
+        p.start_year,
+        p.end_year,
+        varMeta
+      );
+      return { ...p, start_year: startYear, end_year: endYear };
+    });
     return {
-      presets: data.presets || DEFAULT_DETECTIVE_CASES,
-      available_variables: data.available_variables || DEFAULT_VARIABLES,
+      presets: normalizedPresets,
+      available_variables: availableVariables,
     };
   } catch {
     return {
@@ -1023,11 +1063,29 @@ export async function fetchPresetsFromApi(): Promise<{
 
 export async function fetchPhenomenaV2(): Promise<FetchPhenomenaResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v2/fetch-phenomena`);
+    const response = await fetch(
+      `${API_BASE_URL}/api/v2/fetch-phenomena?v=20261115b`,
+      { cache: 'no-store' }
+    );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return (await response.json()) as FetchPhenomenaResponse;
+    const data = (await response.json()) as FetchPhenomenaResponse;
+    const rawScenarios = Array.isArray(data.scenarios)
+      ? data.scenarios
+      : FALLBACK_PHENOMENA_SCENARIOS;
+    return {
+      ...data,
+      scenarios: rawScenarios.map((sc) => {
+        const varMeta = getVariableMetaLocal(sc.variable);
+        const [startYear, endYear] = clampYearRangeForVariable(
+          sc.start_year,
+          sc.end_year,
+          varMeta
+        );
+        return { ...sc, start_year: startYear, end_year: endYear };
+      }),
+    };
   } catch {
     const curatedCount = FALLBACK_PHENOMENA_SCENARIOS.filter(
       (s) => s.source_type === 'curated'

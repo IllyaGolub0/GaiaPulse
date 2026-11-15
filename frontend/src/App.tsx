@@ -481,20 +481,18 @@ export const App: React.FC = () => {
 
   const selectVariableWithBounds = useCallback(
     (nextVar: ClimateVariableCode) => {
-      const nextMeta =
-        variables.find((v) => v.code === nextVar) ||
-        getVariableMetaLocal(nextVar);
-      const [nextStart, nextEnd] = clampYearRangeForVariable(
-        startYear,
-        endYear,
-        nextMeta
-      );
+      const apiMeta = variables.find((v) => v.code === nextVar);
+      const localMeta = getVariableMetaLocal(nextVar);
+      const nextMin =
+        apiMeta?.min_year ?? localMeta.min_year ?? 1981;
+      const nextMax =
+        apiMeta?.max_year ?? localMeta.max_year ?? 2025;
       setVariable(nextVar);
-      setStartYear(nextStart);
-      setEndYear(nextEnd);
+      setStartYear(nextMin);
+      setEndYear(nextMax);
       setActiveScenarioId('custom');
     },
-    [variables, startYear, endYear]
+    [variables]
   );
 
   const filteredVariables = useMemo(() => {
@@ -504,14 +502,14 @@ export const App: React.FC = () => {
     );
   }, [variables, selectedBiome]);
 
+  const localVarMeta = getVariableMetaLocal(variable);
   const currentVarMeta =
-    variables.find((v) => v.code === variable) ||
-    getVariableMetaLocal(variable);
+    variables.find((v) => v.code === variable) || localVarMeta;
 
-  const varMinYear = currentVarMeta.min_year ?? 1981;
-  const varMaxYear = currentVarMeta.max_year ?? 2026;
+  const varMinYear = currentVarMeta.min_year ?? localVarMeta.min_year ?? 1981;
+  const varMaxYear = currentVarMeta.max_year ?? localVarMeta.max_year ?? 2025;
   const isMissionCompleted =
-    currentVarMeta.mission_status === 'completed' || varMaxYear < 2026;
+    currentVarMeta.mission_status === 'completed' || varMaxYear < 2025;
 
   // Enforce strict satellite/mission operational year bounds on variable or catalog updates
   useEffect(() => {
@@ -924,11 +922,17 @@ export const App: React.FC = () => {
             }
             className={fieldCtlCls}
           >
-            {filteredVariables.map((v) => (
-              <option key={v.code} value={v.code}>
-                {lang === 'ua' ? v.name_ua || v.name : v.name} ({v.unit})
-              </option>
-            ))}
+            {filteredVariables.map((v) => {
+              const localMeta = getVariableMetaLocal(v.code);
+              const vMin = v.min_year ?? localMeta.min_year ?? 1981;
+              const vMax = v.max_year ?? localMeta.max_year ?? 2025;
+              const baseName = lang === 'ua' ? v.name_ua || v.name : v.name;
+              return (
+                <option key={v.code} value={v.code}>
+                  {`${baseName} (${vMin}–${vMax}, ${v.unit})`}
+                </option>
+              );
+            })}
           </select>
         </label>
 
