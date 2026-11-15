@@ -1867,7 +1867,7 @@ export const App: React.FC = () => {
       : 'lg:col-span-6';
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-black text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950 print:h-auto print:overflow-visible print:bg-white print:text-zinc-950">
+    <div className="h-[100dvh] overflow-hidden bg-[#09090b] text-zinc-100 flex flex-col selection:bg-zinc-200 selection:text-zinc-950 print:h-auto print:overflow-visible print:bg-white print:text-zinc-950">
       <div className="flex-1 min-w-0 min-h-0 flex flex-col print:hidden">
         {/* Top bar: brand, section tabs, language, guide */}
         <header className="relative z-30 shrink-0 h-12 md:h-16 bg-[#597B8A] px-3 md:px-5 flex items-stretch justify-between gap-3">
@@ -1917,7 +1917,7 @@ export const App: React.FC = () => {
                     aria-current={isSelected ? 'page' : undefined}
                     className={`h-[calc(100%-8px)] px-1.5 lg:px-4 xl:px-5 rounded-t-xl font-nav uppercase text-[15px] lg:text-base xl:text-xl whitespace-nowrap transition ${
                       isSelected
-                        ? 'bg-black text-white'
+                        ? 'bg-[#09090b] text-white active-nav-tab'
                         : 'text-zinc-100 hover:bg-black/25'
                     }`}
                   >

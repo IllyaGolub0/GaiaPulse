@@ -90,10 +90,10 @@ export const ThemeToggle: React.FC = () => {
         aria-expanded={open}
         aria-haspopup="true"
         title={tooltipText}
-        className="h-9 md:h-11 px-2.5 md:px-3 rounded-lg bg-black/35 hover:bg-black/60 text-white font-nav uppercase text-base xl:text-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-1 focus:ring-white/40"
+        className="h-9 md:h-11 px-2.5 md:px-3 rounded-lg bg-black/35 hover:bg-black/60 text-white font-nav uppercase text-base xl:text-lg transition flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-white/40"
       >
         {currentIcon}
-        <span className="hidden xl:inline text-xs font-mono font-medium opacity-90">
+        <span className="hidden xl:inline">
           {theme === 'system'
             ? en
               ? 'Auto'
@@ -109,7 +109,7 @@ export const ThemeToggle: React.FC = () => {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-48 rounded-lg bg-[#111115] border border-[#27272a] shadow-2xl py-1 z-50 animate-in fade-in slide-in-from-top-1 text-sm font-sans">
+        <div className="absolute right-0 top-full mt-1.5 w-48 rounded-lg bg-[#111115] border border-[#27272a] shadow-2xl py-1 z-50 animate-in fade-in slide-in-from-top-1 text-sm font-sans theme-toggle-dropdown">
           <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider text-zinc-400 border-b border-[#24242b]">
             {en ? 'Appearance' : 'Оформлення'}
           </div>

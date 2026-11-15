@@ -300,7 +300,15 @@ html.light {
   color-scheme: light;
 }
 
-html.light body {
+html.light body,
+html.light #root,
+html.light .h-\[100dvh\] {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Seamless Header Active Tab in Light Mode */
+html.light .active-nav-tab {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
@@ -331,6 +339,154 @@ html.light .bg-zinc-900 {
 
 html.light .bg-\[\#1f1f24\] {
   background-color: #e2e8f0 !important;
+}
+
+/* =========================================================================
+   Catppuccin (ctp-*) light theme mappings (Sources, Your Data, Badges)
+   ========================================================================= */
+
+html.light .bg-ctp-crust {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-ctp-crust\/70,
+html.light .bg-ctp-crust\/80,
+html.light .bg-ctp-crust\/90 {
+  background-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+html.light .bg-ctp-mantle {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-ctp-base {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-ctp-surface0 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .bg-ctp-surface1 {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .bg-ctp-surface2 {
+  background-color: #cbd5e1 !important;
+}
+
+html.light .border-ctp-surface0,
+html.light .border-ctp-surface1,
+html.light .border-ctp-surface2 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-ctp-text {
+  color: #0f172a !important;
+}
+
+html.light .text-ctp-subtext0 {
+  color: #64748b !important;
+}
+
+html.light .text-ctp-subtext1 {
+  color: #475569 !important;
+}
+
+html.light .text-ctp-lavender {
+  color: #1e293b !important;
+}
+
+html.light .hover\:bg-ctp-surface0:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .hover\:bg-ctp-surface1:hover {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .hover\:bg-ctp-mantle:hover {
+  background-color: #f8fafc !important;
+}
+
+html.light .text-ctp-green {
+  color: #059669 !important;
+}
+
+html.light .bg-ctp-green\/15,
+html.light .bg-ctp-green\/20 {
+  background-color: rgba(16, 185, 129, 0.14) !important;
+  color: #047857 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html.light .text-ctp-red {
+  color: #dc2626 !important;
+}
+
+html.light .bg-ctp-red\/15,
+html.light .bg-ctp-red\/20 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: #b91c1c !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+}
+
+html.light .text-ctp-yellow {
+  color: #d97706 !important;
+}
+
+html.light .border-ctp-yellow\/35 {
+  border-color: rgba(217, 119, 6, 0.35) !important;
+}
+
+html.light .text-ctp-teal {
+  color: #0f766e !important;
+}
+
+html.light .bg-ctp-teal\/15 {
+  background-color: rgba(20, 184, 166, 0.12) !important;
+  color: #0f766e !important;
+  border-color: rgba(20, 184, 166, 0.35) !important;
+}
+
+html.light .text-ctp-mauve {
+  color: #7c3aed !important;
+}
+
+html.light .bg-ctp-mauve\/15 {
+  background-color: rgba(139, 92, 246, 0.12) !important;
+  color: #6d28d9 !important;
+  border-color: rgba(139, 92, 246, 0.35) !important;
+}
+
+/* Footer & App Layout in Light Mode */
+html.light footer {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+html.light footer .text-zinc-300,
+html.light footer .text-zinc-400 {
+  color: #64748b !important;
+}
+
+html.light .theme-toggle-dropdown {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light .theme-toggle-dropdown .text-zinc-400 {
+  color: #64748b !important;
+}
+
+html.light .theme-toggle-dropdown .border-\[\#24242b\] {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .theme-toggle-dropdown button:hover {
+  background-color: #f1f5f9 !important;
 }
 
 /* Borders */
