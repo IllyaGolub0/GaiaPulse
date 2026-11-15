@@ -72,6 +72,7 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 async def add_cache_control_headers(request: Request, call_next: Any) -> Response:
     """Attach Cache-Control headers for reference catalogs, phenomena, and hashed static assets."""
     response: Response = await call_next(request)
+    response.headers["X-GaiaPulse-Version"] = "2.1.0"
     if request.method in ("GET", "HEAD") and response.status_code == 200 and "cache-control" not in response.headers:
         path = request.url.path
         if path.startswith("/assets/"):

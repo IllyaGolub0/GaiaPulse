@@ -181,3 +181,29 @@ body {
     grid-column: auto;
   }
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #09090b !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .leaflet-control-container,
+  .maplibregl-ctrl-top-right {
+    display: none !important;
+  }
+
+  .mission-brief-printable,
+  .mission-brief-printable * {
+    background-color: #ffffff !important;
+    color: #09090b !important;
+    border-color: #d4d4d8 !important;
+  }
+}

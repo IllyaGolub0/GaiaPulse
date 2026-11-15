@@ -111,13 +111,14 @@ The platform integrates official satellite, reanalysis, radar, and station resou
         │   └── __tests__/api.test.ts
         ├── utils/
         │   ├── format.ts
+        │   ├── roiGeometry.ts
         │   ├── urlState.ts
         │   └── useMediaQuery.ts
         └── components/
-            ├── DetectiveStepper.tsx
             ├── EarthMap.tsx
             ├── Globe3DView.tsx
             ├── GuidedTour.tsx
+            ├── MissionBriefModal.tsx
             ├── OfficialResourcesHub.tsx
             ├── PhenomenaDrawer.tsx
             ├── TrendCharts.tsx

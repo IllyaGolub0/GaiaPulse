@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import os
+import secrets
+import time
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header, HTTPException
 
 from nasa_client import clear_cache, get_cache_stats
 from presets import (
@@ -14,6 +17,9 @@ from presets import (
 )
 
 router = APIRouter(tags=["System"])
+
+_CACHE_FLUSH_COOLDOWN_SECONDS = 5.0
+_last_cache_flush_ts: float = 0.0
 
 
 def api_status_payload() -> Dict[str, Any]:
@@ -66,7 +72,23 @@ async def health_check_v2() -> Dict[str, Any]:
 
 
 @router.delete("/api/cache")
-async def flush_cache() -> Dict[str, str]:
-    """Clear in-memory NASA data cache."""
+async def flush_cache(
+    x_admin_token: Optional[str] = Header(default=None, alias="X-Admin-Token"),
+) -> Dict[str, str]:
+    """Clear in-memory NASA data cache with optional token auth and cooldown guard."""
+    global _last_cache_flush_ts
+    expected_token = os.getenv("ADMIN_CACHE_TOKEN", "").strip()
+    if expected_token:
+        if not x_admin_token or not secrets.compare_digest(x_admin_token, expected_token):
+            raise HTTPException(status_code=403, detail="Invalid or missing admin cache token.")
+
+    now = time.monotonic()
+    if _last_cache_flush_ts > 0.0 and (now - _last_cache_flush_ts) < _CACHE_FLUSH_COOLDOWN_SECONDS:
+        raise HTTPException(
+            status_code=429,
+            detail="Cache flush rate-limited; please wait a few seconds before retrying.",
+        )
+
+    _last_cache_flush_ts = now
     clear_cache()
     return {"status": "cleared"}

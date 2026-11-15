@@ -1110,7 +1110,8 @@ function buildOfflineRegionAnalysis(
   startYear: number,
   endYear: number,
   seasonMode: SeasonMode,
-  isCounterpart: boolean
+  isCounterpart: boolean,
+  lang: 'en' | 'ua' = 'en'
 ): RegionAnalysis {
   const n = Math.max(5, endYear - startYear + 1);
   const absLat = Math.abs(loc.lat);
@@ -1334,9 +1335,14 @@ function buildOfflineRegionAnalysis(
           ? '99%'
           : '95%'
         : 'Emerging (~90%)',
-      significance_label: isSig
-        ? 'Статистично значущий тренд (Confidence > 95%)'
-        : 'Тренд ще не перетнув поріг p < 0.05',
+      significance_label:
+        lang === 'en'
+          ? isSig
+            ? 'Statistically significant trend (Confidence > 95%)'
+            : 'Trend has not yet crossed p < 0.05 threshold'
+          : isSig
+          ? 'Статистично значущий тренд (Confidence > 95%)'
+          : 'Тренд ще не перетнув поріг p < 0.05',
       signal_to_noise_ratio: snr,
       time_to_significance: {
         is_already_significant: isSig,
@@ -1349,9 +1355,14 @@ function buildOfflineRegionAnalysis(
           : extraYears <= 12
           ? 'emerging'
           : 'noise_dominated',
-        message: isSig
-          ? `Поріг статистичної значущості (p < 0.05) вже досягнуто на поточній вибірці (${n} р.).`
-          : `Тренд формується (p = ${pValue.toFixed(3)}): потрібно ще +${extraYears} р. супутникових спостережень (до ~${endYear + extraYears} р.) для досягнення порогу p < 0.05.`,
+        message:
+          lang === 'en'
+            ? isSig
+              ? `Statistical significance threshold (p < 0.05) already achieved over the ${n}-year sample.`
+              : `Emerging trend (p = ${pValue.toFixed(3)}): ~+${extraYears} additional years needed (by ~${endYear + extraYears}) to reach p < 0.05.`
+            : isSig
+            ? `Поріг статистичної значущості (p < 0.05) вже досягнуто на поточній вибірці (${n} р.).`
+            : `Тренд формується (p = ${pValue.toFixed(3)}): потрібно ще +${extraYears} р. супутникових спостережень (до ~${endYear + extraYears} р.) для досягнення порогу p < 0.05.`,
       },
       regime_shift: {
         change_point_year: Math.round((startYear + endYear) / 2) + 2,
@@ -1426,10 +1437,16 @@ function buildOfflineRegionAnalysis(
         },
       ],
     },
-    human_summary: isSig
-      ? `[${seasonMode}] У регіоні «${loc.name}» виявлено статистично значущий тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(4)} < 0.05, Student t = ${tStat.toFixed(2)}).`
-      : `[${seasonMode}] У регіоні «${loc.name}» тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(3)} ≥ 0.05) ще формується. Потрібно ще +${extraYears} р. спостережень до p < 0.05.`,
+    human_summary:
+      lang === 'en'
+        ? isSig
+          ? `[${seasonMode}] A statistically significant trend was detected in "${loc.name}" (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/decade, p = ${pValue.toFixed(4)} < 0.05, Student t = ${tStat.toFixed(2)}).`
+          : `[${seasonMode}] In "${loc.name}", the trend (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/decade, p = ${pValue.toFixed(3)} >= 0.05) is still emerging (~+${extraYears} more years needed to reach p < 0.05).`
+        : isSig
+        ? `[${seasonMode}] У регіоні «${loc.name}» виявлено статистично значущий тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(4)} < 0.05, Student t = ${tStat.toFixed(2)}).`
+        : `[${seasonMode}] У регіоні «${loc.name}» тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(3)} ≥ 0.05) ще формується. Потрібно ще +${extraYears} р. спостережень до p < 0.05.`,
     data_source: varMeta.source || 'NASA / CSA Scientific Reference',
+    data_origin: 'client_offline',
   };
 }
 
@@ -1442,7 +1459,8 @@ function makeAnalysisCacheKey(payload: AnalyzeTrendRequest, seasonMode: SeasonMo
     ? `${payload.region_b.lat.toFixed(3)},${payload.region_b.lon.toFixed(3)},${payload.region_b.name}`
     : 'none';
   const box = payload.spatial_box_averaging ? 'box5' : 'pt1';
-  return `${payload.variable}|${seasonMode}|${payload.start_year}|${payload.end_year}|${rA}|${rB}|${box}`;
+  const langKey = payload.lang || 'en';
+  return `${payload.variable}|${seasonMode}|${payload.start_year}|${payload.end_year}|${rA}|${rB}|${box}|${langKey}`;
 }
 
 export async function analyzeTrendV2(
@@ -1450,6 +1468,7 @@ export async function analyzeTrendV2(
   options?: { signal?: AbortSignal; forceRefresh?: boolean }
 ): Promise<AnalyzeTrendResponse> {
   const seasonMode: SeasonMode = payload.season_mode || 'raw';
+  const lang: 'en' | 'ua' = payload.lang || 'en';
   const varMeta = getVariableMetaLocal(payload.variable);
   const [effStart, effEnd] = clampYearRangeForVariable(
     payload.start_year,
@@ -1460,6 +1479,7 @@ export async function analyzeTrendV2(
     ...payload,
     start_year: effStart,
     end_year: effEnd,
+    lang,
   };
   const cacheKey = makeAnalysisCacheKey(boundedPayload, seasonMode);
 
@@ -1476,6 +1496,7 @@ export async function analyzeTrendV2(
       body: JSON.stringify({
         ...boundedPayload,
         season_mode: seasonMode,
+        lang,
       }),
       signal: options?.signal,
     });
@@ -1502,7 +1523,8 @@ export async function analyzeTrendV2(
       effStart,
       effEnd,
       seasonMode,
-      false
+      false,
+      lang
     );
     const regionB = boundedPayload.region_b
       ? buildOfflineRegionAnalysis(
@@ -1511,7 +1533,8 @@ export async function analyzeTrendV2(
           effStart,
           effEnd,
           seasonMode,
-          true
+          true,
+          lang
         )
       : null;
 
@@ -1528,8 +1551,14 @@ export async function analyzeTrendV2(
             correlation_p_value: 0.0002,
             spearman_r: -0.69,
             spearman_p_value: 0.0005,
-            badge: 'Виявлено кліматичний диполь (Opposite Trends)',
-            verdict: `Виявлено сильний регіональний контраст (Диполь, r = -0.72): поки у регіоні «${regionA.location.name}» показник змінюється в один бік, у регіоні «${regionB.location.name}» спостерігається протилежна динаміка.`,
+            badge:
+              lang === 'en'
+                ? 'Climate Dipole Detected (Opposite Trends)'
+                : 'Виявлено кліматичний диполь (Opposite Trends)',
+            verdict:
+              lang === 'en'
+                ? `Strong regional contrast detected (Dipole, r = -0.72): while "${regionA.location.name}" shifts in one direction, "${regionB.location.name}" exhibits the opposite trajectory.`
+                : `Виявлено сильний регіональний контраст (Диполь, r = -0.72): поки у регіоні «${regionA.location.name}» показник змінюється в один бік, у регіоні «${regionB.location.name}» спостерігається протилежна динаміка.`,
           }
         : null,
     };
@@ -1559,6 +1588,7 @@ export function analyzeCsvClientSideFallback(
   payload: AnalyzeCsvRequest
 ): AnalyzeTrendResponse {
   const seasonMode: SeasonMode = payload.season_mode || 'deseasonalized';
+  const lang: 'en' | 'ua' = payload.lang || 'en';
   const rawLines = payload.csv_text
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -1860,9 +1890,14 @@ export function analyzeCsvClientSideFallback(
           ? '99%'
           : '95%'
         : 'Emerging (~90%)',
-      significance_label: isSig
-        ? 'Статистично значущий тренд у CSV-ряді (Confidence > 95%)'
-        : 'Тренд у CSV-ряді ще не перетнув поріг p < 0.05',
+      significance_label:
+        lang === 'en'
+          ? isSig
+            ? 'Statistically significant CSV trend (Confidence > 95%)'
+            : 'CSV trend has not yet crossed p < 0.05'
+          : isSig
+          ? 'Статистично значущий тренд у CSV-ряді (Confidence > 95%)'
+          : 'Тренд у CSV-ряді ще не перетнув поріг p < 0.05',
       signal_to_noise_ratio: snr,
       time_to_significance: {
         is_already_significant: isSig,
@@ -1871,15 +1906,26 @@ export function analyzeCsvClientSideFallback(
         current_years: n,
         projected_significance_year: years[n - 1] + extraYears,
         status: isSig ? 'significant' : 'emerging',
-        message: isSig
-          ? `Поріг статистичної значущості (p < 0.05) досягнуто на імпортованому CSV-ряді (${n} р.).`
-          : `Для досягнення порогу p < 0.05 потрібно ще +${extraYears} р. спостережень (до ~${years[n - 1] + extraYears} р.).`,
+        message:
+          lang === 'en'
+            ? isSig
+              ? `Statistical significance (p < 0.05) reached on imported CSV series (${n} yrs).`
+              : `At least +${extraYears} additional years needed (by ~${years[n - 1] + extraYears}) to reach p < 0.05.`
+            : isSig
+            ? `Поріг статистичної значущості (p < 0.05) досягнуто на імпортованому CSV-ряді (${n} р.).`
+            : `Для досягнення порогу p < 0.05 потрібно ще +${extraYears} р. спостережень (до ~${years[n - 1] + extraYears} р.).`,
       },
     },
-    human_summary: isSig
-      ? `[CSV Імпорт • ${seasonMode}] У ряді «${payload.dataset_name}» виявлено статистично значущий тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, Mann-Kendall p = ${pValue.toFixed(4)}, Student t = ${tStat.toFixed(2)}).`
-      : `[CSV Імпорт • ${seasonMode}] У ряді «${payload.dataset_name}» тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(3)}) ще не перетнув поріг p < 0.05 (потрібно +${extraYears} р.).`,
+    human_summary:
+      lang === 'en'
+        ? isSig
+          ? `[CSV Import · ${seasonMode}] Statistically significant trend detected in "${payload.dataset_name}" (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/decade, Mann-Kendall p = ${pValue.toFixed(4)}, Student t = ${tStat.toFixed(2)}).`
+          : `[CSV Import · ${seasonMode}] Trend in "${payload.dataset_name}" (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/decade, p = ${pValue.toFixed(3)}) has not yet crossed p < 0.05 (+${extraYears} more years needed).`
+        : isSig
+        ? `[CSV Імпорт • ${seasonMode}] У ряді «${payload.dataset_name}» виявлено статистично значущий тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, Mann-Kendall p = ${pValue.toFixed(4)}, Student t = ${tStat.toFixed(2)}).`
+        : `[CSV Імпорт • ${seasonMode}] У ряді «${payload.dataset_name}» тренд (${changePerDecade >= 0 ? '+' : ''}${changePerDecade} ${varMeta.unit}/декаду, p = ${pValue.toFixed(3)}) ще не перетнув поріг p < 0.05 (потрібно +${extraYears} р.).`,
     data_source: `CSV Import: ${payload.dataset_name} (${monthlyRows.length} rows)`,
+    data_origin: 'user_csv',
   };
 
   return {
@@ -1901,20 +1947,24 @@ export function analyzeCsvClientSideFallback(
 export async function analyzeCsvTimeSeries(
   payload: AnalyzeCsvRequest
 ): Promise<AnalyzeTrendResponse> {
+  const normalizedPayload: AnalyzeCsvRequest = {
+    ...payload,
+    lang: payload.lang || 'en',
+  };
   try {
     const response = await fetch(`${API_BASE_URL}/api/v2/analyze-csv`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizedPayload),
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     return (await response.json()) as AnalyzeTrendResponse;
   } catch {
-    return analyzeCsvClientSideFallback(payload);
+    return analyzeCsvClientSideFallback(normalizedPayload);
   }
 }
 

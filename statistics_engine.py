@@ -51,6 +51,21 @@ MONTH_NAMES_UA = [
     "Гру",
 ]
 
+MONTH_NAMES_EN = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
 SEASON_MONTH_MAP: Dict[str, Tuple[int, ...]] = {
     "DJF": (12, 1, 2),
     "MAM": (3, 4, 5),
@@ -65,6 +80,15 @@ SEASON_LABELS_UA: Dict[str, str] = {
     "MAM": "Весна (MAM: Березень–Травень)",
     "JJA": "Літо (JJA: Червень–Серпень)",
     "SON": "Осінь (SON: Вересень–Листопад)",
+}
+
+SEASON_LABELS_EN: Dict[str, str] = {
+    "raw": "All Months (Raw / Unfiltered)",
+    "deseasonalized": "Deseasonalized Series (Annual Cycle Removed)",
+    "DJF": "Winter (DJF: Dec–Feb)",
+    "MAM": "Spring (MAM: Mar–May)",
+    "JJA": "Summer (JJA: Jun–Aug)",
+    "SON": "Autumn (SON: Sep–Nov)",
 }
 
 
@@ -445,6 +469,7 @@ def compute_time_to_significance(
     alpha: float = 0.05,
     lag1_r: float = 0.0,
     variance_inflation_factor: float = 1.0,
+    lang: str = "ua",
 ) -> Dict[str, Any]:
     """
     Time-to-Significance Calculator (based on Weatherhead et al., 1998 JGR trend detection scaling).
@@ -459,6 +484,11 @@ def compute_time_to_significance(
     autocorr_adjusted = bool(vif_eff > 1.05)
 
     if p_value < alpha:
+        msg = (
+            f"Statistical significance threshold (p < 0.05) already achieved over the {n_years}-year record."
+            if lang == "en"
+            else f"Поріг статистичної значущості (p < 0.05) вже досягнуто на поточній вибірці ({n_years} р.)."
+        )
         return {
             "is_already_significant": True,
             "additional_years_needed": 0,
@@ -469,9 +499,7 @@ def compute_time_to_significance(
             "autocorrelation_adjusted": autocorr_adjusted,
             "lag1_r": round(float(lag1_r), 3),
             "variance_inflation_factor": round(vif_eff, 3),
-            "message": (
-                f"Поріг статистичної значущості (p < 0.05) вже досягнуто на поточній вибірці ({n_years} р.)."
-            ),
+            "message": msg,
         }
 
     # Effective normalized statistic corresponding to current p_value, adjusted for AR(1) VIF
@@ -493,6 +521,14 @@ def compute_time_to_significance(
             break
 
     if not found_within_horizon:
+        msg = (
+            "Signal too weak relative to natural variability: >100 additional years required to reach p < 0.05 (stochastic noise dominates)."
+            if lang == "en"
+            else (
+                "Сигнал занадто слабкий відносно природного шуму: для досягнення p < 0.05 "
+                "знадобиться понад 100 років спостережень (домінує стохастична варіативність)."
+            )
+        )
         return {
             "is_already_significant": False,
             "additional_years_needed": 120,
@@ -503,14 +539,23 @@ def compute_time_to_significance(
             "autocorrelation_adjusted": autocorr_adjusted,
             "lag1_r": round(float(lag1_r), 3),
             "variance_inflation_factor": round(vif_eff, 3),
-            "message": (
-                "Сигнал занадто слабкий відносно природного шуму: для досягнення p < 0.05 "
-                "знадобиться понад 100 років спостережень (домінує стохастична варіативність)."
-            ),
+            "message": msg,
         }
 
     proj_year = int(end_year + additional_needed)
-    ar_note = f", з урахуванням AR(1) r₁={lag1_r:+.2f}" if autocorr_adjusted else ""
+    if lang == "en":
+        ar_note = f", AR(1) r1={lag1_r:+.2f} adjusted" if autocorr_adjusted else ""
+        msg = (
+            f"Emerging trend (p = {p_value:.3f}{ar_note}): assuming current slope and noise variance persist, "
+            f"~+{additional_needed} additional years of observations (by ~{proj_year}) are needed to reach p < 0.05."
+        )
+    else:
+        ar_note = f", з урахуванням AR(1) r₁={lag1_r:+.2f}" if autocorr_adjusted else ""
+        msg = (
+            f"Тренд формується (p = {p_value:.3f}{ar_note}): за збереження поточного нахилу та дисперсії шуму "
+            f"потрібно ще +{additional_needed} р. супутникових спостережень (орієнтовно до {proj_year} р.) "
+            f"для досягнення статистичної значущості p < 0.05."
+        )
     return {
         "is_already_significant": False,
         "additional_years_needed": int(additional_needed),
@@ -521,21 +566,19 @@ def compute_time_to_significance(
         "autocorrelation_adjusted": autocorr_adjusted,
         "lag1_r": round(float(lag1_r), 3),
         "variance_inflation_factor": round(vif_eff, 3),
-        "message": (
-            f"Тренд формується (p = {p_value:.3f}{ar_note}): за збереження поточного нахилу та дисперсії шуму "
-            f"потрібно ще +{additional_needed} р. супутникових спостережень (орієнтовно до {proj_year} р.) "
-            f"для досягнення статистичної значущості p < 0.05."
-        ),
+        "message": msg,
     }
 
 
 def compute_stl_decomposition(
     monthly_df: pd.DataFrame,
     annual_df: pd.DataFrame,
+    lang: str = "ua",
 ) -> Tuple[Dict[str, Any], Dict[int, Tuple[float, float]]]:
     """
     Perform STL (Seasonal-Trend decomposition using LOESS) on the monthly time series.
     """
+    month_names = MONTH_NAMES_EN if lang == "en" else MONTH_NAMES_UA
     if monthly_df is not None and len(monthly_df) >= 24:
         mdf = monthly_df.sort_values(["year", "month"]).reset_index(drop=True)
         unique_months = mdf["month"].nunique()
@@ -584,7 +627,7 @@ def compute_stl_decomposition(
         annual_seasonal_cycle = [
             {
                 "month": int(row["month"]),
-                "month_name": MONTH_NAMES_UA[int(row["month"]) - 1],
+                "month_name": month_names[int(row["month"]) - 1],
                 "seasonal_effect": round(float(row["seasonal"]), 4),
             }
             for _, row in seasonal_profile.iterrows()
@@ -651,31 +694,35 @@ def compute_stl_decomposition(
     return stl_payload, year_to_trend_resid
 
 
-def classify_significance(p_value: float) -> Tuple[bool, str, str]:
+def classify_significance(p_value: float, lang: str = "ua") -> Tuple[bool, str, str]:
     """Classify statistical significance against alpha = 0.01 and alpha = 0.05."""
     if p_value < 0.01:
-        return (
-            True,
-            "99%",
-            "Висока статистична значущість (Confidence > 99%)",
+        label = (
+            "High statistical significance (Confidence > 99%)"
+            if lang == "en"
+            else "Висока статистична значущість (Confidence > 99%)"
         )
+        return True, "99%", label
     if p_value < 0.05:
-        return (
-            True,
-            "95%",
-            "Статистично значущий тренд (Confidence > 95%)",
+        label = (
+            "Statistically significant trend (Confidence > 95%)"
+            if lang == "en"
+            else "Статистично значущий тренд (Confidence > 95%)"
         )
+        return True, "95%", label
     if p_value < 0.10:
-        return (
-            False,
-            "Emerging (~90%)",
-            "Тренд на межі значущості (0.05 ≤ p < 0.10 — потрібні додаткові роки)",
+        label = (
+            "Borderline trend (0.05 <= p < 0.10 — additional years needed)"
+            if lang == "en"
+            else "Тренд на межі значущості (0.05 ≤ p < 0.10 — потрібні додаткові роки)"
         )
-    return (
-        False,
-        "Noise (<95%)",
-        "Статистично незначущий (природна варіативність / шум)",
+        return False, "Emerging (~90%)", label
+    label = (
+        "Not statistically significant (natural variability / noise)"
+        if lang == "en"
+        else "Статистично незначущий (природна варіативність / шум)"
     )
+    return False, "Noise (<95%)", label
 
 
 def build_human_summary(
@@ -690,12 +737,38 @@ def build_human_summary(
     total_change_abs: float,
     snr: float,
     tts_info: Dict[str, Any],
+    lang: str = "ua",
 ) -> str:
-    """Generate Ukrainian scientific detective summary including season & Time-to-Significance."""
+    """Generate localized scientific detective summary including season & Time-to-Significance."""
     sign_str = "+" if change_per_decade >= 0 else ""
     total_sign = "+" if total_change_abs >= 0 else ""
     prob_noise_pct = max(0.01, round(p_value * 100.0, 2))
-    season_tag = SEASON_LABELS_UA.get(season_mode, season_mode)
+    season_map = SEASON_LABELS_EN if lang == "en" else SEASON_LABELS_UA
+    season_tag = season_map.get(season_mode, season_mode)
+
+    if lang == "en":
+        if is_significant:
+            direction_word = "increase" if change_per_decade >= 0 else "decrease"
+            p_bound = "p < 0.01" if p_value < 0.01 else "p < 0.05"
+            return (
+                f"[{season_tag}] A statistically significant {direction_word} was detected in \"{region_name}\" "
+                f"({sign_str}{change_per_decade:.3f} {unit}/decade, Mann-Kendall {p_bound}, Student t = {t_stat:+.2f}). "
+                f"Cumulative shift is {total_sign}{total_change_abs:.2f} {unit} (SNR = {snr:.2f}). "
+                f"Probability of random noise is below {prob_noise_pct:.2f}%."
+            )
+
+        extra_yrs = tts_info.get("additional_years_needed", 0)
+        proj_yr = tts_info.get("projected_significance_year")
+        tts_tail = (
+            f" Time-to-Significance estimates +{extra_yrs} additional years (until ~{proj_yr}) to cross p < 0.05."
+            if 0 < extra_yrs < 100
+            else " Natural climate variability currently dominates."
+        )
+        return (
+            f"[{season_tag}] In \"{region_name}\", the observed trend ({sign_str}{change_per_decade:.3f} {unit}/decade) "
+            f"has not yet crossed the 95% confidence threshold (p = {p_value:.3f} >= 0.05, Student t = {t_stat:+.2f}, SNR = {snr:.2f})."
+            f"{tts_tail}"
+        )
 
     if is_significant:
         direction_word = "зростання" if change_per_decade >= 0 else "зниження"
@@ -730,6 +803,8 @@ def analyze_single_region(
     data_source: str = "NASA POWER API (Live)",
     season_mode: str = "raw",
     spatial_box_averaging: bool = False,
+    data_origin: str = "live_api",
+    lang: str = "ua",
 ) -> Dict[str, Any]:
     """
     Execute the complete v2 mathematical pipeline for a single region:
@@ -861,7 +936,7 @@ def analyze_single_region(
     stl_source_monthly = (
         monthly_df if (monthly_df is not None and len(monthly_df) >= 24) else filtered_monthly_df
     )
-    stl_payload, year_to_stl = compute_stl_decomposition(stl_source_monthly, adf)
+    stl_payload, year_to_stl = compute_stl_decomposition(stl_source_monthly, adf, lang=lang)
 
     # 6. Quantitative Rate of Change (per year & per decade)
     rate_per_year = sens_slope
@@ -889,7 +964,7 @@ def analyze_single_region(
     )
 
     # 9. Significance Classification & Time-to-Significance Calculator (AR(1)-aware)
-    is_significant, confidence_level, significance_label = classify_significance(p_value)
+    is_significant, confidence_level, significance_label = classify_significance(p_value, lang=lang)
     tts_info = compute_time_to_significance(
         n_years=n,
         end_year=int(years[-1]),
@@ -899,6 +974,7 @@ def analyze_single_region(
         alpha=0.05,
         lag1_r=float(autocorr_info["lag1_r"]),
         variance_inflation_factor=float(autocorr_info["variance_inflation_factor"]),
+        lang=lang,
     )
 
     # 10. Non-parametric Pettitt Change-Point (Regime Shift) Detection
@@ -936,9 +1012,10 @@ def analyze_single_region(
             }
         )
 
+    season_labels = SEASON_LABELS_EN if lang == "en" else SEASON_LABELS_UA
     statistics_block = {
         "season_mode": norm_season,
-        "season_label": SEASON_LABELS_UA.get(norm_season, norm_season),
+        "season_label": season_labels.get(norm_season, norm_season),
         "sample_size_years": n,
         "mk_trend": mk_trend,
         "is_significant": is_significant,
@@ -986,8 +1063,9 @@ def analyze_single_region(
         "seasonal_matrix": seasonal_matrix,
     }
 
+    default_name = "Selected Point" if lang == "en" else "Обрана точка"
     human_summary = build_human_summary(
-        region_name=location_info.get("name", "Обрана точка"),
+        region_name=location_info.get("name", default_name),
         unit=variable_meta["unit"],
         season_mode=norm_season,
         mk_trend=mk_trend,
@@ -998,6 +1076,7 @@ def analyze_single_region(
         total_change_abs=total_change_abs,
         snr=snr,
         tts_info=tts_info,
+        lang=lang,
     )
 
     return {
@@ -1014,12 +1093,14 @@ def analyze_single_region(
         "statistics": statistics_block,
         "human_summary": human_summary,
         "data_source": data_source,
+        "data_origin": data_origin,
     }
 
 
 def compare_dipole_regions(
     region_a_result: Dict[str, Any],
     region_b_result: Dict[str, Any],
+    lang: str = "ua",
 ) -> Dict[str, Any]:
     """
     Cross-Regional Dipole Engine:
@@ -1031,6 +1112,16 @@ def compare_dipole_regions(
     common_years = sorted(set(ts_a.keys()).intersection(set(ts_b.keys())))
 
     if len(common_years) < 3:
+        badge = (
+            "Insufficient common years for correlation"
+            if lang == "en"
+            else "Недостатньо спільних років для кореляції"
+        )
+        verdict = (
+            "Insufficient overlapping time points for statistical comparison."
+            if lang == "en"
+            else "Недостатньо спільних часових точок для статистичного порівняння."
+        )
         return {
             "is_opposite_trend": False,
             "is_dipole_detected": False,
@@ -1038,8 +1129,8 @@ def compare_dipole_regions(
             "correlation_p_value": 1.0,
             "spearman_r": 0.0,
             "spearman_p_value": 1.0,
-            "badge": "Недостатньо спільних років для кореляції",
-            "verdict": "Недостатньо спільних часових точок для статистичного порівняння.",
+            "badge": badge,
+            "verdict": verdict,
         }
 
     arr_a = np.array([ts_a[yr] for yr in common_years], dtype=float)
@@ -1075,51 +1166,97 @@ def compare_dipole_regions(
         stats_a["is_significant"] and stats_b["is_significant"] and opposite_slopes
     )
     strong_anti_correlation = bool(pearson_r < -0.5 and is_opposite_trend)
+    either_meaningful = bool(
+        stats_a["p_value"] < 0.10 or stats_b["p_value"] < 0.10 or abs(pearson_r) >= 0.35
+    )
     is_dipole_detected = bool(
-        strong_anti_correlation or both_significant_opposite or is_opposite_trend
+        strong_anti_correlation
+        or both_significant_opposite
+        or (is_opposite_trend and either_meaningful)
     )
 
     name_a = region_a_result["location"]["name"]
     name_b = region_b_result["location"]["name"]
 
     if pearson_r < -0.45 and opposite_slopes:
-        badge = "Виявлено кліматичний диполь (Opposite Trends)"
-        verdict = (
-            f"Виявлено класичний кліматичний диполь (r = {pearson_r:.2f}, p = {pearson_p:.4f}): "
-            f"між регіонами «{name_a}» та «{name_b}» існує сильна обернена телеконекція з протилежно "
-            f"спрямованими довгостроковими трендами."
-        )
-    elif is_opposite_trend:
-        badge = "Виявлено регіональний контраст (Розходження трендів)"
-        desc_a = (
-            "стагнує в межах шуму"
-            if trend_a == "no trend"
-            else ("стрімке зростання" if slope_a > 0 else "зниження")
-        )
-        desc_b = (
-            "стагнує в межах шуму"
-            if trend_b == "no trend"
-            else ("спадає" if slope_b < 0 else "зростає")
-        )
-        verdict = (
-            f"Виявлено сильний регіональний контраст (Диполь, r = {pearson_r:.2f}): "
-            f"поки у регіоні «{name_a}» показник демонструє {desc_a} "
-            f"({stats_a['change_per_decade']:+.3f}/декаду), у регіоні «{name_b}» він "
-            f"{desc_b} ({stats_b['change_per_decade']:+.3f}/декаду)."
-        )
+        if lang == "en":
+            badge = "Climate Dipole Detected (Opposite Trends)"
+            verdict = (
+                f"Classic climate dipole detected (r = {pearson_r:.2f}, p = {pearson_p:.4f}): "
+                f"\"{name_a}\" and \"{name_b}\" exhibit strong inverse teleconnection with "
+                f"opposing long-term trajectories."
+            )
+        else:
+            badge = "Виявлено кліматичний диполь (Opposite Trends)"
+            verdict = (
+                f"Виявлено класичний кліматичний диполь (r = {pearson_r:.2f}, p = {pearson_p:.4f}): "
+                f"між регіонами «{name_a}» та «{name_b}» існує сильна обернена телеконекція з протилежно "
+                f"спрямованими довгостроковими трендами."
+            )
+    elif is_dipole_detected and is_opposite_trend:
+        if lang == "en":
+            badge = "Regional Contrast Detected (Divergent Trends)"
+            desc_a = (
+                "remains flat within noise"
+                if trend_a == "no trend"
+                else ("rises sharply" if slope_a > 0 else "declines")
+            )
+            desc_b = (
+                "remains flat within noise"
+                if trend_b == "no trend"
+                else ("declines" if slope_b < 0 else "rises")
+            )
+            verdict = (
+                f"Strong regional contrast detected (Dipole, r = {pearson_r:.2f}): "
+                f"while \"{name_a}\" {desc_a} ({stats_a['change_per_decade']:+.3f}/decade), "
+                f"\"{name_b}\" {desc_b} ({stats_b['change_per_decade']:+.3f}/decade)."
+            )
+        else:
+            badge = "Виявлено регіональний контраст (Розходження трендів)"
+            desc_a = (
+                "стагнує в межах шуму"
+                if trend_a == "no trend"
+                else ("стрімке зростання" if slope_a > 0 else "зниження")
+            )
+            desc_b = (
+                "стагнує в межах шуму"
+                if trend_b == "no trend"
+                else ("спадає" if slope_b < 0 else "зростає")
+            )
+            verdict = (
+                f"Виявлено сильний регіональний контраст (Диполь, r = {pearson_r:.2f}): "
+                f"поки у регіоні «{name_a}» показник демонструє {desc_a} "
+                f"({stats_a['change_per_decade']:+.3f}/декаду), у регіоні «{name_b}» він "
+                f"{desc_b} ({stats_b['change_per_decade']:+.3f}/декаду)."
+            )
     elif pearson_r > 0.5:
-        badge = "Синхронний односпрямований тренд"
-        verdict = (
-            f"Обидва регіони («{name_a}» та «{name_b}») змінюються синхронно в одному напрямку "
-            f"(позитивна кореляція r = {pearson_r:.2f}, p = {pearson_p:.4f}), що свідчить про спільний "
-            f"макрокліматичний рушій."
-        )
+        if lang == "en":
+            badge = "Synchronous Co-Directional Trend"
+            verdict = (
+                f"Both regions (\"{name_a}\" and \"{name_b}\") shift synchronously in the same direction "
+                f"(positive correlation r = {pearson_r:.2f}, p = {pearson_p:.4f}), pointing to a shared "
+                f"macro-climate driver."
+            )
+        else:
+            badge = "Синхронний односпрямований тренд"
+            verdict = (
+                f"Обидва регіони («{name_a}» та «{name_b}») змінюються синхронно в одному напрямку "
+                f"(позитивна кореляція r = {pearson_r:.2f}, p = {pearson_p:.4f}), що свідчить про спільний "
+                f"макрокліматичний рушій."
+            )
     else:
-        badge = "Незалежна регіональна динаміка"
-        verdict = (
-            f"Між регіонами «{name_a}» та «{name_b}» спостерігається слабкий статистичний зв'язок "
-            f"(r = {pearson_r:.2f}, p = {pearson_p:.4f}); локальні фактори переважають над глобальною телеконекцією."
-        )
+        if lang == "en":
+            badge = "Independent Regional Dynamics"
+            verdict = (
+                f"Weak statistical coupling between \"{name_a}\" and \"{name_b}\" "
+                f"(r = {pearson_r:.2f}, p = {pearson_p:.4f}); local variability dominates over global teleconnection."
+            )
+        else:
+            badge = "Незалежна регіональна динаміка"
+            verdict = (
+                f"Між регіонами «{name_a}» та «{name_b}» спостерігається слабкий статистичний зв'язок "
+                f"(r = {pearson_r:.2f}, p = {pearson_p:.4f}); локальні фактори переважають над глобальною телеконекцією."
+            )
 
     return {
         "is_opposite_trend": is_opposite_trend,

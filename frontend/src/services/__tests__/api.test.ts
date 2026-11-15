@@ -31,11 +31,14 @@ describe('analyzeCsvClientSideFallback', () => {
       dataset_name: 'Giovanni AOD Test',
       variable_code: 'AOD',
       season_mode: 'JJA',
+      lang: 'en',
     });
 
     expect(result.csv_import_metadata?.years_count).toBe(24);
     expect(result.csv_import_metadata?.start_year).toBe(2002);
     expect(result.csv_import_metadata?.end_year).toBe(2025);
+    expect(result.region_a_analysis.data_origin).toBe('user_csv');
+    expect(result.region_a_analysis.human_summary).toContain('Statistically significant trend');
     expect(result.region_a_analysis.statistics.is_significant).toBe(true);
     expect(result.region_a_analysis.statistics.mk_trend).toBe('increasing');
     expect(result.region_a_analysis.statistics.change_per_decade).toBeGreaterThan(0.05);

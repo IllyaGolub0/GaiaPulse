@@ -237,3 +237,63 @@ def test_stl_decomposition_and_dipole_comparison() -> None:
     assert dipole["is_opposite_trend"] is True
     assert dipole["is_dipole_detected"] is True
     assert dipole["pearson_r"] < -0.9
+
+
+def test_analyze_single_region_english_localization_and_data_origin() -> None:
+    annual_df, monthly_df, baseline_df = _make_monthly_df(2000, 2020, slope_per_year=0.12)
+    res = analyze_single_region(
+        location_info={"name": "Kyiv Basin", "lat": 50.45, "lon": 30.52},
+        variable_meta={"code": "T2M", "unit": "°C"},
+        annual_df=annual_df,
+        monthly_df=monthly_df,
+        baseline_df=baseline_df,
+        season_mode="deseasonalized",
+        data_origin="user_csv",
+        lang="en",
+    )
+    assert res["data_origin"] == "user_csv"
+    assert "statistically significant" in res["human_summary"].lower()
+    assert "Statistical significance threshold" in res["statistics"]["time_to_significance"]["message"]
+    assert res["stl_decomposition"]["annual_seasonal_cycle"][0]["month_name"] == "Jan"
+
+
+def test_compare_dipole_regions_rejects_flat_noisy_non_significant_opposite_signs() -> None:
+    rng = np.random.default_rng(12345)
+    years = list(range(2005, 2021))
+    # Construct two nearly flat oscillating series with p > 0.4 and negligible correlation
+    rows_a = []
+    rows_b = []
+    for idx, yr in enumerate(years):
+        val_a = 10.0 + (0.08 if idx % 2 == 0 else -0.08) + float(rng.normal(0, 0.02))
+        val_b = 10.0 + (0.08 if (idx // 2) % 2 == 0 else -0.08) + float(rng.normal(0, 0.02))
+        for mo in range(1, 13):
+            rows_a.append({"year": yr, "month": mo, "timestamp": f"{yr:04d}-{mo:02d}", "value": val_a})
+            rows_b.append({"year": yr, "month": mo, "timestamp": f"{yr:04d}-{mo:02d}", "value": val_b})
+    mon_a = pd.DataFrame(rows_a)
+    mon_b = pd.DataFrame(rows_b)
+    ann_a = mon_a.groupby("year", as_index=False)["value"].mean()
+    ann_b = mon_b.groupby("year", as_index=False)["value"].mean()
+
+    res_a = analyze_single_region(
+        {"name": "Flat A", "lat": 10.0, "lon": 10.0},
+        {"code": "T2M", "unit": "°C"},
+        ann_a,
+        mon_a,
+        ann_a.head(8),
+        season_mode="deseasonalized",
+        lang="en",
+    )
+    res_b = analyze_single_region(
+        {"name": "Flat B", "lat": 20.0, "lon": 20.0},
+        {"code": "T2M", "unit": "°C"},
+        ann_b,
+        mon_b,
+        ann_b.head(8),
+        season_mode="deseasonalized",
+        lang="en",
+    )
+    assert res_a["statistics"]["p_value"] > 0.10
+    assert res_b["statistics"]["p_value"] > 0.10
+    dipole = compare_dipole_regions(res_a, res_b, lang="en")
+    assert dipole["is_dipole_detected"] is False
+    assert "Dipole" not in dipole["badge"] or "Detected" not in dipole["badge"]

@@ -87,6 +87,10 @@ class AnalyzeTrendRequestV2(BaseModel):
         default=False,
         description="Enable 5-point ROI spatial box averaging (±0.5° lat/lon around center) to reduce single-pixel noise",
     )
+    lang: Literal["en", "ua"] = Field(
+        default="en",
+        description="Narrative output language ('en' or 'ua')",
+    )
 
     @model_validator(mode="after")
     def validate_year_window(self) -> "AnalyzeTrendRequestV2":
@@ -127,6 +131,10 @@ class AnalyzeCsvRequestV2(BaseModel):
     )
     lat: float = Field(default=38.90, ge=-90.0, le=90.0)
     lon: float = Field(default=-76.40, ge=-180.0, le=180.0)
+    lang: Literal["en", "ua"] = Field(
+        default="en",
+        description="Narrative output language ('en' or 'ua')",
+    )
 
     @model_validator(mode="after")
     def normalize_fields(self) -> "AnalyzeCsvRequestV2":

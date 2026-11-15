@@ -135,6 +135,8 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
             data_source=bundle_a.source,
             season_mode=norm_season,
             spatial_box_averaging=payload.spatial_box_averaging,
+            data_origin=bundle_a.data_origin,
+            lang=payload.lang,
         )
 
         region_b_analysis: Optional[Dict[str, Any]] = None
@@ -155,11 +157,14 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
                 data_source=bundle_b.source,
                 season_mode=norm_season,
                 spatial_box_averaging=payload.spatial_box_averaging,
+                data_origin=bundle_b.data_origin,
+                lang=payload.lang,
             )
             dipole_comparison = await asyncio.to_thread(
                 compare_dipole_regions,
                 region_a_result=region_a_analysis,
                 region_b_result=region_b_analysis,
+                lang=payload.lang,
             )
 
         return {
@@ -254,6 +259,8 @@ async def analyze_csv_v2(payload: AnalyzeCsvRequestV2) -> Dict[str, Any]:
         baseline_df=baseline_df,
         data_source=f"CSV Import: {payload.dataset_name} ({parsed_meta.get('total_observations', 0)} obs)",
         season_mode=norm_season,
+        data_origin="user_csv",
+        lang=payload.lang,
     )
 
     return {

@@ -14,6 +14,7 @@ def test_health_and_reference_endpoints_with_cache_headers() -> None:
     health = client.get("/api/v2/health")
     assert health.status_code == 200
     assert health.json()["status"] == "ok"
+    assert health.headers.get("x-gaiapulse-version") == "2.1.0"
 
     presets = client.get("/api/presets")
     assert presets.status_code == 200
@@ -43,12 +44,16 @@ def test_analyze_v2_single_and_dipole_and_roi_box() -> None:
             "region_b": {"name": "Svalbard", "lat": 78.22, "lon": 15.63},
             "prefer_live_api": False,
             "spatial_box_averaging": True,
+            "lang": "en",
         },
     )
     assert resp.status_code == 200
     body = resp.json()
     assert body["season_mode"] == "JJA"
     assert "ROI" in body["region_a_analysis"]["data_source"]
+    assert body["region_a_analysis"]["data_origin"] == "calibrated_model"
+    assert "Wisconsin" in body["region_a_analysis"]["human_summary"]
+    assert "Detected" in body["dipole_comparison"]["badge"] or "Trend" in body["dipole_comparison"]["badge"]
     assert body["region_b_analysis"] is not None
     assert body["dipole_comparison"] is not None
 
@@ -184,3 +189,23 @@ def test_analyze_enforces_satellite_mission_year_bounds() -> None:
     assert bundle_snow is not None
     # 25 cm -> 0.25 m
     assert abs(float(bundle_snow.monthly_df["value"].iloc[0]) - 0.25) < 0.001
+
+
+def test_delete_cache_admin_token_and_cooldown(monkeypatch) -> None:
+    import routers.system as sys_router
+
+    monkeypatch.setenv("ADMIN_CACHE_TOKEN", "secret-test-token")
+    monkeypatch.setattr(sys_router, "_last_cache_flush_ts", 0.0)
+
+    denied = client.delete("/api/cache")
+    assert denied.status_code == 403
+
+    wrong = client.delete("/api/cache", headers={"X-Admin-Token": "wrong"})
+    assert wrong.status_code == 403
+
+    allowed = client.delete("/api/cache", headers={"X-Admin-Token": "secret-test-token"})
+    assert allowed.status_code == 200
+    assert allowed.json()["status"] == "cleared"
+
+    rate_limited = client.delete("/api/cache", headers={"X-Admin-Token": "secret-test-token"})
+    assert rate_limited.status_code == 429

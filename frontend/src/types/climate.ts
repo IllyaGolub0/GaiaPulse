@@ -180,6 +180,12 @@ export interface TrendStatistics {
   seasonal_matrix?: SeasonalFingerprintEntry[];
 }
 
+export type DataOrigin =
+  | 'live_api'
+  | 'calibrated_model'
+  | 'user_csv'
+  | 'client_offline';
+
 export interface RegionAnalysis {
   location: RegionLocation;
   season_mode?: SeasonMode;
@@ -188,6 +194,7 @@ export interface RegionAnalysis {
   statistics: TrendStatistics;
   human_summary: string;
   data_source?: string;
+  data_origin?: DataOrigin;
 }
 
 export interface DipoleComparison {
@@ -210,6 +217,7 @@ export interface AnalyzeTrendRequest {
   region_b?: RegionLocation | null;
   prefer_live_api?: boolean;
   spatial_box_averaging?: boolean;
+  lang?: 'en' | 'ua';
 }
 
 export interface CsvImportMetadata {
@@ -228,6 +236,7 @@ export interface AnalyzeCsvRequest {
   season_mode?: SeasonMode;
   lat?: number;
   lon?: number;
+  lang?: 'en' | 'ua';
 }
 
 export interface AnalyzeTrendResponse {

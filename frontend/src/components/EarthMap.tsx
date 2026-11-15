@@ -31,11 +31,14 @@ import {
   RegionLocation,
 } from '../types/climate';
 import {
-  Globe3DView,
   ROIShapeMode,
   buildROIPolygonCoords,
-} from './Globe3DView';
+} from '../utils/roiGeometry';
 import { Language, useLanguage } from '../i18n/translations';
+
+const LazyGlobe3DView = React.lazy(() =>
+  import('./Globe3DView').then((mod) => ({ default: mod.Globe3DView }))
+);
 
 interface EarthMapProps {
   mode: AnalysisMode;
@@ -121,11 +124,11 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
         'linear-gradient(90deg, #fab387 0%, #f9e2af 30%, #a6e3a1 65%, #89b4fa 100%)',
       minLabel: '0.05 (Посуха)',
       minLabelEn: '0.05 (Dry)',
-      midLabel: '0.35',
-      maxLabel: '0.65 (Волого)',
-      maxLabelEn: '0.65 (Wet)',
-      unit: 'м³/м³',
-      unitEn: 'm³/m³',
+      midLabel: '0.50',
+      maxLabel: '0.95 (Волого)',
+      maxLabelEn: '0.95 (Wet)',
+      unit: 'fraction (0–1)',
+      unitEn: 'fraction (0–1)',
     },
   },
   AOD: {
@@ -135,6 +138,9 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
     layerName: 'MODIS_Terra_Aerosol',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
+    minDate: '2000-02-24',
+    maxDate: '2025-12-31',
+    defaultDate: '2023-06-28',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #f9e2af 0%, #fab387 50%, #f38ba8 100%)',
@@ -152,6 +158,8 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
     minDate: '2005-01-01',
+    maxDate: '2025-12-31',
+    defaultDate: '2024-06-15',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #89dceb 0%, #cba6f7 55%, #f38ba8 100%)',
@@ -176,6 +184,9 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
     layerName: 'MODIS_Terra_NDSI_Snow_Cover',
     matrixSet: 'GoogleMapsCompatible_Level8',
     format: 'png',
+    minDate: '2000-02-24',
+    maxDate: '2025-12-31',
+    defaultDate: '2024-02-15',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #74c7ec 0%, #89b4fa 45%, #cdd6f4 80%, #ffffff 100%)',
@@ -786,22 +797,22 @@ export const EarthMap: React.FC<EarthMapProps> = ({
         </div>
 
         {gibsEnabled && gibsConfig.colorbar && (
-          <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-ctp-crust border border-ctp-surface1 shadow-lg pointer-events-none min-w-[210px]">
-            <div className="flex items-center justify-between text-xs font-mono text-ctp-text mb-1">
-              <span className="font-semibold truncate max-w-[150px]">
+          <div className="absolute bottom-3 left-3 z-[1000] px-3 py-2 rounded-xl bg-[#121216]/95 border border-[#27272a] shadow-lg pointer-events-none min-w-[220px]">
+            <div className="flex items-center justify-between text-xs font-mono text-[#f4f4f6] mb-1">
+              <span className="font-semibold truncate max-w-[140px]">
                 {activeLayerDisplayLabel.split(':')[1] || activeLayerDisplayLabel}
               </span>
-              <span className="text-ctp-blue font-bold ml-2">
+              <span className="text-[#38bdf8] font-bold ml-2">
                 {lang === 'en' && gibsConfig.colorbar.unitEn
                   ? gibsConfig.colorbar.unitEn
                   : gibsConfig.colorbar.unit}
               </span>
             </div>
             <div
-              className="w-full h-2 rounded-full border border-ctp-surface0"
+              className="w-full h-2 rounded-full border border-[#27272a]"
               style={{ background: gibsConfig.colorbar.gradientCss }}
             />
-            <div className="flex items-center justify-between text-xs font-mono text-ctp-subtext0 mt-1">
+            <div className="flex items-center justify-between text-xs font-mono text-[#a1a1aa] mt-1">
               <span>
                 {lang === 'en' && gibsConfig.colorbar.minLabelEn
                   ? gibsConfig.colorbar.minLabelEn
@@ -818,27 +829,41 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                   : gibsConfig.colorbar.maxLabel}
               </span>
             </div>
+            {!gibsConfig.isStaticDate && (
+              <div className="text-[11px] font-mono text-[#71717a] mt-1 pt-1 border-t border-[#27272a]/70 flex items-center justify-between">
+                <span>{en ? 'GIBS Date' : 'Дата GIBS'}</span>
+                <span className="text-[#a1a1aa]">{clampedGibsDate}</span>
+              </div>
+            )}
           </div>
         )}
 
         {viewMode === '3d' ? (
-          <Globe3DView
-            mode={mode}
-            regionA={regionA}
-            regionB={regionB}
-            activeTarget={activeTarget}
-            cameraTrigger={cameraTrigger}
-            baseTileUrl={activeBasemap.baseUrl}
-            referenceTileUrl={activeBasemap.refUrl}
-            gibsTileUrl={gibsTileUrl}
-            gibsEnabled={gibsEnabled}
-            gibsOpacity={gibsOpacity}
-            showGraticule={showGraticule}
-            autoRotate={autoRotate}
-            roiShape={roiShape}
-            onStopAutoRotate={() => setAutoRotate(false)}
-            onMapClickRegion={onMapClickRegion}
-          />
+          <React.Suspense
+            fallback={
+              <div className="w-full h-full flex items-center justify-center bg-[#09090b] text-xs font-mono text-[#a1a1aa]">
+                {en ? 'Loading 3D WebGL Globe...' : 'Завантаження 3D WebGL глобусу...'}
+              </div>
+            }
+          >
+            <LazyGlobe3DView
+              mode={mode}
+              regionA={regionA}
+              regionB={regionB}
+              activeTarget={activeTarget}
+              cameraTrigger={cameraTrigger}
+              baseTileUrl={activeBasemap.baseUrl}
+              referenceTileUrl={activeBasemap.refUrl}
+              gibsTileUrl={gibsTileUrl}
+              gibsEnabled={gibsEnabled}
+              gibsOpacity={gibsOpacity}
+              showGraticule={showGraticule}
+              autoRotate={autoRotate}
+              roiShape={roiShape}
+              onStopAutoRotate={() => setAutoRotate(false)}
+              onMapClickRegion={onMapClickRegion}
+            />
+          </React.Suspense>
         ) : (
           <MapContainer
             center={[35.0, 15.0]}
@@ -906,11 +931,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({
             <Marker position={[regionA.lat, regionA.lon]} icon={iconA}>
               <Popup>
                 <div className="text-sm space-y-1 font-sans">
-                  <div className="font-bold text-ctp-blue">
+                  <div className="font-bold text-[#38bdf8]">
                     REGION A (Primary Target)
                   </div>
-                  <div className="font-medium text-ctp-text">{regionA.name}</div>
-                  <div className="font-mono text-ctp-subtext0">
+                  <div className="font-medium text-[#f4f4f6]">{regionA.name}</div>
+                  <div className="font-mono text-[#a1a1aa]">
                     Lat: {regionA.lat.toFixed(3)}° | Lon:{' '}
                     {regionA.lon.toFixed(3)}°
                   </div>
@@ -936,13 +961,13 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 <Marker position={[regionB.lat, regionB.lon]} icon={iconB}>
                   <Popup>
                     <div className="text-sm space-y-1 font-sans">
-                      <div className="font-bold text-ctp-peach">
+                      <div className="font-bold text-[#fb923c]">
                         REGION B (Dipole Counterpart)
                       </div>
-                      <div className="font-medium text-ctp-text">
+                      <div className="font-medium text-[#f4f4f6]">
                         {regionB.name}
                       </div>
-                      <div className="font-mono text-ctp-subtext0">
+                      <div className="font-mono text-[#a1a1aa]">
                         Lat: {regionB.lat.toFixed(3)}° | Lon:{' '}
                         {regionB.lon.toFixed(3)}°
                       </div>

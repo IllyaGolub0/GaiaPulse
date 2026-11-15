@@ -30,8 +30,32 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
   onSelectSeasonMode,
 }) => {
   const { t, lang } = useLanguage();
-  const { location, statistics, human_summary, data_source } = analysis;
+  const { location, statistics, human_summary, data_source, data_origin } =
+    analysis;
   const isRegionA = regionKey === 'A';
+
+  const originMeta =
+    data_origin === 'live_api'
+      ? {
+          label: lang === 'en' ? 'LIVE NASA API' : 'LIVE NASA API',
+          cls: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300',
+        }
+      : data_origin === 'calibrated_model'
+      ? {
+          label: lang === 'en' ? 'CALIBRATED MODEL' : 'КАЛІБРОВАНА МОДЕЛЬ',
+          cls: 'bg-sky-500/10 border-sky-500/30 text-sky-300',
+        }
+      : data_origin === 'user_csv'
+      ? {
+          label: lang === 'en' ? 'USER CSV' : 'CSV ІМПОРТ',
+          cls: 'bg-violet-500/10 border-violet-500/30 text-violet-300',
+        }
+      : data_origin === 'client_offline'
+      ? {
+          label: lang === 'en' ? 'OFFLINE ESTIMATE' : 'ОФЛАЙН-МОДЕЛЬ',
+          cls: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
+        }
+      : null;
 
   const slopeDecade = statistics.change_per_decade;
   const slopeYear = statistics.sens_slope_per_year;
@@ -87,24 +111,34 @@ export const VerdictCard: React.FC<VerdictCardProps> = ({
           </div>
         </div>
 
-        {/* Minimalist Status Indicator */}
-        <div
-          className={`inline-flex items-center gap-2 px-2.5 py-1 rounded text-[13px] font-mono border ${
-            statistics.is_significant
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-          }`}
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              statistics.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
+        {/* Status & Provenance Indicators */}
+        <div className="flex flex-wrap items-center gap-2">
+          {originMeta && (
+            <span
+              title={data_source || originMeta.label}
+              className={`inline-flex items-center px-2 py-1 rounded text-[11px] font-mono font-medium tracking-wide border ${originMeta.cls}`}
+            >
+              {originMeta.label}
+            </span>
+          )}
+          <div
+            className={`inline-flex items-center gap-2 px-2.5 py-1 rounded text-[13px] font-mono border ${
+              statistics.is_significant
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
             }`}
-          />
-          <span className="font-medium">
-            {statistics.is_significant
-              ? `${t.verdictSignificant} · p = ${formattedPValue}`
-              : `${t.verdictNotYetSig} · p = ${formattedPValue}`}
-          </span>
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                statistics.is_significant ? 'bg-emerald-400' : 'bg-amber-400'
+              }`}
+            />
+            <span className="font-medium">
+              {statistics.is_significant
+                ? `${t.verdictSignificant} · p = ${formattedPValue}`
+                : `${t.verdictNotYetSig} · p = ${formattedPValue}`}
+            </span>
+          </div>
         </div>
       </div>
 

@@ -39,11 +39,13 @@ class ClimateDataBundle:
     monthly_df: pd.DataFrame  # columns: ['year', 'month', 'timestamp', 'value']
     baseline_df: pd.DataFrame  # columns: ['year', 'value'] (1981-2010 reference)
     source: str = "NASA POWER API (Live)"
+    data_origin: str = "live_api"  # "live_api" | "calibrated_model" | "user_csv"
     fetched_at: float = field(default_factory=time.time)
 
 
 _MEMORY_CACHE: Dict[Tuple[float, float, str, int, int], ClimateDataBundle] = {}
 _RAW_API_CACHE: Dict[Tuple[float, float, str], Dict[str, float]] = {}
+_INFLIGHT_LOCKS: Dict[Tuple[float, float, str], asyncio.Lock] = {}
 MAX_CACHE_ENTRIES = 256
 _SHARED_HTTP_CLIENT: Optional[httpx.AsyncClient] = None
 
@@ -84,6 +86,7 @@ def get_cache_stats() -> Dict[str, Any]:
 def clear_cache() -> None:
     _MEMORY_CACHE.clear()
     _RAW_API_CACHE.clear()
+    _INFLIGHT_LOCKS.clear()
 
 
 def _coord_seed(lat: float, lon: float, variable: str) -> int:
@@ -105,7 +108,7 @@ def _generate_special_phenomenon_series(
     (e.g., MODIS Aqua 550nm AOD, Aura OMI SO2, GLDAS Reference Soil Moisture).
     """
     var = variable.upper()
-    full_years = np.arange(min(1981, start_year), max(2026, end_year) + 1)
+    full_years = np.arange(min(1981, start_year), max(2025, end_year) + 1)
 
     # 1. Wisconsin Wildfire Smoke Transport (MODIS Aqua AOD, lat 44.5, lon -89.5)
     # Winter (DJF) has flat low background AOD (no trend, p > 0.4),
@@ -120,7 +123,6 @@ def _generate_special_phenomenon_series(
             2023: 0.34,
             2024: 0.16,
             2025: 0.26,
-            2026: 0.23,
         }
         rows: List[Dict[str, Any]] = []
         for yr in full_years:
@@ -250,7 +252,7 @@ def _generate_special_phenomenon_series(
                 for idx, yr in enumerate(full_years)
             }
             # Historical Super El Nino boosts in 1998, 2016, 2024
-            for super_yr in (1987, 1998, 2010, 2016, 2024, 2026):
+            for super_yr in (1987, 1998, 2010, 2016, 2024):
                 if super_yr in enso_index:
                     enso_index[super_yr] += 1.35
 
@@ -416,6 +418,7 @@ def _finalize_bundle(
         monthly_df=sliced_monthly,
         baseline_df=baseline_df,
         source=source,
+        data_origin="calibrated_model",
     )
 
 
@@ -440,7 +443,7 @@ def generate_scientific_fallback(
     rng = np.random.default_rng(seed)
     global_rng = np.random.default_rng(104729)
 
-    full_years = np.arange(min(1981, start_year), max(2026, end_year) + 1)
+    full_years = np.arange(min(1981, start_year), max(2025, end_year) + 1)
     n_years = len(full_years)
     t_idx = np.arange(n_years, dtype=float)
     shared_mode = (
@@ -602,42 +605,51 @@ async def _fetch_raw_nasa_power_monthly(
     if cache_key in _RAW_API_CACHE:
         return _RAW_API_CACHE[cache_key]
 
-    api_start = max(1981, query_start_year)
-    api_end = min(2025, max(api_start, query_end_year))
+    lock = _INFLIGHT_LOCKS.get(cache_key)
+    if lock is None:
+        lock = asyncio.Lock()
+        _INFLIGHT_LOCKS[cache_key] = lock
 
-    params: Dict[str, str | float] = {
-        "parameters": power_param.upper(),
-        "community": "AG",
-        "longitude": round(lon, 4),
-        "latitude": round(lat, 4),
-        "start": str(api_start),
-        "end": str(api_end),
-        "format": "JSON",
-    }
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": "GaiaPulse-NASA-SpaceApps-2026/2.0",
-    }
+    async with lock:
+        if cache_key in _RAW_API_CACHE:
+            return _RAW_API_CACHE[cache_key]
 
-    client = _get_shared_http_client()
-    response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
-    if response.status_code == 422 and api_end >= 2025:
-        params["end"] = "2024"
+        api_start = max(1981, query_start_year)
+        api_end = min(2025, max(api_start, query_end_year))
+
+        params: Dict[str, str | float] = {
+            "parameters": power_param.upper(),
+            "community": "AG",
+            "longitude": round(lon, 4),
+            "latitude": round(lat, 4),
+            "start": str(api_start),
+            "end": str(api_end),
+            "format": "JSON",
+        }
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "GaiaPulse-NASA-SpaceApps-2026/2.0",
+        }
+
+        client = _get_shared_http_client()
         response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
-    response.raise_for_status()
-    payload = response.json()
+        if response.status_code == 422 and api_end >= 2025:
+            params["end"] = "2024"
+            response = await client.get(NASA_POWER_MONTHLY_URL, params=params, headers=headers)
+        response.raise_for_status()
+        payload = response.json()
 
-    param_block = (
-        payload.get("properties", {})
-        .get("parameter", {})
-        .get(power_param.upper(), {})
-    )
-    if not isinstance(param_block, dict) or not param_block:
-        raise ValueError(f"Empty parameter block from NASA POWER for {power_param}")
+        param_block = (
+            payload.get("properties", {})
+            .get("parameter", {})
+            .get(power_param.upper(), {})
+        )
+        if not isinstance(param_block, dict) or not param_block:
+            raise ValueError(f"Empty parameter block from NASA POWER for {power_param}")
 
-    _evict_if_full(_RAW_API_CACHE)
-    _RAW_API_CACHE[cache_key] = param_block
-    return param_block
+        _evict_if_full(_RAW_API_CACHE)
+        _RAW_API_CACHE[cache_key] = param_block
+        return param_block
 
 
 def _parse_nasa_monthly_dict(
@@ -709,58 +721,6 @@ def _parse_nasa_monthly_dict(
     if len(in_window) < 8:
         return None
 
-    # Complete trailing incomplete months up to end_year (e.g. 2025-2026)
-    max_avail_year = int(valid_years_df["year"].max())
-    if max_avail_year < end_year and (end_year - max_avail_year) <= 3:
-        recent_df = valid_years_df.tail(15)
-        coeffs = np.polyfit(recent_df["year"].values, recent_df["value"].values, 1)
-        month_means = monthly_df.groupby("month")["value"].mean().to_dict()
-        overall_mean = float(monthly_df["value"].mean())
-        resid_std = float(np.std(recent_df["value"].values - np.polyval(coeffs, recent_df["year"].values)))
-        rng = np.random.default_rng(_coord_seed(lat, lon, variable))
-
-        new_monthly_rows = []
-        new_annual_rows = []
-        for missing_yr in range(max_avail_year + 1, end_year + 1):
-            expected_ann = float(coeffs[0] * missing_yr + coeffs[1]) + float(rng.normal(0.0, resid_std * 0.35))
-            yr_vals = []
-            for m in range(1, 13):
-                # Skip months already present in monthly_df
-                if not monthly_df[
-                    (monthly_df["year"] == missing_yr) & (monthly_df["month"] == m)
-                ].empty:
-                    continue
-                seasonal_offset = month_means.get(m, overall_mean) - overall_mean
-                m_val = expected_ann + seasonal_offset
-                if variable.upper() in ("PRECTOTCORR", "SNODP", "EVPTRNS"):
-                    m_val = max(0.0, m_val)
-                elif variable.upper() == "GWETROOT":
-                    m_val = float(np.clip(m_val, 0.02, 0.99))
-                yr_vals.append(m_val)
-                new_monthly_rows.append(
-                    {
-                        "year": missing_yr,
-                        "month": m,
-                        "timestamp": f"{missing_yr:04d}-{m:02d}",
-                        "value": round(float(m_val), 4),
-                    }
-                )
-            if yr_vals:
-                new_annual_rows.append({"year": missing_yr, "value": float(np.mean(yr_vals))})
-
-        if new_monthly_rows:
-            monthly_df = (
-                pd.concat([monthly_df, pd.DataFrame(new_monthly_rows)], ignore_index=True)
-                .sort_values(["year", "month"])
-                .reset_index(drop=True)
-            )
-        if new_annual_rows:
-            valid_years_df = (
-                pd.concat([valid_years_df, pd.DataFrame(new_annual_rows)], ignore_index=True)
-                .sort_values("year")
-                .reset_index(drop=True)
-            )
-
     baseline_df = valid_years_df[
         (valid_years_df["year"] >= 1981) & (valid_years_df["year"] <= 2010)
     ].copy()
@@ -770,20 +730,23 @@ def _parse_nasa_monthly_dict(
     sliced_annual = valid_years_df[
         (valid_years_df["year"] >= start_year) & (valid_years_df["year"] <= end_year)
     ].reset_index(drop=True)
+    actual_start = int(sliced_annual["year"].min())
+    actual_end = int(sliced_annual["year"].max())
     sliced_monthly = monthly_df[
-        (monthly_df["year"] >= start_year) & (monthly_df["year"] <= end_year)
+        (monthly_df["year"] >= actual_start) & (monthly_df["year"] <= actual_end)
     ].reset_index(drop=True)
 
     return ClimateDataBundle(
         variable=variable.upper(),
         lat=lat,
         lon=lon,
-        start_year=start_year,
-        end_year=end_year,
+        start_year=actual_start,
+        end_year=actual_end,
         annual_df=sliced_annual,
         monthly_df=sliced_monthly,
         baseline_df=baseline_df,
         source="NASA POWER API (Live MERRA-2 / CERES)",
+        data_origin="live_api",
     )
 
 
@@ -792,7 +755,7 @@ async def fetch_climate_series(
     lon: float,
     variable: str,
     start_year: int = 1985,
-    end_year: int = 2026,
+    end_year: int = 2025,
     prefer_live_api: bool = True,
 ) -> ClimateDataBundle:
     """
@@ -879,7 +842,7 @@ async def fetch_spatial_box_series(
     lon: float,
     variable: str,
     start_year: int = 1985,
-    end_year: int = 2026,
+    end_year: int = 2025,
     prefer_live_api: bool = True,
     box_offset_deg: float = 1.5,
 ) -> ClimateDataBundle:
@@ -922,12 +885,13 @@ async def fetch_spatial_box_series(
             variable=only.variable,
             lat=lat,
             lon=lon,
-            start_year=start_year,
-            end_year=end_year,
+            start_year=only.start_year,
+            end_year=only.end_year,
             annual_df=only.annual_df.copy(),
             monthly_df=only.monthly_df.copy(),
             baseline_df=only.baseline_df.copy(),
             source=f"{only.source} · ROI 1-pt fallback (±{box_offset_deg:.1f}°)",
+            data_origin=only.data_origin,
         )
 
     monthly_avg = (
@@ -957,10 +921,11 @@ async def fetch_spatial_box_series(
         variable=bundles[0].variable,
         lat=lat,
         lon=lon,
-        start_year=start_year,
-        end_year=end_year,
+        start_year=int(annual_avg["year"].min()),
+        end_year=int(annual_avg["year"].max()),
         annual_df=annual_avg,
         monthly_df=monthly_avg,
         baseline_df=baseline_avg,
         source=f"{center_source} · ROI {len(bundles)}-pt Box (±{box_offset_deg:.1f}°)",
+        data_origin=bundles[0].data_origin,
     )
