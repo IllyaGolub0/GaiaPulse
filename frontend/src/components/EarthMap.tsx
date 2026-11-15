@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -433,9 +433,17 @@ const CameraFlyController: React.FC<{
   cameraTrigger: number;
 }> = ({ mode, regionA, regionB, cameraTrigger }) => {
   const map = useMap();
+  const prevTriggerRef = useRef(0);
 
   useEffect(() => {
-    if (cameraTrigger === 0) return;
+    if (cameraTrigger === 0 || cameraTrigger === prevTriggerRef.current) return;
+    prevTriggerRef.current = cameraTrigger;
+
+    try {
+      map.stop();
+    } catch {
+      /* ignore if map is unmounted or busy */
+    }
 
     if (mode === 'dipole' && regionB) {
       const bounds = L.latLngBounds(
@@ -443,12 +451,12 @@ const CameraFlyController: React.FC<{
         [regionB.lat, regionB.lon]
       );
       map.flyToBounds(bounds.pad(0.42), {
-        duration: 1.4,
+        duration: 0.75,
         maxZoom: 5,
       });
     } else {
       map.flyTo([regionA.lat, regionA.lon], 5, {
-        duration: 1.3,
+        duration: 0.75,
       });
     }
   }, [cameraTrigger, mode, regionA, regionB, map]);
@@ -526,14 +534,14 @@ export const EarthMap: React.FC<EarthMapProps> = ({
     return buildROIPolygonCoords(regionA, roiShape).map(
       ([lon, lat]) => [lat, lon] as [number, number]
     );
-  }, [regionA, roiShape]);
+  }, [regionA.lat, regionA.lon, roiShape]);
 
   const roiLatLngsB = useMemo(() => {
     if (mode !== 'dipole' || !regionB) return [];
     return buildROIPolygonCoords(regionB, roiShape).map(
       ([lon, lat]) => [lat, lon] as [number, number]
     );
-  }, [mode, regionB, roiShape]);
+  }, [mode, regionB?.lat, regionB?.lon, roiShape]);
 
   const [layersOpen, setLayersOpen] = useState<boolean>(false);
   const activeLayerDisplayLabel =
@@ -917,6 +925,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
 
             {roiShape !== 'off' && roiLatLngsA.length > 0 && (
               <Polygon
+                key={`roi-polygon-a-${roiShape}-${regionA.lat.toFixed(3)}-${regionA.lon.toFixed(3)}`}
                 positions={roiLatLngsA}
                 pathOptions={{
                   color: '#89b4fa',
@@ -928,7 +937,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               />
             )}
 
-            <Marker position={[regionA.lat, regionA.lon]} icon={iconA}>
+            <Marker
+              key={`marker-a-${regionA.lat.toFixed(3)}-${regionA.lon.toFixed(3)}`}
+              position={[regionA.lat, regionA.lon]}
+              icon={iconA}
+            >
               <Popup>
                 <div className="text-sm space-y-1 font-sans">
                   <div className="font-bold text-[#38bdf8]">
@@ -947,6 +960,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
               <>
                 {roiShape !== 'off' && roiLatLngsB.length > 0 && (
                   <Polygon
+                    key={`roi-polygon-b-${roiShape}-${regionB.lat.toFixed(3)}-${regionB.lon.toFixed(3)}`}
                     positions={roiLatLngsB}
                     pathOptions={{
                       color: '#fab387',
@@ -958,7 +972,11 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                   />
                 )}
 
-                <Marker position={[regionB.lat, regionB.lon]} icon={iconB}>
+                <Marker
+                  key={`marker-b-${regionB.lat.toFixed(3)}-${regionB.lon.toFixed(3)}`}
+                  position={[regionB.lat, regionB.lon]}
+                  icon={iconB}
+                >
                   <Popup>
                     <div className="text-sm space-y-1 font-sans">
                       <div className="font-bold text-[#fb923c]">
@@ -976,6 +994,7 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 </Marker>
 
                 <Polyline
+                  key={`dipole-line-${regionA.lat.toFixed(3)}-${regionA.lon.toFixed(3)}-${regionB.lat.toFixed(3)}-${regionB.lon.toFixed(3)}`}
                   positions={[
                     [regionA.lat, regionA.lon],
                     [regionB.lat, regionB.lon],

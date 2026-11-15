@@ -509,9 +509,18 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
     }
   }, [mode, regionA, regionB, roiShape, baseTileUrl, gibsTileUrl]);
 
+  const prevTriggerRef = useRef(0);
+
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || cameraTrigger === 0) return;
+    if (!map || cameraTrigger === 0 || cameraTrigger === prevTriggerRef.current) return;
+    prevTriggerRef.current = cameraTrigger;
+
+    try {
+      map.stop();
+    } catch {
+      /* ignore */
+    }
 
     if (mode === 'dipole' && regionB) {
       const midLat = (regionA.lat + regionB.lat) / 2;
@@ -519,13 +528,13 @@ export const Globe3DView: React.FC<Globe3DViewProps> = ({
       map.flyTo({
         center: [midLon, midLat],
         zoom: 1.9,
-        duration: 1400,
+        duration: 800,
       });
     } else {
       map.flyTo({
         center: [regionA.lon, regionA.lat],
         zoom: 3.5,
-        duration: 1300,
+        duration: 800,
       });
     }
   }, [cameraTrigger, mode, regionA, regionB]);
