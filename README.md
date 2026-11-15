@@ -1,4 +1,4 @@
-# GaiaPulse — NASA Earth System Trend Detective (v2.1)
+# GaiaPulse — NASA Earth System Trend Detective (v2.2)
 
 **[English Version](#english-version) | [Українська версія](#українська-версія)**
 
@@ -10,9 +10,9 @@
 
 ### Overview
 
-**GaiaPulse (Earth System Trend Detective v2.1)** is a full-stack geospatial and statistical analytics platform developed for the **NASA Space Apps Challenge 2026 ("Be an Earth System Trend Detective", authored by Dr. James Acker — NASA Goddard Space Flight Center)**.
+**GaiaPulse (Earth System Trend Detective v2.2)** is an open-source, full-stack geospatial and statistical analytics platform developed for the **NASA Space Apps Challenge 2026 ("Be an Earth System Trend Detective", authored by Dr. James Acker — NASA Goddard Space Flight Center)**.
 
-The platform integrates official satellite, reanalysis, radar, and station resources from **NASA**, **NOAA**, **KNMI**, and the **Canadian Space Agency (CSA)** to help students, researchers, and Earth system detectives distinguish statistically significant climate and ecological trends (`p < 0.05`) from natural seasonal and interannual noise.
+The platform integrates official satellite, reanalysis, radar altimetry, and surface station resources from **NASA**, **NOAA**, **KNMI**, and the **Canadian Space Agency (CSA)** to help students, researchers, and Earth system detectives distinguish statistically significant climate and ecological trends (`p < 0.05`) from natural seasonal and interannual noise.
 
 ---
 
@@ -23,7 +23,7 @@ The platform integrates official satellite, reanalysis, radar, and station resou
    - `SWOT_WSE` — Water Surface Elevation for Lakes, Rivers & Reservoirs (`m above reference ellipsoid`, NASA / CNES / CSA SWOT Mission)
    - `RCM_SAR_BACKSCATTER` — C-Band SAR Surface Moisture, Flood & Sea Ice Index (`dB σ°`, CSA RADARSAT Constellation Mission / Geo.ca)
    - `AOD` — Aerosol Optical Depth 550 nm (`AOD`, NASA MODIS Aqua)
-   - `SO2` — Sulfur Dioxide Column Amount (`DU`, NASA Aura OMI)
+   - `SO2` — Sulfur Dioxide Column Amount (`DU`, Suomi NPP OMPS / NASA Aura OMI with striping-suppression pipeline)
    - `T2M` — Surface Air Temperature at 2m (`°C`, NASA MERRA-2 / Aqua AIRS)
    - `PRECTOTCORR` — Corrected Precipitation Rate (`mm/day`, NASA GPM IMERG / MERRA-2)
    - `GWETROOT` — Root Zone Soil Moisture (`fraction 0-1`, NASA GLDAS / SMAP)
@@ -35,26 +35,41 @@ The platform integrates official satellite, reanalysis, radar, and station resou
 
 2. **Curated Historical Phenomena & Live NASA EONET v3 Feed (`GET /api/v2/fetch-phenomena`)**:
    - **7 Curated Scientific Scenarios**:
-     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)* — MODIS Aqua `AOD`, Summer `JJA` vs. Winter `DJF`
+     1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)* — MODIS Aqua `AOD`, Summer `JJA` vs. Winter `DJF` baseline
      2. *Acker's SeaWiFS Coastal Chlorophyll Study (NASA NTRS 20090042747)* — Mississippi River Plume / Chesapeake Bay vs. Open Gulf of Mexico Shelf (`SEAWIFS_CHLA` & `QRUNOFF` Dipole)
      3. *CSA SWOT & RADARSAT Canadian Water & Ice Monitor* — Hudson Bay & Boreal Lakes (`SWOT_WSE` & `RCM_SAR_BACKSCATTER`)
-     4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Aura OMI `SO2` & CERES `ALLSKY_SFC_SW_DWN`
+     4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Suomi NPP OMPS / Aura OMI `SO2` & CERES `ALLSKY_SFC_SW_DWN`
      5. *El Nino / Southern Oscillation (ENSO) Hydrological Dipole* — Peru/Ecuador Coast vs. Indonesia/Northern Australia (`PRECTOTCORR`, `DJF`)
      6. *Arctic Amplification vs. North Atlantic Warming Hole* — Svalbard vs. Subpolar North Atlantic (`T2M`, `deseasonalized`)
      7. *Ukraine Southern Steppe Soil Moisture & Evaporation* — Emerging trend (`p ≈ 0.07`) showcasing the **Time-to-Significance Calculator**
    - **Live NASA EONET v3 Events**: Asynchronous real-time ingestion from `https://eonet.gsfc.nasa.gov/api/v3/events` with automatic mapping of Wildfires, Volcanoes, Floods, Severe Storms, Drought, and Sea Ice to corresponding satellite channels and offline caching.
 
 3. **Mathematical & Statistical Verification Engine (`POST /api/v2/analyze`)**:
-   - **Seasonal & Deseasonalized Filtering (`season_mode`)**: `raw` (all months), `deseasonalized` (climatological monthly cycle removed), `DJF` (Winter), `MAM` (Spring), `JJA` (Summer), `SON` (Autumn), plus a **6-Mode Seasonal Fingerprint Matrix** comparing all modes side-by-side.
+   - **Seasonal & Deseasonalized Filtering (`season_mode`)**: `raw` (all months), `deseasonalized` (climatological monthly cycle removed), `DJF` (Winter), `MAM` (Spring), `JJA` (Summer), `SON` (Autumn), plus an interactive **6-Mode Seasonal Fingerprint Matrix** comparing all modes side-by-side.
    - **Parametric & Non-Parametric Tests**: Ordinary Least Squares (OLS), `Student's t-test` (`t_stat`, `p_value`, degrees of freedom), `Mann-Kendall monotonic trend test` with **Hamed-Rao AR(1) autocorrelation correction** (`z_score`, `p_value`), **Pettitt regime-shift / change-point detector**, and `Theil-Sen robust slope estimator` (per year & per decade with `95% Confidence Intervals`).
-   - **5-Point ROI Spatial Box Averaging**: Optional 5-point (`center + ±0.5° lat/lon`) spatial averaging to suppress single-pixel noise.
+   - **5-Point ROI Spatial Box Averaging**: Optional 5-point (`center + ±0.5° lat/lon`) spatial averaging to suppress single-pixel sensor noise.
    - **Time-to-Significance Calculator**: Based on Weatherhead et al. ($N^{3/2}$ scaling with AR(1) adjustment), estimates how many additional years of satellite observations are needed to reach `p < 0.05` when a trend is still emerging.
    - **STL Decomposition & Dipole Engine**: Seasonal-Trend decomposition using LOESS (`statsmodels`) and cross-regional Pearson ($r$) & Spearman ($\rho$) dipole correlation.
 
-4. **CSV Importer for NASA Giovanni, AppEEARS, GES DISC & NOAA CDO (`POST /api/v2/analyze-csv`)**:
+4. **Multi-Basemap Geospatial Engine & Automatic Reverse Geocoding**:
+   - **4 Basemap Modes**:
+     1. *Dark* — Esri World Dark Gray Canvas
+     2. *Light* — Esri World Light Gray Canvas (pure light basemap for daytime analysis & printing)
+     3. *Night* — NASA VIIRS Earth at Night (CityLights)
+     4. *Satellite* — NASA Blue Marble Next Generation true-color imagery
+   - **Automatic Reverse Geocoding**: Real-time identification of administrative regions, municipalities, and village names for any clicked coordinates via OpenStreetMap Nominatim with built-in offline geographic fallback.
+   - **2D Map & 3D Interactive Globe**: Seamless toggle between Leaflet 2D projection and MapLibre GL 3D interactive globe with graticule grid and auto-rotation.
+
+5. **Dynamic Light & Dark Theme Support**:
+   - Automatic hardware/device preference detection (`prefers-color-scheme`) with persistent local storage.
+   - Top-navigation appearance toggle supporting *Auto (system default)*, *Light theme*, and *Dark theme*.
+   - Vibrant GaiaPulse Sky Blue active accents (`bg-sky-500/25`, `border-sky-400`, `text-sky-200`) providing high contrast in both themes.
+   - Dynamic dark/light color palette synchronization for Plotly interactive charts, tooltips, popups, and dialogs.
+
+6. **CSV Importer for NASA Giovanni, AppEEARS, GES DISC & NOAA CDO (`POST /api/v2/analyze-csv`)**:
    - Drag-and-drop CSV upload or 1-click official templates (`Date`/`Year`/`time` + `Value`/`data` columns) with automatic `#` comment stripping, deseasonalization, and full statistical verification.
 
-5. **Official NASA, NOAA, KNMI & CSA Resources Hub (13 Portals), Interactive Guided Tour & Printable PDF Mission Brief**:
+7. **Official NASA, NOAA, KNMI & CSA Resources Hub (13 Portals), Interactive Guided Tour & Printable PDF Mission Brief**:
    - Structured catalog of 13 verified agency portals across 3 categories (*NASA & NOAA Data*, *Partner & Statistical Methodology*, *CSA Canadian Space Agency*) plus contextual verification links under every chart (*Verify in NASA Giovanni*, *Explore in AppEEARS*, *Check in KNMI Climate Explorer*, *GES DISC Hydrology*, *NOAA CDO*, *CSA SWOT / RCM*).
    - Interactive first-visit **Guided Tour**, `Ctrl+K` Command Palette, bilingual **EN / UA** switcher (English default), and **Printable PDF Mission Brief** export.
 
@@ -63,8 +78,8 @@ The platform integrates official satellite, reanalysis, radar, and station resou
 ### Technology Stack
 
 - **Backend**: Python 3.12, FastAPI, Uvicorn, HTTPX, NumPy, Pandas, SciPy, PyMannKendall, Statsmodels.
-- **Frontend**: React 18, TypeScript, Vite, TailwindCSS (Catppuccin Mocha palette), React-Leaflet (2D Map), MapLibre GL JS (3D Globe), Plotly.js (`react-plotly.js`), Lucide React.
-- **Deployment**: Single-service Heroku buildpipeline (`package.json` `heroku-postbuild` + `Procfile` + `.python-version` serving the compiled React SPA directly via FastAPI), Docker, and Docker Compose.
+- **Frontend**: React 18, TypeScript, Vite, TailwindCSS (Theme-aware Catppuccin & Slate palette), React-Leaflet (2D Map), MapLibre GL JS (3D Globe), Plotly.js (`react-plotly.js`), Lucide React.
+- **Deployment**: Single-service PaaS build pipeline (`package.json` `heroku-postbuild` + `Procfile` + `.python-version` serving the compiled React SPA directly via FastAPI), Docker, and Docker Compose.
 
 ---
 
@@ -102,27 +117,31 @@ The platform integrates official satellite, reanalysis, radar, and station resou
     └── src/
         ├── App.tsx
         ├── index.css
+        ├── context/
+        │   └── ThemeContext.tsx     # Theme provider with system device preference detection
         ├── i18n/
-        │   └── translations.ts
+        │   └── translations.ts      # Comprehensive English & Ukrainian localization dictionary
         ├── types/
-        │   └── climate.ts
+        │   └── climate.ts           # TypeScript interfaces for climate data, scenarios, and statistics
         ├── services/
-        │   ├── api.ts
+        │   ├── api.ts               # Typed HTTP client for REST API endpoints
         │   └── __tests__/api.test.ts
         ├── utils/
-        │   ├── format.ts
-        │   ├── roiGeometry.ts
-        │   ├── urlState.ts
+        │   ├── format.ts            # Formatting utilities for coordinates, dates, and p-values
+        │   ├── reverseGeocode.ts    # Nominatim reverse geocoding with offline fallback
+        │   ├── roiGeometry.ts       # Circular and rectangular ROI polygon math
+        │   ├── urlState.ts          # Permalinks and URL state synchronization
         │   └── useMediaQuery.ts
         └── components/
-            ├── EarthMap.tsx
-            ├── Globe3DView.tsx
-            ├── GuidedTour.tsx
-            ├── MissionBriefModal.tsx
-            ├── OfficialResourcesHub.tsx
-            ├── PhenomenaDrawer.tsx
-            ├── TrendCharts.tsx
-            ├── VerdictCard.tsx
+            ├── EarthMap.tsx         # Leaflet 2D map with 4 basemaps, GIBS layers & ROI polygon
+            ├── Globe3DView.tsx      # MapLibre GL 3D interactive globe with graticules
+            ├── GuidedTour.tsx       # Interactive step-by-step product walkthrough tour
+            ├── MissionBriefModal.tsx# Printable PDF scientific report generator
+            ├── OfficialResourcesHub.tsx # 13 agency resources catalog & CSV time-series lab
+            ├── PhenomenaDrawer.tsx  # Historical cases & live NASA EONET v3 event browser
+            ├── ThemeToggle.tsx      # Top-navigation light/dark/system theme dropdown
+            ├── TrendCharts.tsx      # Dynamic Plotly charts (time series, stripes, STL decomposition)
+            ├── VerdictCard.tsx      # Statistical verdict hero, telemetry grid & season matrix
             └── VerdictHero.tsx
 ```
 
@@ -131,7 +150,7 @@ The platform integrates official satellite, reanalysis, radar, and station resou
 ### Quick Start & Deployment
 
 #### Option 1: Single-Service Cloud Deployment (Heroku / Render / Railway)
-The repository is configured for zero-configuration single-service deployment using both Node.js and Python buildpacks:
+The repository is configured for zero-configuration single-service deployment:
 1. During `heroku-postbuild` (defined in root `package.json`), Node.js installs frontend dependencies and builds the production bundle into `frontend/dist`.
 2. `Procfile` launches `uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}`, which serves both the `/api/v2/*` REST endpoints and the compiled React SPA (`frontend/dist/index.html`).
 
@@ -206,9 +225,9 @@ In accordance with the **NASA Space Apps Challenge 2026 Project Submission Guide
 
 ### Огляд проєкту
 
-**GaiaPulse (Earth System Trend Detective v2.1)** — повнофункціональна геопросторова та статистична аналітична платформа, розроблена для **NASA Space Apps Challenge 2026 ("Be an Earth System Trend Detective", автор челенджу д-р Джеймс Екер — NASA Goddard Space Flight Center)**.
+**GaiaPulse (Earth System Trend Detective v2.2)** — повнофункціональна відкрита геопросторова та статистична аналітична платформа, створена для міжнародного хакатону **NASA Space Apps Challenge 2026 ("Be an Earth System Trend Detective", автор челенджу д-р Джеймс Екер — NASA Goddard Space Flight Center)**.
 
-Додаток об'єднує офіційні супутникові, радарні та метеорологічні ресурси **NASA**, **NOAA**, **KNMI** та **Канадського космічного агентства (CSA)**, дозволяючи дослідникам та студентам статистично відділяти реальні довгострокові кліматичні й екологічні тренди (`p < 0.05`) від природного сезонного та міжрічного шуму.
+Додаток об'єднує офіційні супутникові, радарні та метеорологічні ресурси **NASA**, **NOAA**, **KNMI** та **Канадського космічного агентства (CSA)**, дозволяючи дослідникам і студентам статистично відділяти реальні довгострокові кліматичні й екологічні тренди (`p < 0.05`) від природного сезонного та міжрічного шуму.
 
 ---
 
@@ -219,7 +238,7 @@ In accordance with the **NASA Space Apps Challenge 2026 Project Submission Guide
    - `SWOT_WSE` — Висота водної поверхні річок, озер та водосховищ (`m above reference ellipsoid`, місія NASA / CNES / CSA SWOT)
    - `RCM_SAR_BACKSCATTER` — Радарний індекс вологості поверхні, повеней та морського льоду (`dB σ°`, CSA RADARSAT Constellation Mission / Geo.ca)
    - `AOD` — Оптична товщина аерозолів та диму пожеж 550 нм (`AOD`, NASA MODIS Aqua)
-   - `SO2` — Загальний вміст діоксиду сірки у стовпі атмосфери (`DU`, NASA Aura OMI)
+   - `SO2` — Загальний вміст діоксиду сірки у стовпі атмосфери (`DU`, Suomi NPP OMPS / NASA Aura OMI із фільтрацією артефактів рядкової аномалії)
    - `T2M` — Приземна температура повітря на висоті 2 м (`°C`, NASA MERRA-2 / Aqua AIRS)
    - `PRECTOTCORR` — Скоригована інтенсивність опадів (`mm/day`, NASA GPM IMERG / MERRA-2)
    - `GWETROOT` — Вологість ґрунту в кореневій зоні (`fraction 0-1`, NASA GLDAS / SMAP)
@@ -234,22 +253,37 @@ In accordance with the **NASA Space Apps Challenge 2026 Project Submission Guide
      1. *Canadian Wildfires & Smoke Transport over Wisconsin (2002–2024)* — MODIS Aqua `AOD`, порівняння літнього сезону `JJA` із зимовим `DJF`
      2. *Acker's SeaWiFS Coastal Chlorophyll Study (NASA NTRS 20090042747)* — Гирло Міссісіпі / Чесапікська затока проти Відкритого шельфу Мексиканської затоки (`SEAWIFS_CHLA` ↔ `QRUNOFF`)
      3. *CSA SWOT & RADARSAT Canadian Water & Ice Monitor* — Північна Канада / Гудзонова затока (`SWOT_WSE` ↔ `RCM_SAR_BACKSCATTER`)
-     4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Aura OMI `SO2` та радіаційне охолодження `ALLSKY_SFC_SW_DWN`
+     4. *Kasatochi Eruption & Sulfur Cooling Trap (Aleutian Islands)* — Suomi NPP OMPS / Aura OMI `SO2` та радіаційне охолодження `ALLSKY_SFC_SW_DWN`
      5. *El Nino / Southern Oscillation (ENSO) Hydrological Dipole* — Узбережжя Перу/Еквадору проти Індонезії/Австралії (`PRECTOTCORR`, сезон `DJF`)
      6. *Arctic Amplification vs. North Atlantic Warming Hole* — Шпіцберген проти Субполярної Північної Атлантики (`T2M`, `deseasonalized`)
      7. *Ukraine Southern Steppe Soil Moisture & Evaporation* — демонстрація тренду на межі значущості (`p ≈ 0.07`) для калькулятора **Time-to-Significance**
    - **Жива інтеграція з NASA EONET v3 API**: автоматичне отримання актуальних природних подій (лісові пожежі, вулкани, шторми, повені, посухи, морський лід) та їх конвертація у сценарії аналізу трендів.
 
 3. **Математичний та статистичний рушій (`POST /api/v2/analyze`)**:
-   - **Сезонна фільтрація (`season_mode`)**: `raw` (усі місяці як є), `deseasonalized` (видалення кліматологічного річного циклу), `DJF` (зима), `MAM` (весна), `JJA` (літо), `SON` (осінь) та **6-режимна матриця сезонних відбитків**.
+   - **Сезонна фільтрація (`season_mode`)**: `raw` (усі місяці як є), `deseasonalized` (видалення кліматологічного річного циклу), `DJF` (зима), `MAM` (весна), `JJA` (літо), `SON` (осінь) та інтерактивна **6-режимна матриця сезонних відбитків**.
    - **Статистичні тести**: лінійна регресія (OLS), параметричний критерій Стьюдента (`Student's t-test`), непараметричний тест Манна-Кендалла (`Mann-Kendall`) із корекцією автокореляції **Hamed-Rao AR(1)**, детектор зсуву режиму **Pettitt**, робастний нахил Сена (`Theil-Sen slope`), `95% довірчі інтервали` та `STL`-декомпозиція (Тренд / Сезонність / Шум).
    - **5-точкове просторове усереднення ROI**: опціональне усереднення по 5-точковій сітці (`центр + ±0.5° lat/lon`) для зменшення похибки окремого пікселя.
    - **Калькулятор Time-to-Significance**: розраховує кількість додаткових років супутникових спостережень (з урахуванням AR(1)), необхідних для досягнення порогу `p < 0.05`.
 
-4. **Імпорт CSV із NASA Giovanni, AppEEARS, GES DISC та NOAA CDO (`POST /api/v2/analyze-csv`)**:
+4. **Геопросторовий рушій із 4 підкладками та автореверс-геокодингом**:
+   - **4 варіанти базової карти**:
+     1. *Темна* (`Dark`) — Esri World Dark Gray Canvas
+     2. *Світла / Біла* (`Light`) — Esri World Light Gray Canvas для світлих звітів та денного аналізу
+     3. *Нічна* (`Night`) — нічні вогні міст NASA VIIRS Earth at Night
+     4. *Супутник* (`Satellite`) — супутникові знімки у природних кольорах NASA Blue Marble
+   - **Автоматичний реверс-геокодинг**: миттєве визначення реальної географічної назви (місто, селище, село, район, область, країна) при кліку на карті через OpenStreetMap Nominatim з офлайн-резервом.
+   - **2D Карта та 3D Інтерактивний Глобус**: перемикання в 1 клік між плоскою проекцією Leaflet та 3D-сферою MapLibre GL з координатною сіткою та автообертанням.
+
+5. **Динамічна підтримка світлої та темної теми**:
+   - Автоматичне визначення системної теми пристрою (`prefers-color-scheme`) зі збереженням у LocalStorage.
+   - Перемикач оформлення в шапці (*Як на пристрої*, *Світла тема*, *Темна тема*) у єдиному типографічному стилі `font-nav`.
+   - Акцентні кнопки у фірмовому небесно-блакитному кольорі (GaiaPulse Sky Blue) з високим контрастом у будь-якому режимі.
+   - Повна синхронізація теми для графіків Plotly, карткових панелей, випадаючих списків та покрокового гіда.
+
+6. **Імпорт CSV із NASA Giovanni, AppEEARS, GES DISC та NOAA CDO (`POST /api/v2/analyze-csv`)**:
    - Завантаження будь-якого CSV-файлу з колонками дати (`Date` / `Year` / `time`) та значення (`Value` / `data`), автоматичне очищення службових заголовків `#`, десезоналізація та повний розрахунок статистичних критеріїв.
 
-5. **Інтерактивний хаб із 13 офіційних ресурсів космічних агенцій, інтерактивний гід та PDF-звіт**:
+7. **Хаб із 13 офіційних ресурсів космічних агенцій, покроковий гід та PDF-звіт**:
    - Вбудований модуль **Official NASA, NOAA, KNMI & CSA Space Agency Resources Hub** із групуванням за 3 категоріями та контекстними кнопками верифікації під графіками (*Verify in NASA Giovanni*, *Explore in AppEEARS*, *Check in KNMI Climate Explorer*, *GES DISC Hydrology*, *NOAA CDO*, *CSA SWOT / RCM*).
    - Інтерактивний **Guided Tour** при першому візиті, палітра команд `Ctrl+K`, перемикач мови **EN / UA** (англійська за замовчуванням) та експорт **PDF Mission Brief**.
 
