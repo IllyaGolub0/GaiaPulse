@@ -43,6 +43,9 @@ export interface VariableMetadata {
   satellite_badge?: string;
   source?: string;
   gibs_layer?: string;
+  min_year?: number;
+  max_year?: number;
+  mission_status?: 'active' | 'completed';
   description?: string;
   student_definition?: string;
   biomes?: BiomeType[];

@@ -23,6 +23,8 @@ import {
   SeasonMode,
 } from '../types/climate';
 import {
+  clampYearRangeForVariable,
+  getVariableMetaLocal,
   NASA_OFFICIAL_DISCLAIMER,
   OFFICIAL_RESOURCES_LIST,
   SAMPLE_CSV_TEMPLATES,
@@ -372,6 +374,16 @@ export const OfficialResourcesHub: React.FC<OfficialResourcesHubProps> = ({
           {NASA_OFFICIAL_DISCLAIMER}
         </p>
       </div>
+
+      {/* Super Intelligence (SI) & AI Tool Disclosure */}
+      <div className="rounded-xl bg-ctp-crust border border-[#597B8A]/35 p-3.5 flex items-start gap-3">
+        <Sparkles className="w-4 h-4 text-[#597B8A] shrink-0 mt-0.5" />
+        <p className="text-sm font-mono text-ctp-subtext1 leading-relaxed">
+          {lang === 'en'
+            ? 'Super Intelligence (SI) Disclosure: AI/LLM coding assistants were used solely to accelerate code scaffolding, UI/UX refinement, and bilingual localization. All scientific methodology, statistical tests, and NASA/CSA data integrations were designed, implemented, and validated by the team. No NASA branding, logos, or mission identifiers were generated or modified by SI.'
+            : 'Розкриття використання Super Intelligence (SI / ШІ): Інструменти ШІ використовувалися виключно для прискорення розробки шаблонного коду, полірування UI/UX та двомовної локалізації. Уся наукова методологія, статистичні алгоритми та інтеграція даних NASA/CSA розроблені й верифіковані командою. Брендинг та логотипи NASA не генерувалися й не змінювалися за допомогою ШІ.'}
+        </p>
+      </div>
     </div>
   );
 
@@ -404,13 +416,18 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
   onOpenResourcesModal,
 }) => {
   const { t } = useLanguage();
+  const [safeStartYear, safeEndYear] = clampYearRangeForVariable(
+    startYear,
+    endYear,
+    getVariableMetaLocal(variable)
+  );
   const bboxStr = `${(regionA.lon - 2.0).toFixed(2)},${(
     regionA.lat - 2.0
   ).toFixed(2)},${(regionA.lon + 2.0).toFixed(2)},${(
     regionA.lat + 2.0
   ).toFixed(2)}`;
 
-  const giovanniUrl = `https://giovanni.gsfc.nasa.gov/giovanni/#service=TmAvMp&starttime=${startYear}-01-01T00:00:00Z&endtime=${endYear}-12-31T23:59:59Z&bbox=${bboxStr}`;
+  const giovanniUrl = `https://giovanni.gsfc.nasa.gov/giovanni/#service=TmAvMp&starttime=${safeStartYear}-01-01T00:00:00Z&endtime=${safeEndYear}-12-31T23:59:59Z&bbox=${bboxStr}`;
   const appeearsUrl = 'https://appeears.earthdatacloud.nasa.gov/';
   const knmiUrl = 'https://climexp.knmi.nl/';
   const gesDiscHydrologyUrl =
@@ -427,8 +444,8 @@ export const ContextDeepLinksBar: React.FC<ContextDeepLinksBarProps> = ({
         <span>{t.externalVerifyLabel}</span>
         <span className="text-zinc-200 font-medium">{variable}</span>
         <span>
-          [{regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}° · {startYear}–
-          {endYear}]
+          [{regionA.lat.toFixed(2)}°, {regionA.lon.toFixed(2)}° · {safeStartYear}–
+          {safeEndYear}]
         </span>
       </div>
 

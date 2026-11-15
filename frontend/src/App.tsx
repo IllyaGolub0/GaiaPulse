@@ -44,12 +44,19 @@ import {
 import {
   analyzeCsvTimeSeries,
   analyzeTrendApi,
+  clampYearRangeForVariable,
   DEFAULT_VARIABLES,
   FALLBACK_PHENOMENA_SCENARIOS,
   fetchPhenomenaV2,
   fetchPresetsFromApi,
+  getVariableMetaLocal,
   NASA_OFFICIAL_DISCLAIMER,
 } from './services/api';
+import {
+  encodeUrlSearch,
+  getYearPresetsForVariable,
+  parseInitialUrlState,
+} from './utils/urlState';
 import {
   formatDipoleVerdictI18n,
   getBiomeOptionsI18n,
@@ -104,17 +111,6 @@ export type SplitLayoutMode =
   | 'wide-chart'
   | 'only-globe'
   | 'only-chart';
-
-const QUICK_YEAR_PRESETS: Array<{
-  label: string;
-  start: number;
-  end: number;
-}> = [
-  { label: '1985–2026', start: 1985, end: 2026 },
-  { label: '2002–2026', start: 2002, end: 2026 },
-  { label: '2006–2026', start: 2006, end: 2026 },
-  { label: '2015–2026', start: 2015, end: 2026 },
-];
 
 /**
  * Minimalist Monochrome SVG Sparkline
@@ -216,59 +212,34 @@ export const App: React.FC = () => {
   const [phenomenaLoading, setPhenomenaLoading] = useState<boolean>(false);
   const [csvLoading, setCsvLoading] = useState<boolean>(false);
 
-  // Hydrate initial state from URL query parameters if present
-  const initialUrlParams = useMemo(
+  // Hydrate initial state from compact (?s= / ?q=) or legacy URL parameters
+  const initialUrlState = useMemo(
     () =>
-      typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search)
-        : new URLSearchParams(),
+      parseInitialUrlState(
+        typeof window !== 'undefined' ? window.location.search : ''
+      ),
     []
   );
 
   // Active Query State
   const [activeScenarioId, setActiveScenarioId] = useState<string>(
-    initialUrlParams.get('scenario') || FALLBACK_PHENOMENA_SCENARIOS[0].id
+    initialUrlState.activeScenarioId
   );
-  const [mode, setMode] = useState<AnalysisMode>(
-    (initialUrlParams.get('mode') as AnalysisMode) ||
-      FALLBACK_PHENOMENA_SCENARIOS[0].mode
-  );
+  const [mode, setMode] = useState<AnalysisMode>(initialUrlState.mode);
   const [selectedBiome, setSelectedBiome] = useState<BiomeType | 'all'>('all');
   const [variable, setVariable] = useState<ClimateVariableCode>(
-    (initialUrlParams.get('var') as ClimateVariableCode) ||
-      FALLBACK_PHENOMENA_SCENARIOS[0].variable
+    initialUrlState.variable
   );
   const [seasonMode, setSeasonMode] = useState<SeasonMode>(
-    (initialUrlParams.get('season') as SeasonMode) ||
-      FALLBACK_PHENOMENA_SCENARIOS[0].season_mode
+    initialUrlState.seasonMode
   );
-  const [startYear, setStartYear] = useState<number>(() => {
-    const p = Number(initialUrlParams.get('start'));
-    return p >= 1981 && p <= 2025 ? p : FALLBACK_PHENOMENA_SCENARIOS[0].start_year;
-  });
-  const [endYear, setEndYear] = useState<number>(() => {
-    const p = Number(initialUrlParams.get('end'));
-    return p >= 1982 && p <= 2026 ? p : FALLBACK_PHENOMENA_SCENARIOS[0].end_year;
-  });
-  const [regionA, setRegionA] = useState<RegionLocation>(() => {
-    const lat = parseFloat(initialUrlParams.get('lat') || '');
-    const lon = parseFloat(initialUrlParams.get('lon') || '');
-    const name = initialUrlParams.get('name');
-    if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-      return {
-        name: name || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
-        lat,
-        lon,
-      };
-    }
-    return FALLBACK_PHENOMENA_SCENARIOS[0].region_a;
-  });
+  const [startYear, setStartYear] = useState<number>(initialUrlState.startYear);
+  const [endYear, setEndYear] = useState<number>(initialUrlState.endYear);
+  const [regionA, setRegionA] = useState<RegionLocation>(
+    initialUrlState.regionA
+  );
   const [regionB, setRegionB] = useState<RegionLocation>(
-    FALLBACK_PHENOMENA_SCENARIOS[0].region_b || {
-      name: 'Northern Ontario Forest, Canada',
-      lat: 50.5,
-      lon: -86.0,
-    }
+    initialUrlState.regionB
   );
   const [activeTarget, setActiveTarget] = useState<'A' | 'B'>('A');
 
@@ -279,24 +250,35 @@ export const App: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Sync active investigation state to URL query parameters (shareable reproducible links)
+  // Sync active investigation state to short, clean URL parameters
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const params = new URLSearchParams();
-    params.set('var', variable);
-    params.set('season', seasonMode);
-    params.set('start', String(startYear));
-    params.set('end', String(endYear));
-    params.set('mode', mode);
-    params.set('lat', regionA.lat.toFixed(2));
-    params.set('lon', regionA.lon.toFixed(2));
-    params.set('name', regionA.name);
-    if (activeScenarioId && activeScenarioId !== 'custom') {
-      params.set('scenario', activeScenarioId);
-    }
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    const searchStr = encodeUrlSearch(
+      {
+        activeScenarioId,
+        mode,
+        variable,
+        seasonMode,
+        startYear,
+        endYear,
+        regionA,
+        regionB,
+      },
+      scenarios
+    );
+    const newUrl = `${window.location.pathname}${searchStr}`;
     window.history.replaceState(null, '', newUrl);
-  }, [variable, seasonMode, startYear, endYear, mode, regionA, activeScenarioId]);
+  }, [
+    variable,
+    seasonMode,
+    startYear,
+    endYear,
+    mode,
+    regionA,
+    regionB,
+    activeScenarioId,
+    scenarios,
+  ]);
 
   const handleCopyShareLink = () => {
     if (typeof window === 'undefined') return;
@@ -456,12 +438,20 @@ export const App: React.FC = () => {
   };
 
   const applyScenario = (scenario: PhenomenonScenario) => {
+    const varMeta =
+      variables.find((v) => v.code === scenario.variable) ||
+      getVariableMetaLocal(scenario.variable);
+    const [clampedStart, clampedEnd] = clampYearRangeForVariable(
+      scenario.start_year,
+      scenario.end_year,
+      varMeta
+    );
     setActiveScenarioId(scenario.id);
     setMode(scenario.mode);
     setVariable(scenario.variable);
     setSeasonMode(scenario.season_mode);
-    setStartYear(scenario.start_year);
-    setEndYear(scenario.end_year);
+    setStartYear(clampedStart);
+    setEndYear(clampedEnd);
     setRegionA(scenario.region_a);
     if (scenario.region_b) {
       setRegionB(scenario.region_b);
@@ -489,6 +479,24 @@ export const App: React.FC = () => {
   const openResources = useCallback(() => setActiveView('resources'), []);
   const selectSeason = useCallback((sm: SeasonMode) => setSeasonMode(sm), []);
 
+  const selectVariableWithBounds = useCallback(
+    (nextVar: ClimateVariableCode) => {
+      const nextMeta =
+        variables.find((v) => v.code === nextVar) ||
+        getVariableMetaLocal(nextVar);
+      const [nextStart, nextEnd] = clampYearRangeForVariable(
+        startYear,
+        endYear,
+        nextMeta
+      );
+      setVariable(nextVar);
+      setStartYear(nextStart);
+      setEndYear(nextEnd);
+      setActiveScenarioId('custom');
+    },
+    [variables, startYear, endYear]
+  );
+
   const filteredVariables = useMemo(() => {
     if (selectedBiome === 'all') return variables;
     return variables.filter(
@@ -498,8 +506,28 @@ export const App: React.FC = () => {
 
   const currentVarMeta =
     variables.find((v) => v.code === variable) ||
-    analysisResult?.variable_metadata ||
-    DEFAULT_VARIABLES[0];
+    getVariableMetaLocal(variable);
+
+  const varMinYear = currentVarMeta.min_year ?? 1981;
+  const varMaxYear = currentVarMeta.max_year ?? 2026;
+  const isMissionCompleted =
+    currentVarMeta.mission_status === 'completed' || varMaxYear < 2026;
+
+  // Enforce strict satellite/mission operational year bounds on variable or catalog updates
+  useEffect(() => {
+    const [clampedStart, clampedEnd] = clampYearRangeForVariable(
+      startYear,
+      endYear,
+      currentVarMeta
+    );
+    if (clampedStart !== startYear) setStartYear(clampedStart);
+    if (clampedEnd !== endYear) setEndYear(clampedEnd);
+  }, [variable, varMinYear, varMaxYear, startYear, endYear, currentVarMeta]);
+
+  const availableYearPresets = useMemo(
+    () => getYearPresetsForVariable(currentVarMeta),
+    [currentVarMeta]
+  );
 
   const activeScenario = scenarios.find((s) => s.id === activeScenarioId);
   const seasonModesList = useMemo(() => getSeasonModesI18n(lang), [lang]);
@@ -817,8 +845,9 @@ export const App: React.FC = () => {
       ? currentVarMeta.name_ua || currentVarMeta.name
       : currentVarMeta.name;
   const periodPresetValue =
-    QUICK_YEAR_PRESETS.find((p) => p.start === startYear && p.end === endYear)
-      ?.label || 'custom';
+    availableYearPresets.find(
+      (p) => p.start === startYear && p.end === endYear
+    )?.label || 'custom';
   const fieldLabelCls = 'block text-xs text-zinc-400 mb-1';
   const toolBtnCls =
     'h-10 px-3.5 rounded-md bg-[#1a1a1a] hover:bg-[#262626] text-zinc-100 text-[15px] transition border border-[#2a2a2a] flex items-center gap-2';
@@ -881,10 +910,9 @@ export const App: React.FC = () => {
           <span className={fieldLabelCls}>{L('Що вимірюємо', 'What we measure')}</span>
           <select
             value={variable}
-            onChange={(e) => {
-              setVariable(e.target.value as ClimateVariableCode);
-              setActiveScenarioId('custom');
-            }}
+            onChange={(e) =>
+              selectVariableWithBounds(e.target.value as ClimateVariableCode)
+            }
             title={
               currentVarMeta?.student_definition
                 ? getVariableDefinitionI18n(
@@ -919,12 +947,33 @@ export const App: React.FC = () => {
           </select>
         </label>
 
-        <label className="flex-1 min-w-[120px] md:flex-none md:w-40">
-          <span className={fieldLabelCls}>{L('Період', 'Period')}</span>
+        <label className="flex-1 min-w-[140px] md:flex-none md:w-44">
+          <span className={`${fieldLabelCls} flex items-center justify-between gap-1`}>
+            <span>{L('Період', 'Period')}</span>
+            <span
+              className={`font-mono ${
+                isMissionCompleted ? 'text-amber-400' : 'text-zinc-500'
+              }`}
+              title={
+                isMissionCompleted
+                  ? L(
+                      `Дані місії обмежені ${varMinYear}–${varMaxYear} (супутник завершив роботу)`,
+                      `Mission data bounded to ${varMinYear}–${varMaxYear} (satellite retired)`
+                    )
+                  : L(
+                      `Доступний діапазон місії: ${varMinYear}–${varMaxYear}`,
+                      `Mission data range: ${varMinYear}–${varMaxYear}`
+                    )
+              }
+            >
+              {varMinYear}–{varMaxYear}
+              {isMissionCompleted ? (lang === 'en' ? ' (ended)' : ' (архів)') : ''}
+            </span>
+          </span>
           <select
             value={periodPresetValue}
             onChange={(e) => {
-              const preset = QUICK_YEAR_PRESETS.find(
+              const preset = availableYearPresets.find(
                 (p) => p.label === e.target.value
               );
               if (preset) {
@@ -939,7 +988,7 @@ export const App: React.FC = () => {
                 {startYear}–{endYear}
               </option>
             )}
-            {QUICK_YEAR_PRESETS.map((preset) => (
+            {availableYearPresets.map((preset) => (
               <option key={preset.label} value={preset.label}>
                 {preset.label}
               </option>
@@ -1170,7 +1219,9 @@ export const App: React.FC = () => {
                             v.biomes?.includes(biome.id as BiomeType)
                           );
                           if (firstMatch) {
-                            setVariable(firstMatch.code as ClimateVariableCode);
+                            selectVariableWithBounds(
+                              firstMatch.code as ClimateVariableCode
+                            );
                           }
                         }
                       }}
@@ -1194,17 +1245,31 @@ export const App: React.FC = () => {
                 <span className="text-zinc-100 font-mono">
                   {startYear}–{endYear} ({endYear - startYear + 1} {t.yearsShort})
                 </span>
+                <span
+                  className={`ml-2 font-mono ${
+                    isMissionCompleted ? 'text-amber-400' : 'text-zinc-500'
+                  }`}
+                >
+                  · {varMinYear}–{varMaxYear}
+                  {isMissionCompleted
+                    ? lang === 'en'
+                      ? ' (mission ended)'
+                      : ' (місія завершена)'
+                    : ''}
+                </span>
               </span>
               <label className="flex items-center gap-2 text-xs text-zinc-400">
                 <span className="w-16">{L('Початок', 'Start')}</span>
                 <input
                   type="range"
-                  min={1985}
-                  max={2021}
+                  min={varMinYear}
+                  max={Math.max(varMinYear, varMaxYear - 4)}
                   value={startYear}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    setStartYear(Math.min(val, endYear - 5));
+                    setStartYear(
+                      Math.max(varMinYear, Math.min(val, endYear - 4))
+                    );
                   }}
                   className="w-full accent-[#597B8A] cursor-pointer"
                 />
@@ -1213,12 +1278,14 @@ export const App: React.FC = () => {
                 <span className="w-16">{L('Кінець', 'End')}</span>
                 <input
                   type="range"
-                  min={1990}
-                  max={2026}
+                  min={Math.min(varMaxYear, varMinYear + 4)}
+                  max={varMaxYear}
                   value={endYear}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    setEndYear(Math.max(val, startYear + 5));
+                    setEndYear(
+                      Math.min(varMaxYear, Math.max(val, startYear + 4))
+                    );
                   }}
                   className="w-full accent-[#597B8A] cursor-pointer"
                 />
@@ -2134,8 +2201,7 @@ export const App: React.FC = () => {
             <OfficialResourcesHub
               activeVariable={variable}
               onSelectVariable={(varCode) => {
-                setVariable(varCode);
-                setActiveScenarioId('custom');
+                selectVariableWithBounds(varCode);
                 setActiveView('split');
               }}
             />
@@ -2322,8 +2388,9 @@ export const App: React.FC = () => {
                         key={v.code}
                         type="button"
                         onClick={() => {
-                          setVariable(v.code as ClimateVariableCode);
-                          setActiveScenarioId('custom');
+                          selectVariableWithBounds(
+                            v.code as ClimateVariableCode
+                          );
                           setCommandPaletteOpen(false);
                         }}
                         className={`w-full px-2.5 py-1.5 rounded flex items-center justify-between gap-2 text-left transition ${

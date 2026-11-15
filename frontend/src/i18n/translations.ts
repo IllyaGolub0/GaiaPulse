@@ -642,11 +642,11 @@ const VARIABLE_DEFINITIONS_EN: Record<string, string> = {
     'Mean terrestrial and cryospheric snow depth (NASA MODIS / MERRA-2), governing surface albedo across polar and alpine regions.',
   SST: 'Radiometric skin and sea surface temperature of the upper ocean layer from infrared satellites (NASA GHRSST / MODIS Aqua).',
   SEAWIFS_CHLA:
-    'Chlorophyll-a concentration in coastal waters and river estuaries (NASA SeaWiFS / MODIS Aqua Ocean Color via Giovanni), tracking nutrient-driven phytoplankton blooms.',
+    'Chlorophyll-a concentration in coastal waters and river estuaries from the NASA OrbView-2 SeaWiFS mission (1998–2010, mission ended in Dec 2010), tracking nutrient-driven phytoplankton blooms.',
   SWOT_WSE:
-    'Water Surface Elevation of lakes, rivers, reservoirs, and estuaries measured from space via KaRIn radar interferometry (NASA / CNES / CSA SWOT Mission).',
+    'Water Surface Elevation of lakes, rivers, reservoirs, and estuaries (2016–2026), combining Jason-3/Sentinel-3 inland radar altimetry (2016–2022) with NASA / CNES / CSA SWOT KaRIn interferometry (launched Dec 2022).',
   RCM_SAR_BACKSCATTER:
-    'Normalized C-band Synthetic Aperture Radar backscatter (σ°, dB) from the CSA RADARSAT Constellation Mission (RCM), imaging sea ice, floods, and wetlands day or night through clouds.',
+    'Normalized C-band Synthetic Aperture Radar backscatter (σ°, dB) from the CSA RADARSAT Constellation Mission (RCM, 2019–2026), imaging sea ice, floods, and wetlands day or night through clouds.',
 };
 
 export function getVariableDefinitionI18n(
@@ -676,7 +676,7 @@ const SCENARIO_TEXT_EN: Record<
   },
   'ackers-seawifs-coastal-study': {
     summary:
-      'Based on Challenge Author Dr. James Acker’s research paper (NASA NTRS 20090042747): river runoff (QRUNOFF from GES DISC Hydrology) delivers agricultural nutrients into the Mississippi River plume and Chesapeake Bay, driving a significant rise in Chlorophyll-a (SEAWIFS_CHLA in NASA Giovanni), while the open Gulf of Mexico shelf exhibits contrasting oligotrophic dynamics.',
+      'Based on Challenge Author Dr. James Acker’s research paper (NASA NTRS 20090042747): river runoff (QRUNOFF from GES DISC Hydrology) delivers agricultural nutrients into the Mississippi River plume and Chesapeake Bay, driving a significant rise in Chlorophyll-a across the SeaWiFS mission archive (1998–2010), while the open Gulf of Mexico shelf exhibits contrasting oligotrophic dynamics.',
     note: 'Click the variable toggle button (SEAWIFS_CHLA ↔ QRUNOFF) to compare coastal phytoplankton blooms directly against river runoff!',
   },
   'csa-swot-radarsat-water-ice': {
@@ -865,10 +865,10 @@ interface LanguageContextValue {
 }
 
 const LanguageContext = createContext<LanguageContextValue>({
-  lang: 'ua',
+  lang: 'en',
   setLang: () => {},
   toggleLang: () => {},
-  t: TRANSLATIONS.ua,
+  t: TRANSLATIONS.en,
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -876,12 +876,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [lang, setLangState] = useState<Language>(() => {
     try {
+      if (typeof window !== 'undefined') {
+        const paramLang = new URLSearchParams(window.location.search).get('lang');
+        if (paramLang === 'en' || paramLang === 'ua') return paramLang;
+      }
       const saved = localStorage.getItem('gaia_lang');
       if (saved === 'en' || saved === 'ua') return saved;
     } catch {
       // ignore storage errors
     }
-    return 'ua';
+    return 'en';
   });
 
   const setLang = (next: Language) => {

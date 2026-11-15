@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeCsvClientSideFallback } from '../api';
+import {
+  analyzeCsvClientSideFallback,
+  clampYearRangeForVariable,
+  FALLBACK_PHENOMENA_SCENARIOS,
+  getVariableMetaLocal,
+} from '../api';
+import {
+  encodeUrlSearch,
+  getYearPresetsForVariable,
+  parseInitialUrlState,
+} from '../../utils/urlState';
 
 describe('analyzeCsvClientSideFallback', () => {
   it('parses NASA Giovanni comment headers, YYYY-MM dates, and detects significant upward trend', () => {
@@ -63,5 +73,108 @@ describe('analyzeCsvClientSideFallback', () => {
         variable_code: 'T2M',
       })
     ).toThrow();
+  });
+});
+
+describe('satellite mission year bounds clamping', () => {
+  it('clamps SeaWiFS (1998-2010), AOD (2002-2026), SWOT (2016-2026), and RCM (2019-2026)', () => {
+    expect(
+      clampYearRangeForVariable(1990, 2026, getVariableMetaLocal('SEAWIFS_CHLA'))
+    ).toEqual([1998, 2010]);
+    expect(
+      clampYearRangeForVariable(2020, 2026, getVariableMetaLocal('SEAWIFS_CHLA'))
+    ).toEqual([2006, 2010]);
+
+    expect(
+      clampYearRangeForVariable(1985, 2026, getVariableMetaLocal('AOD'))
+    ).toEqual([2002, 2026]);
+
+    expect(
+      clampYearRangeForVariable(2000, 2026, getVariableMetaLocal('SWOT_WSE'))
+    ).toEqual([2016, 2026]);
+
+    expect(
+      clampYearRangeForVariable(2000, 2026, getVariableMetaLocal('RCM_SAR_BACKSCATTER'))
+    ).toEqual([2019, 2026]);
+  });
+
+  it('builds quick year presets strictly within each satellite operational window', () => {
+    const seawifsPresets = getYearPresetsForVariable(getVariableMetaLocal('SEAWIFS_CHLA'));
+    expect(seawifsPresets.length).toBeGreaterThan(0);
+    expect(seawifsPresets.every((p) => p.start >= 1998 && p.end <= 2010)).toBe(true);
+
+    const rcmPresets = getYearPresetsForVariable(getVariableMetaLocal('RCM_SAR_BACKSCATTER'));
+    expect(rcmPresets.length).toBeGreaterThan(0);
+    expect(rcmPresets.every((p) => p.start >= 2019 && p.end <= 2026)).toBe(true);
+  });
+});
+
+describe('compact URL state encoding and parsing', () => {
+  it('returns empty search for unmodified default scenario and ?s= for known scenarios', () => {
+    const defaultScenario = FALLBACK_PHENOMENA_SCENARIOS[0];
+    expect(
+      encodeUrlSearch({
+        activeScenarioId: defaultScenario.id,
+        mode: defaultScenario.mode,
+        variable: defaultScenario.variable,
+        seasonMode: defaultScenario.season_mode,
+        startYear: defaultScenario.start_year,
+        endYear: defaultScenario.end_year,
+        regionA: defaultScenario.region_a,
+        regionB: defaultScenario.region_b || { name: 'B', lat: 50.5, lon: -86.0 },
+      })
+    ).toBe('');
+
+    const seawifsScenario = FALLBACK_PHENOMENA_SCENARIOS.find(
+      (s) => s.id === 'ackers-seawifs-coastal-study'
+    )!;
+    expect(
+      encodeUrlSearch({
+        activeScenarioId: seawifsScenario.id,
+        mode: seawifsScenario.mode,
+        variable: seawifsScenario.variable,
+        seasonMode: seawifsScenario.season_mode,
+        startYear: seawifsScenario.start_year,
+        endYear: seawifsScenario.end_year,
+        regionA: seawifsScenario.region_a,
+        regionB: seawifsScenario.region_b || { name: 'B', lat: 50.5, lon: -86.0 },
+      })
+    ).toBe('?s=seawifs');
+  });
+
+  it('encodes custom points without name= and clamps legacy query params on parse', () => {
+    const encoded = encodeUrlSearch({
+      activeScenarioId: 'custom',
+      mode: 'single',
+      variable: 'SWOT_WSE',
+      seasonMode: 'JJA',
+      startYear: 2016,
+      endYear: 2026,
+      regionA: { name: 'Point A (79.75°, -56.25°)', lat: 79.75, lon: -56.25 },
+      regionB: { name: 'B', lat: 50.5, lon: -86.0 },
+    });
+    expect(encoded).toBe('?q=SWOT_WSE.JJA.2016-2026.79.75,-56.25');
+    expect(encoded).not.toContain('name=');
+
+    const parsedCompact = parseInitialUrlState(encoded);
+    expect(parsedCompact.variable).toBe('SWOT_WSE');
+    expect(parsedCompact.seasonMode).toBe('JJA');
+    expect(parsedCompact.startYear).toBe(2016);
+    expect(parsedCompact.endYear).toBe(2026);
+    expect(parsedCompact.regionA.lat).toBe(79.75);
+    expect(parsedCompact.regionA.lon).toBe(-56.25);
+
+    const parsedLegacyOutOfBounds = parseInitialUrlState(
+      '?var=SWOT_WSE&season=JJA&start=2000&end=2026&mode=single&lat=79.75&lon=-56.25&name=Custom'
+    );
+    expect(parsedLegacyOutOfBounds.variable).toBe('SWOT_WSE');
+    expect(parsedLegacyOutOfBounds.startYear).toBe(2016);
+    expect(parsedLegacyOutOfBounds.endYear).toBe(2026);
+
+    const parsedSeaWiFSOutOfBounds = parseInitialUrlState(
+      '?q=SEAWIFS_CHLA.r.1998-2026.37.00,-76.00'
+    );
+    expect(parsedSeaWiFSOutOfBounds.startYear).toBe(1998);
+    expect(parsedSeaWiFSOutOfBounds.endYear).toBe(2010);
   });
 });

@@ -11,7 +11,7 @@ from fastapi import APIRouter, HTTPException
 from csv_parser import parse_scientific_csv_text
 from nasa_client import ClimateDataBundle, fetch_climate_series, fetch_spatial_box_series
 from phenomena_service import get_all_phenomena_scenarios
-from presets import VARIABLE_CATALOG, get_variable_metadata
+from presets import VARIABLE_CATALOG, clamp_year_range_for_variable, get_variable_metadata
 from schemas import AnalyzeCsvRequestV2, AnalyzeTrendRequestV2
 from statistics_engine import (
     analyze_single_region,
@@ -34,6 +34,9 @@ def serialize_variable_meta(var_meta: Dict[str, Any]) -> Dict[str, Any]:
         "satellite_badge": var_meta.get("satellite_badge", "NASA EOS"),
         "source": var_meta.get("source", var_meta.get("satellite_badge", "NASA EOS")),
         "gibs_layer": var_meta.get("gibs_layer", "MODIS_Terra_Land_Surface_Temp_Day"),
+        "min_year": int(var_meta.get("min_year", 1981)),
+        "max_year": int(var_meta.get("max_year", 2026)),
+        "mission_status": var_meta.get("mission_status", "active"),
         "description": var_meta.get("description", ""),
         "student_definition": var_meta.get("student_definition", var_meta.get("description", "")),
         "biomes": var_meta.get("biomes", []),
@@ -78,6 +81,11 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
 
     var_code = var_meta["code"]
     norm_season = normalize_season_mode(payload.season_mode)
+    eff_start_year, eff_end_year = clamp_year_range_for_variable(
+        payload.start_year,
+        payload.end_year,
+        var_meta,
+    )
 
     try:
         if payload.region_b is not None:
@@ -86,8 +94,8 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
                     lat=payload.region_a.lat,
                     lon=payload.region_a.lon,
                     variable=var_code,
-                    start_year=payload.start_year,
-                    end_year=payload.end_year,
+                    start_year=eff_start_year,
+                    end_year=eff_end_year,
                     prefer_live_api=payload.prefer_live_api,
                     spatial_box_averaging=payload.spatial_box_averaging,
                 ),
@@ -95,8 +103,8 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
                     lat=payload.region_b.lat,
                     lon=payload.region_b.lon,
                     variable=var_code,
-                    start_year=payload.start_year,
-                    end_year=payload.end_year,
+                    start_year=eff_start_year,
+                    end_year=eff_end_year,
                     prefer_live_api=payload.prefer_live_api,
                     spatial_box_averaging=payload.spatial_box_averaging,
                 ),
@@ -106,8 +114,8 @@ async def run_trend_analysis_pipeline(payload: AnalyzeTrendRequestV2) -> Dict[st
                 lat=payload.region_a.lat,
                 lon=payload.region_a.lon,
                 variable=var_code,
-                start_year=payload.start_year,
-                end_year=payload.end_year,
+                start_year=eff_start_year,
+                end_year=eff_end_year,
                 prefer_live_api=payload.prefer_live_api,
                 spatial_box_averaging=payload.spatial_box_averaging,
             )

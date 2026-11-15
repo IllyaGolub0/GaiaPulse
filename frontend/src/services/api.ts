@@ -73,17 +73,20 @@ export const BIOME_FILTER_OPTIONS: Array<{
 export const DEFAULT_VARIABLES: VariableMetadata[] = [
   {
     code: 'SEAWIFS_CHLA',
-    name: 'Coastal & Estuarine Chlorophyll-a (SeaWiFS / MODIS Aqua)',
-    name_ua: 'Прибережний хлорофіл-а (SeaWiFS / MODIS Aqua)',
+    name: 'Coastal & Estuarine Chlorophyll-a (SeaWiFS 1998–2010)',
+    name_ua: 'Прибережний хлорофіл-а (SeaWiFS 1998–2010)',
     unit: 'mg/m³',
-    satellite_badge: 'NASA SeaWiFS / MODIS / Giovanni',
-    source: 'NASA SeaWiFS / MODIS / Giovanni',
-    gibs_layer: 'MODIS_Terra_CorrectedReflectance_TrueColor',
+    satellite_badge: 'NASA SeaWiFS / Giovanni (1998–2010)',
+    source: 'NASA OrbView-2 SeaWiFS / Giovanni (1997–2010)',
+    gibs_layer: 'SEAWIFS_ORBVIEW-2_GAC_Chlorophyll_a',
+    min_year: 1998,
+    max_year: 2010,
+    mission_status: 'completed',
     biomes: ['tidal_estuary'],
     description:
-      'Концентрація хлорофілу-a у прибережних водах та естуаріях (NASA SeaWiFS / MODIS Aqua Ocean Color в системі Giovanni).',
+      'Концентрація хлорофілу-a у прибережних водах та естуаріях за архівними даними місії NASA SeaWiFS (завершена у грудні 2010 року).',
     student_definition:
-      'Концентрація хлорофілу у прибережних водах і гирлах річок (естуаріях). Показує, як річковий стік і добрива з полів викликають цвітіння водоростей.',
+      'Концентрація хлорофілу у прибережних водах і гирлах річок (естуаріях) за місією NASA SeaWiFS (1998–2010, місію завершено у 2010 р.). Показує, як річковий стік і добрива з полів викликають цвітіння водоростей.',
   },
   {
     code: 'SWOT_WSE',
@@ -91,13 +94,17 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     name_ua: 'Висота водної поверхні озер та річок (SWOT WSE)',
     unit: 'm (meters above reference ellipsoid)',
     satellite_badge: 'NASA / CNES / CSA SWOT Satellite',
-    source: 'NASA / CNES / CSA SWOT Satellite',
+    source:
+      'NASA / CNES / CSA SWOT (2022–2026) & Jason-3 / Sentinel-3 Inland Altimetry (2016–2026)',
     gibs_layer: 'MODIS_Terra_CorrectedReflectance_Bands721',
+    min_year: 2016,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['tidal_estuary', 'rain_forest', 'desert'],
     description:
-      'Висота водної поверхні річок, озер та водосховищ за даними радарної інтерферометрії KaRIn місії SWOT (NASA/CNES/CSA).',
+      'Висота водної поверхні річок, озер та водосховищ за даними радарної альтиметрії SWOT KaRIn (запуск грудень 2022) у поєднанні з Jason-3 / Sentinel-3 (2016–2026).',
     student_definition:
-      'Висота водної поверхні річок, озер та водосховищ із космосу. Місія SWOT покриває 90% поверхневих вод Землі і дозволяє бачити обміління або наповнення водойм.',
+      'Висота водної поверхні річок, озер та водосховищ із космосу (2016–2026): поєднує попередню супутникову альтиметрію (Jason-3 / Sentinel-3, 2016–2022) із місією SWOT KaRIn (запуск у грудні 2022 р.), що покриває 90% поверхневих вод Землі.',
   },
   {
     code: 'RCM_SAR_BACKSCATTER',
@@ -105,13 +112,16 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     name_ua: 'Радарний індекс льоду, повеней та вологості (CSA RADARSAT SAR)',
     unit: 'dB (SAR Backscatter σ°)',
     satellite_badge: 'CSA RADARSAT (RCM) / Geo.ca',
-    source: 'CSA RADARSAT (RCM) / Geo.ca',
+    source: 'CSA RADARSAT (RCM) / Geo.ca (2019–2026)',
     gibs_layer: 'MODIS_Terra_NDSI_Snow_Cover',
+    min_year: 2019,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['cryosphere', 'tidal_estuary'],
     description:
-      'Нормалізований радарний зворотний розсіювальний сигнал (SAR Backscatter σ°, C-band) сузір’я CSA RADARSAT Constellation Mission (RCM).',
+      'Нормалізований радарний зворотний розсіювальний сигнал (SAR Backscatter σ°, C-band) сузір’я CSA RADARSAT Constellation Mission (RCM, запуск 2019).',
     student_definition:
-      'Радар із синтезованою апертурою (SAR) бачить крізь хмари та вночі, відстежуючи танення морського льоду, межі боліт, вологість полів та розливи річок у Канаді й світі.',
+      'Радар із синтезованою апертурою (SAR, місія RCM з 2019 р.) бачить крізь хмари та вночі, відстежуючи танення морського льоду, межі боліт, вологість полів та розливи річок у Канаді й світі.',
   },
   {
     code: 'AOD',
@@ -121,6 +131,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'MODIS Aqua',
     source: 'NASA MODIS Aqua / Giovanni',
     gibs_layer: 'MODIS_Terra_Aerosol',
+    min_year: 2002,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['rain_forest', 'desert'],
     description:
       'Індикатор диму лісових пожеж, пилу та сульфатних аерозолів (MODIS Aqua).',
@@ -135,6 +148,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'MERRA-2 / AIRS',
     source: 'NASA MERRA-2 / Aqua AIRS / Giovanni',
     gibs_layer: 'MODIS_Terra_Land_Surface_Temp_Day',
+    min_year: 1981,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['cryosphere', 'desert', 'rain_forest', 'tidal_estuary'],
     description:
       'Приземна температура повітря на висоті 2 метри (NASA MERRA-2 & AIRS).',
@@ -149,6 +165,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'GPM / MERRA-2',
     source: 'NASA GPM IMERG / MERRA-2 / Giovanni',
     gibs_layer: 'IMERG_Precipitation_Rate',
+    min_year: 1985,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['rain_forest', 'desert', 'tidal_estuary'],
     description:
       'Середньодобова кількість опадів за супутниковими даними GPM IMERG.',
@@ -162,7 +181,10 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     unit: 'DU',
     satellite_badge: 'Aura OMI',
     source: 'NASA Aura OMI / Giovanni',
-    gibs_layer: 'MODIS_Terra_Aerosol',
+    gibs_layer: 'OMI_SO2_Middle_Troposphere',
+    min_year: 2004,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['cryosphere', 'desert'],
     description:
       'Вміст вулканічного та антропогенного SO₂ у стовпі атмосфери (Aura OMI).',
@@ -177,6 +199,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'GLDAS / SMAP',
     source: 'NASA GES DISC Hydrology / GLDAS / SMAP',
     gibs_layer: 'SMAP_L4_Analyzed_Root_Zone_Soil_Moisture',
+    min_year: 2000,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['desert', 'rain_forest'],
     description:
       'Відносна насиченість вологою кореневого шару ґрунту (GLDAS / SMAP).',
@@ -191,6 +216,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'GLDAS',
     source: 'NASA GES DISC Hydrology Time Series / GLDAS',
     gibs_layer: 'IMERG_Precipitation_Rate',
+    min_year: 1998,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['tidal_estuary', 'rain_forest'],
     description:
       'Інтенсивність гідрологічного стоку та паводків (GLDAS Streamflow).',
@@ -205,6 +233,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'CERES / FLASHFlux',
     source: 'NASA CERES / FLASHFlux',
     gibs_layer: 'MODIS_Terra_CorrectedReflectance_TrueColor',
+    min_year: 2000,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['desert', 'cryosphere', 'rain_forest'],
     description:
       'Потік короткохвильового сонячного випромінювання на поверхні Землі.',
@@ -219,6 +250,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'GLDAS',
     source: 'NASA GES DISC Hydrology / GLDAS',
     gibs_layer: 'SMAP_L4_Analyzed_Root_Zone_Soil_Moisture',
+    min_year: 2000,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['rain_forest', 'desert'],
     description:
       'Сумарне випаровування вологи з ґрунту та рослинності (GLDAS).',
@@ -233,6 +267,9 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     satellite_badge: 'MODIS / MERRA-2',
     source: 'NASA MODIS / MERRA-2 Cryosphere',
     gibs_layer: 'MODIS_Terra_NDSI_Snow_Cover',
+    min_year: 2000,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['cryosphere'],
     description:
       'Глибина снігового покриву кріосфери (MODIS / MERRA-2).',
@@ -246,7 +283,10 @@ export const DEFAULT_VARIABLES: VariableMetadata[] = [
     unit: '°C',
     satellite_badge: 'GHRSST / MODIS',
     source: 'NASA GHRSST / MODIS Aqua',
-    gibs_layer: 'MODIS_Terra_Land_Surface_Temp_Day',
+    gibs_layer: 'GHRSST_L4_MUR_Sea_Surface_Temperature',
+    min_year: 1981,
+    max_year: 2026,
+    mission_status: 'active',
     biomes: ['tidal_estuary', 'cryosphere'],
     description: 'Радіаційна температура поверхні океану та суші.',
     student_definition:
@@ -383,7 +423,7 @@ export const OFFICIAL_RESOURCES_LIST: OfficialResourceItem[] = [
     title: "Geo.ca (Canada's Open Geospatial Information)",
     agency_badge: 'Geo.ca • NRCan / CSA',
     is_us_gov: false,
-    url: 'http://geo.ca/',
+    url: 'https://geo.ca/',
     role_in_app:
       'Регіональні екологічні та просторові дані Канади (лісові пожежі, водні ресурси).',
     supported_variables: ['RCM_SAR_BACKSCATTER', 'AOD', 'SWOT_WSE'],
@@ -454,16 +494,16 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
   },
   {
     id: 'ackers-seawifs-coastal-study',
-    title: 'River-Influenced Coastal Chlorophyll Trend (SeaWiFS / MODIS)',
+    title: 'River-Influenced Coastal Chlorophyll Trend (SeaWiFS 1998–2010)',
     category: 'Coastal & Estuarine Ecology',
     source_type: 'curated',
     tags: ['acker_video', 'dipole', 'curated', 'official_resource'],
-    satellite_badge: 'NASA SeaWiFS / MODIS / Giovanni',
+    satellite_badge: 'NASA SeaWiFS / Giovanni (1998–2010)',
     variable: 'SEAWIFS_CHLA',
     secondary_variable: 'QRUNOFF',
     mode: 'dipole',
     start_year: 1998,
-    end_year: 2026,
+    end_year: 2010,
     season_mode: 'JJA',
     region_a: {
       name: 'Mississippi River Plume / Chesapeake Bay',
@@ -479,7 +519,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
       'https://ntrs.nasa.gov/api/citations/20090042747/downloads/20090042747.pdf',
     source_label: 'NASA NTRS 20090042747 — Dr. James Acker SeaWiFS Study',
     scientific_summary:
-      'За статтею автора челенджу д-ра Джеймса Екера (NASA NTRS 20090042747): річковий стік (QRUNOFF із GES DISC Hydrology) виносить добрива й біогени у гирло Міссісіпі та Чесапікську затоку, спричиняючи значуще зростання хлорофілу-а (SEAWIFS_CHLA), тоді як відкритий шельф Мексиканської затоки демонструє протилежну оліготрофну динаміку.',
+      'За статтею автора челенджу д-ра Джеймса Екера (NASA NTRS 20090042747): річковий стік (QRUNOFF із GES DISC Hydrology) виносить добрива й біогени у гирло Міссісіпі та Чесапікську затоку, спричиняючи значуще зростання хлорофілу-а (SEAWIFS_CHLA за архівом SeaWiFS 1998–2010), тоді як відкритий шельф Мексиканської затоки демонструє протилежну оліготрофну динаміку.',
     student_note:
       'Перемикайте змінну (SEAWIFS_CHLA ↔ QRUNOFF), щоб порівняти цвітіння водоростей із річковим стоком!',
   },
@@ -493,7 +533,7 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
     variable: 'SWOT_WSE',
     secondary_variable: 'RCM_SAR_BACKSCATTER',
     mode: 'single',
-    start_year: 2002,
+    start_year: 2019,
     end_year: 2026,
     season_mode: 'deseasonalized',
     region_a: {
@@ -661,15 +701,15 @@ export const FALLBACK_PHENOMENA_SCENARIOS: PhenomenonScenario[] = [
 export const DEFAULT_DETECTIVE_CASES: DetectiveCasePreset[] = [
   {
     id: 'ackers-seawifs-coastal-study',
-    title: "Acker's SeaWiFS Coastal Chlorophyll Study",
-    subtitle: 'SeaWiFS / MODIS Chlorophyll-a vs River Runoff (NTRS 20090042747)',
+    title: "Acker's SeaWiFS Coastal Chlorophyll Study (1998–2010)",
+    subtitle: 'SeaWiFS Chlorophyll-a vs River Runoff (NTRS 20090042747)',
     mode: 'dipole',
     variable: 'SEAWIFS_CHLA',
     start_year: 1998,
-    end_year: 2026,
+    end_year: 2010,
     season_mode: 'JJA',
     physical_process:
-      'Річковий стік виносить біогени у гирло Міссісіпі та Чесапікську затоку, викликаючи цвітіння водоростей на противагу відкритому шельфу.',
+      'Річковий стік виносить біогени у гирло Міссісіпі та Чесапікську затоку, викликаючи цвітіння водоростей (місія SeaWiFS 1998–2010) на противагу відкритому шельфу.',
     expected_finding:
       'Значуще зростання SEAWIFS_CHLA у гирлі річки (p < 0.01) проти стабільної динаміки відкритого шельфу.',
     region_a: {
@@ -685,7 +725,7 @@ export const DEFAULT_DETECTIVE_CASES: DetectiveCasePreset[] = [
     subtitle: 'Hudson Bay & Boreal Lakes (CSA SWOT WSE + RCM SAR)',
     mode: 'single',
     variable: 'SWOT_WSE',
-    start_year: 2002,
+    start_year: 2019,
     end_year: 2026,
     season_mode: 'deseasonalized',
     physical_process:
@@ -924,11 +964,39 @@ export function getVariableMetaLocal(
       satellite_badge: 'NASA EOS',
       source: 'NASA / CSA EOS',
       gibs_layer: 'MODIS_Terra_Land_Surface_Temp_Day',
+      min_year: 1981,
+      max_year: 2026,
+      mission_status: 'active',
       student_definition:
         'Супутниковий параметр спостереження Землі для статистичної перевірки кліматичних трендів.',
       biomes: ['tidal_estuary', 'rain_forest', 'desert', 'cryosphere'],
     }
   );
+}
+
+/**
+ * Clamp [startYear, endYear] to a satellite/variable mission's operational bounds
+ * while keeping at least `minSpanYears` inclusive years whenever possible.
+ */
+export function clampYearRangeForVariable(
+  startYear: number,
+  endYear: number,
+  varMeta?: Pick<VariableMetadata, 'min_year' | 'max_year'>,
+  minSpanYears = 5
+): [number, number] {
+  const varMin = varMeta?.min_year ?? 1981;
+  const varMax = varMeta?.max_year ?? 2026;
+  const minDelta = Math.max(1, Math.min(minSpanYears - 1, varMax - varMin));
+
+  let clampedStart = Math.max(varMin, Math.min(startYear, varMax - minDelta));
+  const clampedEnd = Math.min(
+    varMax,
+    Math.max(endYear, clampedStart + minDelta)
+  );
+  if (clampedEnd - clampedStart < minDelta) {
+    clampedStart = Math.max(varMin, clampedEnd - minDelta);
+  }
+  return [clampedStart, clampedEnd];
 }
 
 export async function fetchPresetsFromApi(): Promise<{
@@ -1324,7 +1392,18 @@ export async function analyzeTrendV2(
   options?: { signal?: AbortSignal; forceRefresh?: boolean }
 ): Promise<AnalyzeTrendResponse> {
   const seasonMode: SeasonMode = payload.season_mode || 'raw';
-  const cacheKey = makeAnalysisCacheKey(payload, seasonMode);
+  const varMeta = getVariableMetaLocal(payload.variable);
+  const [effStart, effEnd] = clampYearRangeForVariable(
+    payload.start_year,
+    payload.end_year,
+    varMeta
+  );
+  const boundedPayload: AnalyzeTrendRequest = {
+    ...payload,
+    start_year: effStart,
+    end_year: effEnd,
+  };
+  const cacheKey = makeAnalysisCacheKey(boundedPayload, seasonMode);
 
   if (!options?.forceRefresh && _CLIENT_ANALYSIS_CACHE.has(cacheKey)) {
     return _CLIENT_ANALYSIS_CACHE.get(cacheKey)!;
@@ -1337,7 +1416,7 @@ export async function analyzeTrendV2(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        ...payload,
+        ...boundedPayload,
         season_mode: seasonMode,
       }),
       signal: options?.signal,
@@ -1359,21 +1438,20 @@ export async function analyzeTrendV2(
     if (err?.name === 'AbortError') {
       throw err;
     }
-    const varMeta = getVariableMetaLocal(payload.variable);
     const regionA = buildOfflineRegionAnalysis(
-      payload.region_a,
+      boundedPayload.region_a,
       varMeta,
-      payload.start_year,
-      payload.end_year,
+      effStart,
+      effEnd,
       seasonMode,
       false
     );
-    const regionB = payload.region_b
+    const regionB = boundedPayload.region_b
       ? buildOfflineRegionAnalysis(
-          payload.region_b,
+          boundedPayload.region_b,
           varMeta,
-          payload.start_year,
-          payload.end_year,
+          effStart,
+          effEnd,
           seasonMode,
           true
         )

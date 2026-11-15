@@ -45,16 +45,18 @@ The platform integrates official satellite, reanalysis, radar, and station resou
    - **Live NASA EONET v3 Events**: Asynchronous real-time ingestion from `https://eonet.gsfc.nasa.gov/api/v3/events` with automatic mapping of Wildfires, Volcanoes, Floods, Severe Storms, Drought, and Sea Ice to corresponding satellite channels and offline caching.
 
 3. **Mathematical & Statistical Verification Engine (`POST /api/v2/analyze`)**:
-   - **Seasonal & Deseasonalized Filtering (`season_mode`)**: `raw` (all months), `deseasonalized` (climatological monthly cycle removed), `DJF` (Winter), `MAM` (Spring), `JJA` (Summer), `SON` (Autumn).
-   - **Parametric & Non-Parametric Tests**: Ordinary Least Squares (OLS), `Student's t-test` (`t_stat`, `p_value`, degrees of freedom), `Mann-Kendall monotonic trend test` (`z_score`, `p_value`), and `Theil-Sen robust slope estimator` (per year & per decade with `95% Confidence Intervals`).
-   - **Time-to-Significance Calculator**: Based on Weatherhead et al. ($N^{3/2}$ scaling), estimates how many additional years of satellite observations are needed to reach `p < 0.05` when a trend is still emerging.
+   - **Seasonal & Deseasonalized Filtering (`season_mode`)**: `raw` (all months), `deseasonalized` (climatological monthly cycle removed), `DJF` (Winter), `MAM` (Spring), `JJA` (Summer), `SON` (Autumn), plus a **6-Mode Seasonal Fingerprint Matrix** comparing all modes side-by-side.
+   - **Parametric & Non-Parametric Tests**: Ordinary Least Squares (OLS), `Student's t-test` (`t_stat`, `p_value`, degrees of freedom), `Mann-Kendall monotonic trend test` with **Hamed-Rao AR(1) autocorrelation correction** (`z_score`, `p_value`), **Pettitt regime-shift / change-point detector**, and `Theil-Sen robust slope estimator` (per year & per decade with `95% Confidence Intervals`).
+   - **5-Point ROI Spatial Box Averaging**: Optional 5-point (`center + ±0.5° lat/lon`) spatial averaging to suppress single-pixel noise.
+   - **Time-to-Significance Calculator**: Based on Weatherhead et al. ($N^{3/2}$ scaling with AR(1) adjustment), estimates how many additional years of satellite observations are needed to reach `p < 0.05` when a trend is still emerging.
    - **STL Decomposition & Dipole Engine**: Seasonal-Trend decomposition using LOESS (`statsmodels`) and cross-regional Pearson ($r$) & Spearman ($\rho$) dipole correlation.
 
 4. **CSV Importer for NASA Giovanni, AppEEARS, GES DISC & NOAA CDO (`POST /api/v2/analyze-csv`)**:
    - Drag-and-drop CSV upload or 1-click official templates (`Date`/`Year`/`time` + `Value`/`data` columns) with automatic `#` comment stripping, deseasonalization, and full statistical verification.
 
-5. **Official NASA, NOAA, KNMI & CSA Resources Hub (13 Portals) & Context Deep-Links**:
+5. **Official NASA, NOAA, KNMI & CSA Resources Hub (13 Portals), Interactive Guided Tour & Printable PDF Mission Brief**:
    - Structured catalog of 13 verified agency portals across 3 categories (*NASA & NOAA Data*, *Partner & Statistical Methodology*, *CSA Canadian Space Agency*) plus contextual verification links under every chart (*Verify in NASA Giovanni*, *Explore in AppEEARS*, *Check in KNMI Climate Explorer*, *GES DISC Hydrology*, *NOAA CDO*, *CSA SWOT / RCM*).
+   - Interactive first-visit **Guided Tour**, `Ctrl+K` Command Palette, bilingual **EN / UA** switcher (English default), and **Printable PDF Mission Brief** export.
 
 ---
 
@@ -70,11 +72,19 @@ The platform integrates official satellite, reanalysis, radar, and station resou
 
 ```text
 .
-├── main.py                  # FastAPI server, /api/v2/* routes, CSV parser & production SPA static server
+├── main.py                  # FastAPI entrypoint, middleware, and production SPA static server
+├── routers/
+│   ├── analysis.py          # /api/v2/analyze, /api/v2/analyze-csv & /api/v2/fetch-phenomena routes
+│   └── system.py            # /api/v2/health, /api/info & cache management routes
+├── schemas.py               # Pydantic v2 request/response validation schemas
+├── csv_parser.py            # Parser for NASA Giovanni, AppEEARS, GES DISC & NOAA CDO CSV exports
 ├── phenomena_service.py     # Curated historical cases (Dr. Acker & CSA) + live NASA EONET v3 fetcher
-├── nasa_client.py           # Async NASA POWER API client, caching & calibrated satellite time series
-├── statistics_engine.py     # Seasonal filter, Student's t-test, Mann-Kendall, Sen's slope, STL, TTS
+├── nasa_client.py           # Async NASA POWER API client, 5-pt ROI box averaging & LRU caching
+├── statistics_engine.py     # Seasonal filter, Student's t-test, Hamed-Rao MK, Pettitt, Sen's slope, STL, TTS
 ├── presets.py               # Catalog of 13 NASA/CSA variables, 13 official resources & GIBS metadata
+├── tests/                   # Pytest unit & integration suite (API, CSV parser, NASA client, statistics)
+├── SUBMISSION_KIT.md        # Ready-to-submit NASA Space Apps 2026 form copy, 7-slide & 30s video script
+├── LICENSE                  # MIT License
 ├── requirements.txt         # Python backend dependencies
 ├── package.json             # Root build script (heroku-postbuild) for single-service cloud deployment
 ├── Procfile                 # Heroku / PaaS web process definition
@@ -92,18 +102,26 @@ The platform integrates official satellite, reanalysis, radar, and station resou
     └── src/
         ├── App.tsx
         ├── index.css
+        ├── i18n/
+        │   └── translations.ts
         ├── types/
         │   └── climate.ts
         ├── services/
-        │   └── api.ts
+        │   ├── api.ts
+        │   └── __tests__/api.test.ts
+        ├── utils/
+        │   ├── format.ts
+        │   └── useMediaQuery.ts
         └── components/
             ├── DetectiveStepper.tsx
-            ├── PhenomenaDrawer.tsx
-            ├── OfficialResourcesHub.tsx
             ├── EarthMap.tsx
             ├── Globe3DView.tsx
+            ├── GuidedTour.tsx
+            ├── OfficialResourcesHub.tsx
+            ├── PhenomenaDrawer.tsx
+            ├── TrendCharts.tsx
             ├── VerdictCard.tsx
-            └── TrendCharts.tsx
+            └── VerdictHero.tsx
 ```
 
 ---
@@ -172,6 +190,12 @@ docker compose up --build
 > Disclaimer: NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites. For non-U.S. Government websites, participants must comply with any data use parameters of that specific website.
 
 ---
+
+### Use of Super Intelligence (SI) & AI Acknowledgment
+
+In accordance with the **NASA Space Apps Challenge 2026 Project Submission Guide**, we acknowledge that Super Intelligence (SI) / Large Language Model (LLM) coding assistants were utilized during development solely to accelerate boilerplate code scaffolding, UI/UX Tailwind refinement, unit test authoring, and bilingual (`EN`/`UA`) localization. All scientific methodology, challenge ideation, statistical validation rules, and integrations with NASA, NOAA, KNMI, and CSA resources were designed, verified, and reviewed by our human team. No NASA branding, logos, flags, or mission identifiers were generated or modified using SI tools.
+
+---
 ---
 
 <a id="українська-версія"></a>
@@ -215,15 +239,17 @@ docker compose up --build
    - **Жива інтеграція з NASA EONET v3 API**: автоматичне отримання актуальних природних подій (лісові пожежі, вулкани, шторми, повені, посухи, морський лід) та їх конвертація у сценарії аналізу трендів.
 
 3. **Математичний та статистичний рушій (`POST /api/v2/analyze`)**:
-   - **Сезонна фільтрація (`season_mode`)**: `raw` (усі місяці як є), `deseasonalized` (видалення кліматологічного річного циклу), `DJF` (зима), `MAM` (весна), `JJA` (літо), `SON` (осінь).
-   - **Статистичні тести**: лінійна регресія (OLS), параметричний критерій Стьюдента (`Student's t-test`), непараметричний тест Манна-Кендалла (`Mann-Kendall`), робастний нахил Сена (`Theil-Sen slope`), `95% довірчі інтервали` та `STL`-декомпозиція (Тренд / Сезонність / Шум).
-   - **Калькулятор Time-to-Significance**: розраховує кількість додаткових років супутникових спостережень, необхідних для досягнення порогу `p < 0.05`.
+   - **Сезонна фільтрація (`season_mode`)**: `raw` (усі місяці як є), `deseasonalized` (видалення кліматологічного річного циклу), `DJF` (зима), `MAM` (весна), `JJA` (літо), `SON` (осінь) та **6-режимна матриця сезонних відбитків**.
+   - **Статистичні тести**: лінійна регресія (OLS), параметричний критерій Стьюдента (`Student's t-test`), непараметричний тест Манна-Кендалла (`Mann-Kendall`) із корекцією автокореляції **Hamed-Rao AR(1)**, детектор зсуву режиму **Pettitt**, робастний нахил Сена (`Theil-Sen slope`), `95% довірчі інтервали` та `STL`-декомпозиція (Тренд / Сезонність / Шум).
+   - **5-точкове просторове усереднення ROI**: опціональне усереднення по 5-точковій сітці (`центр + ±0.5° lat/lon`) для зменшення похибки окремого пікселя.
+   - **Калькулятор Time-to-Significance**: розраховує кількість додаткових років супутникових спостережень (з урахуванням AR(1)), необхідних для досягнення порогу `p < 0.05`.
 
 4. **Імпорт CSV із NASA Giovanni, AppEEARS, GES DISC та NOAA CDO (`POST /api/v2/analyze-csv`)**:
    - Завантаження будь-якого CSV-файлу з колонками дати (`Date` / `Year` / `time`) та значення (`Value` / `data`), автоматичне очищення службових заголовків `#`, десезоналізація та повний розрахунок статистичних критеріїв.
 
-5. **Інтерактивний хаб із 13 офіційних ресурсів космічних агенцій + Context Deep-Links**:
+5. **Інтерактивний хаб із 13 офіційних ресурсів космічних агенцій, інтерактивний гід та PDF-звіт**:
    - Вбудований модуль **Official NASA, NOAA, KNMI & CSA Space Agency Resources Hub** із групуванням за 3 категоріями та контекстними кнопками верифікації під графіками (*Verify in NASA Giovanni*, *Explore in AppEEARS*, *Check in KNMI Climate Explorer*, *GES DISC Hydrology*, *NOAA CDO*, *CSA SWOT / RCM*).
+   - Інтерактивний **Guided Tour** при першому візиті, палітра команд `Ctrl+K`, перемикач мови **EN / UA** (англійська за замовчуванням) та експорт **PDF Mission Brief**.
 
 ---
 
@@ -246,7 +272,7 @@ docker compose up --build
   ```
 
 #### Варіант 3: Ручний запуск для розробки
-1. ***Запуск Backend (порт `8000`)**:
+1. **Запуск Backend (порт `8000`)**:
    ```bash
    python -m venv .venv
    # Windows PowerShell:
@@ -276,3 +302,9 @@ docker compose up --build
 ### Офіційне застереження (Disclaimer)
 
 > Disclaimer: NASA does not endorse any non-U.S. Government entity and is not responsible for information contained on non-U.S. Government websites. For non-U.S. Government websites, participants must comply with any data use parameters of that specific website.
+
+---
+
+### Використання Super Intelligence (SI) та ШІ-інструментів
+
+Відповідно до **NASA Space Apps Challenge 2026 Project Submission Guide**, команда декларує, що під час розробки використовувалися інструменти Super Intelligence (SI / LLM-асистенти програмування) виключно для прискорення написання шаблонного коду, полірування UI/UX-стилізації Tailwind, підготовки модульних тестів та двомовної (`EN`/`UA`) локалізації. Уся наукова концепція, ідея вирішення челенджу, статистичні методи та інтеграція офіційних ресурсів NASA, NOAA, KNMI і CSA розроблені, впроваджені та перевірені командою. Брендинг, логотипи, прапори або ідентифікатори місій NASA не генерувалися й не модифікувалися за допомогою SI.

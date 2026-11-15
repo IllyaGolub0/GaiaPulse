@@ -4,7 +4,7 @@ Aura OMI, MERRA-2, GLDAS, GPM, CERES), Official Space Agency Resources Hub (13 r
 and presets router for GaiaPulse / Earth System Trend Detective v2.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from fastapi import APIRouter
 
@@ -27,6 +27,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "T2M",
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_Land_Surface_Temp_Day",
+        "min_year": 1981,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["cryosphere", "desert", "rain_forest", "tidal_estuary"],
         "description": (
             "Приземна температура повітря на висоті 2 метри (NASA MERRA-2 Reanalysis & Aqua AIRS)."
@@ -46,6 +49,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "PRECTOTCORR",
         "aggregation": "mean",
         "gibs_layer": "IMERG_Precipitation_Rate",
+        "min_year": 1985,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["rain_forest", "desert", "tidal_estuary"],
         "description": (
             "Середньодобова скоригована кількість опадів за супутниковими даними GPM IMERG та MERRA-2."
@@ -65,6 +71,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "GWETROOT",
         "aggregation": "mean",
         "gibs_layer": "SMAP_L4_Analyzed_Root_Zone_Soil_Moisture",
+        "min_year": 2000,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["desert", "rain_forest"],
         "description": (
             "Відносна насиченість вологою кореневого шару ґрунту (0..1) за моделлю GLDAS та радаром SMAP."
@@ -84,6 +93,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "ALLSKY_SFC_SW_DWN",
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_CorrectedReflectance_TrueColor",
+        "min_year": 2000,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["desert", "cryosphere", "rain_forest"],
         "description": (
             "Потік короткохвильового сонячного випромінювання на поверхні Землі з урахуванням хмар та аерозолів."
@@ -102,6 +114,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": None,
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_Aerosol",
+        "min_year": 2002,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["rain_forest", "desert"],
         "description": (
             "Безрозмірний показник екстинкції сонячного світла димом лісових пожеж, пилом і сульфатами (MODIS Aqua 550nm)."
@@ -119,7 +134,10 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "source": "NASA Aura OMI / Giovanni",
         "nasa_power_param": None,
         "aggregation": "mean",
-        "gibs_layer": "MODIS_Terra_Aerosol",
+        "gibs_layer": "OMI_SO2_Middle_Troposphere",
+        "min_year": 2004,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["cryosphere", "desert"],
         "description": (
             "Загальний вміст діоксиду сірки у стовпі атмосфери в одиницях Добсона (Aura OMI Planetary/Stratospheric)."
@@ -138,6 +156,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "EVLAND",
         "aggregation": "mean",
         "gibs_layer": "SMAP_L4_Analyzed_Root_Zone_Soil_Moisture",
+        "min_year": 2000,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["rain_forest", "desert"],
         "description": (
             "Сумарне випаровування вологи з поверхні ґрунту та транспірація рослинності (GLDAS Noah)."
@@ -156,6 +177,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": None,
         "aggregation": "mean",
         "gibs_layer": "IMERG_Precipitation_Rate",
+        "min_year": 1998,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["tidal_estuary", "rain_forest"],
         "description": (
             "Інтенсивність поверхневого та підземного гідрологічного стоку (індикатор паводків та виносу біогенів у прибережні води)."
@@ -174,6 +198,9 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "nasa_power_param": "SNODP",
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_NDSI_Snow_Cover",
+        "min_year": 2000,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["cryosphere"],
         "description": (
             "Середня глибина снігового покриву на суходолі та льодовиках (MERRA-2 / MODIS Cryosphere)."
@@ -191,7 +218,10 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "source": "NASA GHRSST / MODIS Aqua",
         "nasa_power_param": "TS",
         "aggregation": "mean",
-        "gibs_layer": "MODIS_Terra_Land_Surface_Temp_Day",
+        "gibs_layer": "GHRSST_L4_MUR_Sea_Surface_Temperature",
+        "min_year": 1981,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["tidal_estuary", "cryosphere"],
         "description": (
             "Радіаційна температура поверхні океану або верхнього шару суші (GHRSST / MERRA-2 Skin Temp)."
@@ -202,20 +232,23 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
     },
     "SEAWIFS_CHLA": {
         "code": "SEAWIFS_CHLA",
-        "name": "Coastal & Estuarine Chlorophyll-a (SeaWiFS / MODIS Aqua)",
-        "name_ua": "Прибережний хлорофіл-а (SeaWiFS / MODIS Aqua)",
+        "name": "Coastal & Estuarine Chlorophyll-a (SeaWiFS 1998–2010)",
+        "name_ua": "Прибережний хлорофіл-а (SeaWiFS 1998–2010)",
         "unit": "mg/m³",
-        "satellite_badge": "NASA SeaWiFS / MODIS / Giovanni",
-        "source": "NASA SeaWiFS / MODIS / Giovanni",
+        "satellite_badge": "NASA SeaWiFS / Giovanni (1998–2010)",
+        "source": "NASA OrbView-2 SeaWiFS / Giovanni (1997–2010)",
         "nasa_power_param": None,
         "aggregation": "mean",
-        "gibs_layer": "MODIS_Terra_CorrectedReflectance_TrueColor",
+        "gibs_layer": "SEAWIFS_ORBVIEW-2_GAC_Chlorophyll_a",
+        "min_year": 1998,
+        "max_year": 2010,
+        "mission_status": "completed",
         "biomes": ["tidal_estuary"],
         "description": (
-            "Концентрація хлорофілу-a у прибережних водах та естуаріях (NASA SeaWiFS / MODIS Aqua Ocean Color в системі Giovanni)."
+            "Концентрація хлорофілу-a у прибережних водах та естуаріях за архівними даними місії NASA SeaWiFS (завершена у грудні 2010 року)."
         ),
         "student_definition": (
-            "Концентрація хлорофілу у прибережних водах і гирлах річок (естуаріях). "
+            "Концентрація хлорофілу у прибережних водах і гирлах річок (естуаріях) за місією NASA SeaWiFS (1998–2010, місію завершено у 2010 р.). "
             "Показує, як річковий стік і добрива з полів викликають цвітіння водоростей."
         ),
     },
@@ -225,17 +258,19 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "name_ua": "Висота водної поверхні озер та річок (SWOT WSE)",
         "unit": "m (meters above reference ellipsoid)",
         "satellite_badge": "NASA / CNES / CSA SWOT Satellite",
-        "source": "NASA / CNES / CSA SWOT Satellite",
+        "source": "NASA / CNES / CSA SWOT (2022–2026) & Jason-3 / Sentinel-3 Inland Altimetry (2016–2026)",
         "nasa_power_param": None,
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_CorrectedReflectance_Bands721",
+        "min_year": 2016,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["tidal_estuary", "rain_forest", "desert"],
         "description": (
-            "Висота водної поверхні (Water Surface Elevation) озер, річок, водосховищ та естуаріїв за даними радарної інтерферометрії KaRIn місії SWOT (NASA/CNES/CSA)."
+            "Висота водної поверхні (Water Surface Elevation) озер, річок, водосховищ та естуаріїв за даними альтиметрії SWOT KaRIn (запуск грудень 2022) у поєднанні з Jason-3 / Sentinel-3 (2016–2026)."
         ),
         "student_definition": (
-            "Висота водної поверхні річок, озер та водосховищ із космосу. Місія SWOT покриває 90% "
-            "поверхневих вод Землі і дозволяє бачити обміління або наповнення водойм."
+            "Висота водної поверхні річок, озер та водосховищ із космосу (2016–2026): поєднує попередню супутникову альтиметрію (Jason-3 / Sentinel-3, 2016–2022) із місією SWOT KaRIn (запуск у грудні 2022 р.), що покриває 90% поверхневих вод Землі."
         ),
     },
     "RCM_SAR_BACKSCATTER": {
@@ -244,16 +279,19 @@ VARIABLE_CATALOG: Dict[str, Dict[str, Any]] = {
         "name_ua": "Радарний індекс льоду, повеней та вологості (CSA RADARSAT SAR)",
         "unit": "dB (SAR Backscatter σ°)",
         "satellite_badge": "CSA RADARSAT (RCM) / Geo.ca",
-        "source": "CSA RADARSAT (RCM) / Geo.ca",
+        "source": "CSA RADARSAT (RCM) / Geo.ca (2019–2026)",
         "nasa_power_param": None,
         "aggregation": "mean",
         "gibs_layer": "MODIS_Terra_NDSI_Snow_Cover",
+        "min_year": 2019,
+        "max_year": 2026,
+        "mission_status": "active",
         "biomes": ["cryosphere", "tidal_estuary"],
         "description": (
-            "Нормалізований радарний зворотний розсіювальний сигнал (SAR Backscatter σ°, C-band) сузір'я CSA RADARSAT Constellation Mission (RCM)."
+            "Нормалізований радарний зворотний розсіювальний сигнал (SAR Backscatter σ°, C-band) сузір'я CSA RADARSAT Constellation Mission (RCM, запуск 2019)."
         ),
         "student_definition": (
-            "Радар із синтезованою апертурою (SAR) бачить крізь хмари та вночі, відстежуючи танення морського льоду, "
+            "Радар із синтезованою апертурою (SAR, місія RCM з 2019 р.) бачить крізь хмари та вночі, відстежуючи танення морського льоду, "
             "межі боліт, вологість полів та розливи річок у Канаді й світі."
         ),
     },
@@ -397,7 +435,7 @@ OFFICIAL_RESOURCES_CATALOG: List[Dict[str, Any]] = [
         "title": "Geo.ca (Canada's Open Geospatial Information)",
         "agency_badge": "Geo.ca • NRCan / CSA",
         "is_us_gov": False,
-        "url": "http://geo.ca/",
+        "url": "https://geo.ca/",
         "role_in_app": (
             "Регіональні екологічні та просторові дані Канади (лісові пожежі, водні ресурси)."
         ),
@@ -450,20 +488,20 @@ OFFICIAL_RESOURCES_CATALOG: List[Dict[str, Any]] = [
 DETECTIVE_CASES: List[Dict[str, Any]] = [
     {
         "id": "ackers-seawifs-coastal-study",
-        "title": "River-Influenced Coastal Chlorophyll Trend (SeaWiFS / MODIS)",
+        "title": "River-Influenced Coastal Chlorophyll Trend (SeaWiFS 1998–2010)",
         "subtitle": "Гирло Міссісіпі / Чесапікська затока vs Відкритий шельф (NTRS 20090042747)",
         "mode": "dipole",
         "variable": "SEAWIFS_CHLA",
         "start_year": 1998,
-        "end_year": 2026,
+        "end_year": 2010,
         "season_mode": "JJA",
         "physical_process": (
             "Річковий стік (QRUNOFF із GES DISC Hydrology) виносить нітрати та фосфати з аграрних басейнів "
-            "у прибережні естуарії, стимулюючи інтенсивне цвітіння фітопланктону (SEAWIFS_CHLA у системі Giovanni), "
+            "у прибережні естуарії, стимулюючи інтенсивне цвітіння фітопланктону (SEAWIFS_CHLA у системі Giovanni, 1998–2010), "
             "тоді як відкритий шельф Мексиканської затоки демонструє протилежну оліготрофну динаміку."
         ),
         "expected_finding": (
-            "Статистично значуще зростання хлорофілу-а у гирлі річки (p < 0.01) на противагу стабільному/східному тренду відкритого шельфу."
+            "Статистично значуще зростання хлорофілу-а у гирлі річки (p < 0.01) за архівними даними SeaWiFS 1998–2010 на противагу стабільному/східному тренду відкритого шельфу."
         ),
         "region_a": {"name": "Mississippi River Plume / Chesapeake Estuary", "lat": 29.15, "lon": -89.25},
         "region_b": {"name": "Open Gulf of Mexico Shelf", "lat": 26.0, "lon": -90.0},
@@ -474,12 +512,12 @@ DETECTIVE_CASES: List[Dict[str, Any]] = [
         "subtitle": "Північна Канада / Гудзонова затока (SWOT WSE & RADARSAT SAR)",
         "mode": "single",
         "variable": "SWOT_WSE",
-        "start_year": 2002,
+        "start_year": 2019,
         "end_year": 2026,
         "season_mode": "deseasonalized",
         "physical_process": (
             "Поєднання радарної альтиметрії SWOT (Water Surface Elevation) та всепогодного C-band радару "
-            "CSA RADARSAT Constellation Mission (RCM) фіксує зміни рівня бореальних озер та скорочення льодового покриву Гудзонової затоки."
+            "CSA RADARSAT Constellation Mission (RCM, з 2019 р.) фіксує зміни рівня бореальних озер та скорочення льодового покриву Гудзонової затоки."
         ),
         "expected_finding": (
             "Статистично значущий тренд зміни висоти водної поверхні (SWOT_WSE) та радарного зворотного розсіювання (RCM_SAR_BACKSCATTER, p < 0.01)."
@@ -556,6 +594,27 @@ def get_variable_metadata(variable_code: str) -> Dict[str, Any]:
             f"Supported variables: {', '.join(VARIABLE_CATALOG.keys())}"
         )
     return VARIABLE_CATALOG[code]
+
+
+def clamp_year_range_for_variable(
+    start_year: int,
+    end_year: int,
+    var_meta: Dict[str, Any],
+    min_span_years: int = 5,
+) -> Tuple[int, int]:
+    """
+    Clamp requested [start_year, end_year] to the satellite/dataset operational bounds
+    [min_year, max_year] while preserving at least `min_span_years` inclusive years.
+    """
+    var_min = int(var_meta.get("min_year", 1981))
+    var_max = int(var_meta.get("max_year", 2026))
+    min_delta = max(1, min(min_span_years - 1, var_max - var_min))
+
+    clamped_start = max(var_min, min(int(start_year), var_max - min_delta))
+    clamped_end = min(var_max, max(int(end_year), clamped_start + min_delta))
+    if clamped_end - clamped_start < min_delta:
+        clamped_start = max(var_min, clamped_end - min_delta)
+    return clamped_start, clamped_end
 
 
 @router.get("/presets")

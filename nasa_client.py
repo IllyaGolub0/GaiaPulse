@@ -17,7 +17,7 @@ import httpx
 import numpy as np
 import pandas as pd
 
-from presets import VARIABLE_CATALOG
+from presets import VARIABLE_CATALOG, clamp_year_range_for_variable
 
 logger = logging.getLogger("gaiapulse.nasa_client")
 
@@ -336,7 +336,7 @@ def _generate_special_phenomenon_series(
                         }
                     )
             src = (
-                "NASA SeaWiFS / MODIS Aqua Chlorophyll-a (Giovanni NTRS 20090042747)"
+                "NASA SeaWiFS Chlorophyll-a (Giovanni NTRS 20090042747, 1998–2010)"
                 if var == "SEAWIFS_CHLA"
                 else "NASA GES DISC Hydrology Time Series (GLDAS QRUNOFF)"
             )
@@ -661,6 +661,14 @@ def _parse_nasa_monthly_dict(
         if val <= NASA_FILL_VALUE_THRESHOLD or math.isnan(val):
             continue
 
+        var_upper = variable.upper()
+        if var_upper == "ALLSKY_SFC_SW_DWN":
+            # NASA POWER community=AG serves shortwave irradiance in MJ/m^2/day; normalize to W/m^2
+            val = round(val * (1_000_000.0 / 86_400.0), 4)
+        elif var_upper == "SNODP":
+            # NASA POWER serves snow depth in cm; normalize to meters
+            val = round(val / 100.0, 4)
+
         if mo == 13:
             annual_summary_from_api[yr] = val
         elif 1 <= mo <= 12:
@@ -795,6 +803,9 @@ async def fetch_climate_series(
     - Falls back smoothly to physics-informed regional model if offline.
     """
     var = variable.strip().upper()
+    var_info = VARIABLE_CATALOG.get(var, {})
+    if var_info:
+        start_year, end_year = clamp_year_range_for_variable(start_year, end_year, var_info)
     cache_key = (round(lat, 3), round(lon, 3), var, int(start_year), int(end_year))
 
     now = time.time()
@@ -810,7 +821,6 @@ async def fetch_climate_series(
         _MEMORY_CACHE[cache_key] = special_bundle
         return special_bundle
 
-    var_info = VARIABLE_CATALOG.get(var, {})
     power_param = var_info.get("nasa_power_param")
 
     if prefer_live_api and power_param:

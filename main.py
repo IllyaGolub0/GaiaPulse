@@ -45,10 +45,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="GaiaPulse — NASA Earth System Trend Detective API v2",
     description=(
-        "Інтерактивна геопросторова аналітична платформа для NASA Space Apps Challenge 2026: "
-        "каталог історичних феноменів д-ра Джеймса Екера та CSA (SWOT / RADARSAT), живі події NASA EONET v3, "
-        "імпорт CSV із NASA Giovanni / AppEEARS / NOAA CDO, сезонна фільтрація (raw, deseasonalized, DJF, MAM, JJA, SON), "
-        "Student's t-test, Mann-Kendall, Sen's Slope, 95% CI, STL-декомпозиція та Time-to-Significance Calculator."
+        "Interactive geospatial and statistical analytics platform for the NASA Space Apps Challenge 2026 "
+        "('Be an Earth System Trend Detective'): curated historical case catalog (Dr. James Acker & CSA SWOT / RADARSAT), "
+        "live NASA EONET v3 feed, CSV import from NASA Giovanni / AppEEARS / NOAA CDO, seasonal filtering "
+        "(raw, deseasonalized, DJF, MAM, JJA, SON), Student's t-test, Hamed-Rao AR(1) Mann-Kendall, Theil-Sen slope with 95% CI, "
+        "Pettitt regime-shift detection, STL decomposition, and Time-to-Significance calculator. "
+        "(Підтримує українську та англійську локалізацію інтерфейсу.)"
     ),
     version="2.1.0",
     docs_url="/docs",

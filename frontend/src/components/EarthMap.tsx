@@ -59,6 +59,9 @@ interface GibsLayerConfig {
   matrixSet: string;
   format: 'png' | 'jpg';
   isStaticDate?: boolean;
+  minDate?: string;
+  maxDate?: string;
+  defaultDate?: string;
   colorbar?: {
     gradientCss: string;
     minLabel: string;
@@ -143,11 +146,12 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
   },
   SO2: {
     id: 'SO2',
-    label: 'Aura OMI / MODIS: Вулканічний шлейф та сульфати (SO₂/AOD)',
-    labelEn: 'Aura OMI / MODIS: Volcanic Plume & Sulfates (SO₂/AOD)',
-    layerName: 'MODIS_Terra_Aerosol',
+    label: 'Aura OMI: Діоксид сірки в тропосфері (SO₂)',
+    labelEn: 'Aura OMI: Sulfur Dioxide Middle Troposphere (SO₂)',
+    layerName: 'OMI_SO2_Middle_Troposphere',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
+    minDate: '2005-01-01',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #89dceb 0%, #cba6f7 55%, #f38ba8 100%)',
@@ -211,13 +215,33 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       unitEn: 'Elevation',
     },
   },
-  SEAWIFS_CHLA: {
-    id: 'SEAWIFS_CHLA',
-    label: 'MODIS Aqua / SeaWiFS: Прибережний хлорофіл-а (Ocean Color)',
-    labelEn: 'MODIS Aqua / SeaWiFS: Coastal Chlorophyll-a (Ocean Color)',
-    layerName: 'MODIS_Aqua_Chlorophyll_A',
+  SST: {
+    id: 'SST',
+    label: 'GHRSST MUR: Температура поверхні океану (SST)',
+    labelEn: 'GHRSST MUR: Sea Surface Temperature (SST)',
+    layerName: 'GHRSST_L4_MUR_Sea_Surface_Temperature',
     matrixSet: 'GoogleMapsCompatible_Level7',
     format: 'png',
+    minDate: '2002-06-01',
+    colorbar: {
+      gradientCss:
+        'linear-gradient(90deg, #1e3a8a 0%, #89b4fa 30%, #a6e3a1 55%, #fab387 80%, #f38ba8 100%)',
+      minLabel: '-2',
+      midLabel: '+16',
+      maxLabel: '+32',
+      unit: '°C',
+    },
+  },
+  SEAWIFS_CHLA: {
+    id: 'SEAWIFS_CHLA',
+    label: 'OrbView-2 SeaWiFS: Прибережний хлорофіл-а (1997–2010)',
+    labelEn: 'OrbView-2 SeaWiFS: Coastal Chlorophyll-a (1997–2010)',
+    layerName: 'SEAWIFS_ORBVIEW-2_GAC_Chlorophyll_a',
+    matrixSet: 'GoogleMapsCompatible_Level7',
+    format: 'png',
+    minDate: '1997-09-04',
+    maxDate: '2010-12-11',
+    defaultDate: '2010-07-15',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #1e3a8a 0%, #74c7ec 35%, #a6e3a1 65%, #f9e2af 85%, #f38ba8 100%)',
@@ -268,7 +292,7 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
 
 const VARIABLE_TO_GIBS_KEY: Record<string, string> = {
   T2M: 'T2M',
-  SST: 'T2M',
+  SST: 'SST',
   PRECTOTCORR: 'PRECTOTCORR',
   QRUNOFF: 'PRECTOTCORR',
   GWETROOT: 'GWETROOT',
@@ -474,7 +498,16 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   const gibsConfig =
     TERRA_GIBS_CATALOG[effectiveLayerKey] || TERRA_GIBS_CATALOG.T2M;
 
-  const dateSegment = gibsConfig.isStaticDate ? 'default' : gibsDate;
+  const layerMinDate = gibsConfig.minDate || '2000-02-24';
+  const layerMaxDate =
+    gibsConfig.maxDate || new Date().toISOString().slice(0, 10);
+  const clampedGibsDate =
+    gibsDate < layerMinDate || gibsDate > layerMaxDate
+      ? gibsConfig.defaultDate ||
+        (gibsDate > layerMaxDate ? layerMaxDate : layerMinDate)
+      : gibsDate;
+
+  const dateSegment = gibsConfig.isStaticDate ? 'default' : clampedGibsDate;
   const gibsTileUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${gibsConfig.layerName}/default/${dateSegment}/${gibsConfig.matrixSet}/{z}/{y}/{x}.${gibsConfig.format}`;
   const activeBasemap = BASEMAP_THEMES[basemapTheme];
 
@@ -678,9 +711,9 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                         </span>
                         <input
                           type="date"
-                          min="2001-01-01"
-                          max="2025-02-01"
-                          value={gibsDate}
+                          min={layerMinDate}
+                          max={layerMaxDate}
+                          value={clampedGibsDate}
                           onChange={(e) => {
                             if (e.target.value) setGibsDate(e.target.value);
                           }}

@@ -57,16 +57,16 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
     },
     {
         "id": "ackers-seawifs-coastal-study",
-        "title": "River-Influenced Coastal Chlorophyll Trend (SeaWiFS / MODIS)",
+        "title": "River-Influenced Coastal Chlorophyll Trend (SeaWiFS 1998–2010)",
         "category": "Coastal & Estuarine Ecology",
         "source_type": "curated",
         "tags": ["acker_video", "dipole", "curated", "official_resource"],
-        "satellite_badge": "NASA SeaWiFS / MODIS / Giovanni",
+        "satellite_badge": "NASA SeaWiFS / Giovanni (1998–2010)",
         "variable": "SEAWIFS_CHLA",
         "secondary_variable": "QRUNOFF",
         "mode": "dipole",
         "start_year": 1998,
-        "end_year": 2026,
+        "end_year": 2010,
         "season_mode": "JJA",
         "region_a": {
             "name": "Mississippi River Plume / Chesapeake Bay",
@@ -84,7 +84,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
             "Кейс за науковою статтею автора челенджу д-ра Джеймса Екера (NASA NTRS 20090042747): "
             "річковий стік (QRUNOFF із GES DISC Hydrology Time Series) виносить біогенні речовини та добрива "
             "у гирло Міссісіпі та Чесапікську затоку, викликаючи статистично значуще зростання хлорофілу-а "
-            "(SEAWIFS_CHLA у NASA Giovanni), тоді як відкритий шельф Мексиканської затоки має протилежну динаміку."
+            "(SEAWIFS_CHLA у NASA Giovanni за період місії SeaWiFS 1998–2010), тоді як відкритий шельф Мексиканської затоки має протилежну динаміку."
         ),
         "student_note": (
             "Натисніть кнопку перемикання змінної (SEAWIFS_CHLA ↔ QRUNOFF), щоб порівняти цвітіння водоростей із річковим стоком!"
@@ -100,7 +100,7 @@ CURATED_PHENOMENA: List[Dict[str, Any]] = [
         "variable": "SWOT_WSE",
         "secondary_variable": "RCM_SAR_BACKSCATTER",
         "mode": "single",
-        "start_year": 2002,
+        "start_year": 2019,
         "end_year": 2026,
         "season_mode": "deseasonalized",
         "region_a": {
@@ -406,7 +406,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "variable": "QRUNOFF",
             "satellite_badge": "GLDAS / SWOT",
             "season_mode": "deseasonalized",
-            "start_year": 2000,
+            "start_year": 1998,
             "end_year": 2026,
             "category_label": "Floods",
         }
@@ -433,7 +433,7 @@ def _map_eonet_category_to_variable(category_title: str, category_id: str) -> Di
             "variable": "RCM_SAR_BACKSCATTER",
             "satellite_badge": "CSA RADARSAT / MODIS",
             "season_mode": "DJF",
-            "start_year": 2002,
+            "start_year": 2019,
             "end_year": 2026,
             "category_label": "Sea and Lake Ice",
         }
