@@ -1057,7 +1057,7 @@ export const App: React.FC = () => {
           ))}
         </div>
 
-        <div className="relative" data-tour="header-actions">
+        <div className="relative ml-auto" data-tour="header-actions">
           <button
             type="button"
             onClick={() => setExportOpen((prev) => !prev)}
@@ -1071,7 +1071,7 @@ export const App: React.FC = () => {
             }`}
           >
             <Share2 className="w-4 h-4" />
-            <span className="hidden 2xl:inline">
+            <span className="hidden sm:inline">
               {L('Поділитися та експорт', 'Share and export')}
             </span>
             <ChevronDown className="w-4 h-4" />
@@ -1084,7 +1084,7 @@ export const App: React.FC = () => {
               />
               <div
                 role="menu"
-                className="absolute right-0 top-full mt-1 z-[1200] w-64 rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
+                className="absolute right-0 top-full mt-1 z-[1200] w-64 max-w-[calc(100vw-24px)] rounded-md bg-[#0c0c0f] border border-[#2a2a32] shadow-2xl p-1"
               >
                 <div className="px-2.5 pt-1.5 pb-1 text-xs text-zinc-400">
                   {L('Поділитися', 'Share')}
