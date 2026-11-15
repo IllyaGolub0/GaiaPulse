@@ -150,16 +150,35 @@ export const TERRA_GIBS_CATALOG: Record<string, GibsLayerConfig> = {
       unit: 'AOD',
     },
   },
+  OMPS_SO2: {
+    id: 'OMPS_SO2',
+    label: 'Suomi NPP OMPS: Діоксид сірки (чистий шар, 2012–2025)',
+    labelEn: 'Suomi NPP OMPS: Sulfur Dioxide (Clean / No stripes, 2012–2025)',
+    layerName: 'OMPS_SO2_Middle_Troposphere',
+    matrixSet: 'GoogleMapsCompatible_Level6',
+    format: 'png',
+    minDate: '2012-01-01',
+    maxDate: '2025-12-31',
+    defaultDate: '2024-06-15',
+    colorbar: {
+      gradientCss:
+        'linear-gradient(90deg, #89dceb 0%, #cba6f7 55%, #f38ba8 100%)',
+      minLabel: '0.1',
+      midLabel: '1.5',
+      maxLabel: '5.0+',
+      unit: 'DU',
+    },
+  },
   SO2: {
     id: 'SO2',
-    label: 'Aura OMI: Діоксид сірки в тропосфері (SO₂)',
-    labelEn: 'Aura OMI: Sulfur Dioxide Middle Troposphere (SO₂)',
+    label: 'Aura OMI: Діоксид сірки (архів 2004–2025, аномалія рядків)',
+    labelEn: 'Aura OMI: Sulfur Dioxide (Archive 2004–2025, OMI Row Anomaly)',
     layerName: 'OMI_SO2_Middle_Troposphere',
     matrixSet: 'GoogleMapsCompatible_Level6',
     format: 'png',
-    minDate: '2005-01-01',
+    minDate: '2004-10-01',
     maxDate: '2025-12-31',
-    defaultDate: '2024-06-15',
+    defaultDate: '2008-08-10',
     colorbar: {
       gradientCss:
         'linear-gradient(90deg, #89dceb 0%, #cba6f7 55%, #f38ba8 100%)',
@@ -514,8 +533,18 @@ export const EarthMap: React.FC<EarthMapProps> = ({
   const mappedAutoKey = VARIABLE_TO_GIBS_KEY[variable] || 'T2M';
   const effectiveLayerKey =
     customLayerKey === 'AUTO' ? mappedAutoKey : customLayerKey;
-  const gibsConfig =
+  let gibsConfig =
     TERRA_GIBS_CATALOG[effectiveLayerKey] || TERRA_GIBS_CATALOG.T2M;
+
+  // Auto-switch SO2 to modern clean OMPS (>=2012) to avoid OMI row anomaly horizontal stripes
+  if (
+    effectiveLayerKey === 'SO2' &&
+    customLayerKey === 'AUTO' &&
+    gibsDate >= '2012-01-01' &&
+    TERRA_GIBS_CATALOG.OMPS_SO2
+  ) {
+    gibsConfig = TERRA_GIBS_CATALOG.OMPS_SO2;
+  }
 
   const layerMinDate = gibsConfig.minDate || '2000-02-24';
   const layerMaxDate =
