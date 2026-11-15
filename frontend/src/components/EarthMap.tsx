@@ -700,14 +700,14 @@ export const EarthMap: React.FC<EarthMapProps> = ({
                 <div className="text-xs text-zinc-400">
                   {en ? 'Base map' : 'Підкладка'}
                 </div>
-                <div className="grid grid-cols-3 gap-1">
-                  {(['dark', 'night', 'satellite'] as BasemapTheme[]).map(
+                <div className="grid grid-cols-4 gap-1">
+                  {(['dark', 'light', 'night', 'satellite'] as BasemapTheme[]).map(
                     (themeKey) => (
                       <button
                         key={themeKey}
                         type="button"
                         onClick={() => setBasemapTheme(themeKey)}
-                        className={`h-8 rounded-md text-sm border transition ${
+                        className={`h-8 rounded-md text-xs sm:text-sm border transition flex items-center justify-center px-1 ${
                           basemapTheme === themeKey
                             ? 'bg-sky-500/25 text-sky-200 border-sky-400 font-semibold shadow-sm'
                             : 'text-zinc-300 border-[#2a2a32] hover:text-white'
